@@ -15,6 +15,7 @@ import GrowthMetrics from "./pages/GrowthMetrics";
 import DataVisualization from "./pages/DataVisualization";
 import AutomatedWorkflows from "./pages/AutomatedWorkflows";
 import IntegrationHub from "./pages/IntegrationHub";
+import { ThemeProvider } from "./ThemeContext";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { useEffect, useState } from "react";
 import Container from '@mui/material/Container';
@@ -30,16 +31,18 @@ function App() {
   const [isLogin, setIsLogin] = useState(true);
 
   return (
-    <Router>
-      <AppContent
-        user={user}
-        setUser={setUser}
-        showAuth={showAuth}
-        setShowAuth={setShowAuth}
-        isLogin={isLogin}
-        setIsLogin={setIsLogin}
-      />
-    </Router>
+    <ThemeProvider>
+      <Router>
+        <AppContent
+          user={user}
+          setUser={setUser}
+          showAuth={showAuth}
+          setShowAuth={setShowAuth}
+          isLogin={isLogin}
+          setIsLogin={setIsLogin}
+        />
+      </Router>
+    </ThemeProvider>
   );
 }
 

@@ -3,13 +3,9 @@ import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
 import Button from '@mui/material/Button';
-import Chip from '@mui/material/Chip';
 import AddIcon from '@mui/icons-material/Add';
-import TrendingUpIcon from '@mui/icons-material/TrendingUp';
-import MoreVertIcon from '@mui/icons-material/MoreVert';
 import IconButton from '@mui/material/IconButton';
 import Avatar from '@mui/material/Avatar';
-import AvatarGroup from '@mui/material/AvatarGroup';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
@@ -19,14 +15,19 @@ import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import { useTheme } from '../ThemeContext';
 
 function DashboardHome() {
+  const { mode } = useTheme();
   const [gaps, setGaps] = useState([
-    { id: 1, title: 'Mobile App Offline Mode', severity: 'High', status: 'Open', category: 'Feature', assignee: 'Sarah Johnson', createdAt: '2024-01-15' },
-    { id: 2, title: 'API Documentation Updates', severity: 'Medium', status: 'In Progress', category: 'Documentation', assignee: 'Mike Chen', createdAt: '2024-01-14' },
-    { id: 3, title: 'User Onboarding Simplification', severity: 'High', status: 'Open', category: 'UX', assignee: 'Emily Davis', createdAt: '2024-01-13' },
-    { id: 4, title: 'Payment Gateway Integration', severity: 'High', status: 'In Progress', category: 'Feature', assignee: 'Alex Kumar', createdAt: '2024-01-12' },
-    { id: 5, title: 'Performance Monitoring Dashboard', severity: 'Medium', status: 'Open', category: 'Performance', assignee: 'Sarah Johnson', createdAt: '2024-01-10' },
+    { id: 1, title: 'Mobile App Offline Mode', severity: 'High', status: 'Open', category: 'Feature', assignee: 'Sarah Johnson', createdAt: '2024-01-15', description: 'Users need ability to access core features without internet connection' },
+    { id: 2, title: 'API Documentation Updates', severity: 'Medium', status: 'In Progress', category: 'Documentation', assignee: 'Mike Chen', createdAt: '2024-01-14', description: 'API docs need examples and better descriptions' },
+    { id: 3, title: 'User Onboarding Simplification', severity: 'High', status: 'Open', category: 'UX', assignee: 'Emily Davis', createdAt: '2024-01-13', description: 'Reduce steps in initial user setup flow' },
+    { id: 4, title: 'Payment Gateway Integration', severity: 'High', status: 'In Progress', category: 'Feature', assignee: 'Alex Kumar', createdAt: '2024-01-12', description: 'Add Stripe payment processing' },
+    { id: 5, title: 'Performance Monitoring Dashboard', severity: 'Medium', status: 'Open', category: 'Performance', assignee: 'Sarah Johnson', createdAt: '2024-01-10', description: 'Real-time performance metrics dashboard' },
+    { id: 6, title: 'Dark Mode Support', severity: 'Low', status: 'Open', category: 'Feature', assignee: 'Mike Chen', createdAt: '2024-01-09', description: 'Add dark mode theme option' },
   ]);
 
   const [openDialog, setOpenDialog] = useState(false);
@@ -72,18 +73,11 @@ function DashboardHome() {
     inProgress: gaps.filter(g => g.status === 'In Progress').length,
     resolved: gaps.filter(g => g.status === 'Resolved').length,
     high: gaps.filter(g => g.severity === 'High').length,
+    medium: gaps.filter(g => g.severity === 'Medium').length,
+    low: gaps.filter(g => g.severity === 'Low').length,
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'Open': return { bg: '#FEF3C7', text: '#92400E', border: '#FCD34D' };
-      case 'In Progress': return { bg: '#DBEAFE', text: '#1E40AF', border: '#93C5FD' };
-      case 'Resolved': return { bg: '#D1FAE5', text: '#065F46', border: '#6EE7B7' };
-      default: return { bg: '#F3F4F6', text: '#374151', border: '#D1D5DB' };
-    }
-  };
-
-  const getPriorityDot = (severity) => {
+  const getPriorityColor = (severity) => {
     switch (severity) {
       case 'High': return '#EF4444';
       case 'Medium': return '#F59E0B';
@@ -92,308 +86,329 @@ function DashboardHome() {
     }
   };
 
-  return (
-    <Box sx={{ maxWidth: 1400, mx: 'auto' }}>
-      {/* Header */}
-      <Box sx={{ mb: 6 }}>
-        <Typography variant="h4" sx={{ fontWeight: 700, mb: 1, color: '#111827', letterSpacing: '-0.02em' }}>
-          Good morning 👋
-        </Typography>
-        <Typography variant="body1" sx={{ color: '#6B7280' }}>
-          Here's what's happening with your product today
-        </Typography>
-      </Box>
+  const getStatusColor = (status) => {
+    if (mode === 'dark') {
+      switch (status) {
+        case 'Open': return { bg: 'rgba(251, 191, 36, 0.1)', text: '#FCD34D' };
+        case 'In Progress': return { bg: 'rgba(96, 165, 250, 0.1)', text: '#60A5FA' };
+        case 'Resolved': return { bg: 'rgba(74, 222, 128, 0.1)', text: '#4ADE80' };
+        default: return { bg: 'rgba(148, 163, 184, 0.1)', text: '#94A3B8' };
+      }
+    } else {
+      switch (status) {
+        case 'Open': return { bg: '#FEF3C7', text: '#92400E' };
+        case 'In Progress': return { bg: '#DBEAFE', text: '#1E40AF' };
+        case 'Resolved': return { bg: '#D1FAE5', text: '#065F46' };
+        default: return { bg: '#F3F4F6', text: '#374151' };
+      }
+    }
+  };
 
-      {/* Stats Grid */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} sm={6} lg={3}>
+  return (
+    <Box sx={{ height: '100%' }}>
+      <Grid container spacing={2} sx={{ height: '100%' }}>
+        {/* Stats Section - Top Row */}
+        <Grid item xs={12} md={3}>
           <Box sx={{
             p: 3,
-            bgcolor: 'white',
-            borderRadius: 3,
-            border: '1px solid #F3F4F6',
-            transition: 'all 0.2s',
-            '&:hover': { boxShadow: '0 4px 12px rgba(0,0,0,0.05)', transform: 'translateY(-2px)' }
+            bgcolor: 'background.paper',
+            borderRadius: 2,
+            border: 1,
+            borderColor: 'divider',
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between'
           }}>
-            <Typography variant="body2" sx={{ color: '#6B7280', mb: 2, fontWeight: 500 }}>
-              Total Gaps
-            </Typography>
-            <Typography variant="h3" sx={{ fontWeight: 700, color: '#111827', mb: 1 }}>
-              {stats.total}
-            </Typography>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <TrendingUpIcon sx={{ fontSize: 16, color: '#10B981' }} />
-              <Typography variant="caption" sx={{ color: '#10B981', fontWeight: 600 }}>
-                +12% from last month
+            <Box>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                Total Gaps
+              </Typography>
+              <Typography variant="h2" sx={{ fontWeight: 700, mb: 2 }}>
+                {stats.total}
+              </Typography>
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <TrendingUpIcon sx={{ fontSize: 20, color: '#10B981' }} />
+              <Typography variant="body2" sx={{ color: '#10B981', fontWeight: 600 }}>
+                +12% this month
               </Typography>
             </Box>
           </Box>
         </Grid>
 
-        <Grid item xs={12} sm={6} lg={3}>
+        <Grid item xs={12} md={9}>
+          <Grid container spacing={2} sx={{ height: '100%' }}>
+            <Grid item xs={4}>
+              <Box sx={{
+                p: 3,
+                bgcolor: 'background.paper',
+                borderRadius: 2,
+                border: 1,
+                borderColor: 'divider',
+                height: '100%'
+              }}>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>Open</Typography>
+                <Typography variant="h3" sx={{ fontWeight: 700, color: '#F59E0B' }}>{stats.open}</Typography>
+              </Box>
+            </Grid>
+            <Grid item xs={4}>
+              <Box sx={{
+                p: 3,
+                bgcolor: 'background.paper',
+                borderRadius: 2,
+                border: 1,
+                borderColor: 'divider',
+                height: '100%'
+              }}>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>In Progress</Typography>
+                <Typography variant="h3" sx={{ fontWeight: 700, color: '#3B82F6' }}>{stats.inProgress}</Typography>
+              </Box>
+            </Grid>
+            <Grid item xs={4}>
+              <Box sx={{
+                p: 3,
+                bgcolor: 'background.paper',
+                borderRadius: 2,
+                border: 1,
+                borderColor: 'divider',
+                height: '100%'
+              }}>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>Resolved</Typography>
+                <Typography variant="h3" sx={{ fontWeight: 700, color: '#10B981' }}>{stats.resolved}</Typography>
+              </Box>
+            </Grid>
+          </Grid>
+        </Grid>
+
+        {/* Priority Breakdown */}
+        <Grid item xs={12} md={4}>
           <Box sx={{
             p: 3,
-            bgcolor: 'white',
-            borderRadius: 3,
-            border: '1px solid #F3F4F6',
-            transition: 'all 0.2s',
-            '&:hover': { boxShadow: '0 4px 12px rgba(0,0,0,0.05)', transform: 'translateY(-2px)' }
+            bgcolor: 'background.paper',
+            borderRadius: 2,
+            border: 1,
+            borderColor: 'divider',
+            height: '100%'
           }}>
-            <Typography variant="body2" sx={{ color: '#6B7280', mb: 2, fontWeight: 500 }}>
-              Open
+            <Typography variant="h6" sx={{ fontWeight: 600, mb: 3 }}>
+              Priority Breakdown
             </Typography>
-            <Typography variant="h3" sx={{ fontWeight: 700, color: '#111827', mb: 1 }}>
-              {stats.open}
-            </Typography>
-            <Typography variant="caption" sx={{ color: '#6B7280' }}>
-              Awaiting action
-            </Typography>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+              <Box>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: '#EF4444' }} />
+                    <Typography variant="body2">High</Typography>
+                  </Box>
+                  <Typography variant="h6" sx={{ fontWeight: 700 }}>{stats.high}</Typography>
+                </Box>
+              </Box>
+              <Box>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: '#F59E0B' }} />
+                    <Typography variant="body2">Medium</Typography>
+                  </Box>
+                  <Typography variant="h6" sx={{ fontWeight: 700 }}>{stats.medium}</Typography>
+                </Box>
+              </Box>
+              <Box>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: '#10B981' }} />
+                    <Typography variant="body2">Low</Typography>
+                  </Box>
+                  <Typography variant="h6" sx={{ fontWeight: 700 }}>{stats.low}</Typography>
+                </Box>
+              </Box>
+            </Box>
           </Box>
         </Grid>
 
-        <Grid item xs={12} sm={6} lg={3}>
+        {/* Recent Activity */}
+        <Grid item xs={12} md={4}>
           <Box sx={{
             p: 3,
-            bgcolor: 'white',
-            borderRadius: 3,
-            border: '1px solid #F3F4F6',
-            transition: 'all 0.2s',
-            '&:hover': { boxShadow: '0 4px 12px rgba(0,0,0,0.05)', transform: 'translateY(-2px)' }
+            bgcolor: 'background.paper',
+            borderRadius: 2,
+            border: 1,
+            borderColor: 'divider',
+            height: '100%'
           }}>
-            <Typography variant="body2" sx={{ color: '#6B7280', mb: 2, fontWeight: 500 }}>
-              In Progress
-            </Typography>
-            <Typography variant="h3" sx={{ fontWeight: 700, color: '#111827', mb: 1 }}>
-              {stats.inProgress}
-            </Typography>
-            <Typography variant="caption" sx={{ color: '#6B7280' }}>
-              Being worked on
-            </Typography>
-          </Box>
-        </Grid>
-
-        <Grid item xs={12} sm={6} lg={3}>
-          <Box sx={{
-            p: 3,
-            bgcolor: 'white',
-            borderRadius: 3,
-            border: '1px solid #F3F4F6',
-            transition: 'all 0.2s',
-            '&:hover': { boxShadow: '0 4px 12px rgba(0,0,0,0.05)', transform: 'translateY(-2px)' }
-          }}>
-            <Typography variant="body2" sx={{ color: '#6B7280', mb: 2, fontWeight: 500 }}>
-              High Priority
-            </Typography>
-            <Typography variant="h3" sx={{ fontWeight: 700, color: '#EF4444', mb: 1 }}>
-              {stats.high}
-            </Typography>
-            <Typography variant="caption" sx={{ color: '#6B7280' }}>
-              Needs attention
-            </Typography>
-          </Box>
-        </Grid>
-      </Grid>
-
-      {/* Recent Gaps Table */}
-      <Box sx={{
-        bgcolor: 'white',
-        borderRadius: 3,
-        border: '1px solid #F3F4F6',
-        overflow: 'hidden'
-      }}>
-        {/* Table Header */}
-        <Box sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          p: 3,
-          borderBottom: '1px solid #F3F4F6'
-        }}>
-          <Typography variant="h6" sx={{ fontWeight: 600, color: '#111827' }}>
-            Recent Gaps
-          </Typography>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={handleOpenDialog}
-            sx={{
-              bgcolor: '#111827',
-              color: 'white',
-              textTransform: 'none',
-              fontWeight: 600,
-              px: 3,
-              py: 1,
-              borderRadius: 2,
-              boxShadow: 'none',
-              '&:hover': {
-                bgcolor: '#1F2937',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
-              }
-            }}
-          >
-            Add Gap
-          </Button>
-        </Box>
-
-        {/* Table Content */}
-        <Box>
-          {gaps.map((gap, index) => {
-            const statusColors = getStatusColor(gap.status);
-            return (
-              <Box
-                key={gap.id}
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  p: 3,
-                  borderBottom: index < gaps.length - 1 ? '1px solid #F3F4F6' : 'none',
-                  transition: 'all 0.15s',
-                  '&:hover': {
-                    bgcolor: '#FAFAFA'
-                  }
-                }}
-              >
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, flex: 1 }}>
-                  {/* Priority Indicator */}
-                  <Box
-                    sx={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: '50%',
-                      bgcolor: getPriorityDot(gap.severity),
-                      flexShrink: 0
-                    }}
-                  />
-
-                  {/* Title & Category */}
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+              <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                Recent Activity
+              </Typography>
+            </Box>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              {gaps.slice(0, 3).map((gap) => (
+                <Box key={gap.id} sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                  <Avatar sx={{ width: 32, height: 32, fontSize: '0.75rem', bgcolor: 'primary.main' }}>
+                    {gap.assignee?.charAt(0)}
+                  </Avatar>
                   <Box sx={{ flex: 1, minWidth: 0 }}>
-                    <Typography variant="body1" sx={{
-                      fontWeight: 600,
-                      color: '#111827',
-                      mb: 0.5,
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap'
-                    }}>
-                      {gap.title}
-                    </Typography>
-                    <Typography variant="caption" sx={{ color: '#6B7280' }}>
-                      {gap.category}
-                    </Typography>
-                  </Box>
-
-                  {/* Status */}
-                  <Box sx={{ display: { xs: 'none', md: 'block' }, minWidth: 120 }}>
-                    <Box sx={{
-                      display: 'inline-flex',
-                      px: 2,
-                      py: 0.5,
-                      borderRadius: 6,
-                      bgcolor: statusColors.bg,
-                      border: `1px solid ${statusColors.border}`
-                    }}>
-                      <Typography variant="caption" sx={{
-                        color: statusColors.text,
-                        fontWeight: 600,
-                        fontSize: '0.75rem'
-                      }}>
-                        {gap.status}
-                      </Typography>
-                    </Box>
-                  </Box>
-
-                  {/* Assignee */}
-                  <Box sx={{ display: { xs: 'none', lg: 'flex' }, alignItems: 'center', gap: 1.5, minWidth: 150 }}>
-                    <Avatar sx={{ width: 28, height: 28, bgcolor: '#667eea', fontSize: '0.75rem' }}>
-                      {gap.assignee?.charAt(0)}
-                    </Avatar>
-                    <Typography variant="body2" sx={{ color: '#374151', fontWeight: 500 }}>
+                    <Typography variant="body2" sx={{ fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {gap.assignee}
                     </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {gap.status} • {gap.category}
+                    </Typography>
                   </Box>
-
-                  {/* Date */}
-                  <Typography variant="body2" sx={{ color: '#9CA3AF', minWidth: 100, display: { xs: 'none', sm: 'block' } }}>
-                    {gap.createdAt}
-                  </Typography>
                 </Box>
-
-                {/* Actions */}
-                <IconButton size="small" sx={{ color: '#9CA3AF' }}>
-                  <MoreVertIcon fontSize="small" />
-                </IconButton>
-              </Box>
-            );
-          })}
-        </Box>
-
-        {/* View All Footer */}
-        <Box sx={{
-          p: 2,
-          textAlign: 'center',
-          borderTop: '1px solid #F3F4F6',
-          bgcolor: '#FAFAFA'
-        }}>
-          <Button sx={{ textTransform: 'none', color: '#6B7280', fontWeight: 500 }}>
-            View all gaps
-          </Button>
-        </Box>
-      </Box>
-
-      {/* Quick Actions */}
-      <Grid container spacing={3} sx={{ mt: 2 }}>
-        <Grid item xs={12} md={6}>
-          <Box sx={{
-            p: 4,
-            bgcolor: 'white',
-            borderRadius: 3,
-            border: '1px solid #F3F4F6',
-            height: '100%'
-          }}>
-            <Typography variant="h6" sx={{ fontWeight: 600, color: '#111827', mb: 3 }}>
-              Team Activity
-            </Typography>
-            <AvatarGroup max={4} sx={{ mb: 2, justifyContent: 'flex-start' }}>
-              <Avatar sx={{ bgcolor: '#667eea' }}>SJ</Avatar>
-              <Avatar sx={{ bgcolor: '#f093fb' }}>MC</Avatar>
-              <Avatar sx={{ bgcolor: '#4facfe' }}>ED</Avatar>
-              <Avatar sx={{ bgcolor: '#43e97b' }}>AK</Avatar>
-            </AvatarGroup>
-            <Typography variant="body2" sx={{ color: '#6B7280' }}>
-              4 team members active today
-            </Typography>
+              ))}
+            </Box>
           </Box>
         </Grid>
 
-        <Grid item xs={12} md={6}>
+        {/* Quick Actions */}
+        <Grid item xs={12} md={4}>
           <Box sx={{
-            p: 4,
-            bgcolor: 'white',
-            borderRadius: 3,
-            border: '1px solid #F3F4F6',
-            height: '100%'
+            p: 3,
+            bgcolor: 'background.paper',
+            borderRadius: 2,
+            border: 1,
+            borderColor: 'divider',
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center'
           }}>
-            <Typography variant="h6" sx={{ fontWeight: 600, color: '#111827', mb: 3 }}>
-              Quick Stats
+            <Typography variant="h6" sx={{ fontWeight: 600, mb: 3 }}>
+              Quick Actions
             </Typography>
-            <Box sx={{ display: 'flex', gap: 3 }}>
-              <Box>
-                <Typography variant="h5" sx={{ fontWeight: 700, color: '#111827' }}>
-                  {((stats.resolved / stats.total) * 100 || 0).toFixed(0)}%
-                </Typography>
-                <Typography variant="caption" sx={{ color: '#6B7280' }}>
-                  Completion Rate
-                </Typography>
-              </Box>
-              <Box>
-                <Typography variant="h5" sx={{ fontWeight: 700, color: '#111827' }}>
-                  2.3
-                </Typography>
-                <Typography variant="caption" sx={{ color: '#6B7280' }}>
-                  Avg. Days to Close
-                </Typography>
-              </Box>
+            <Button
+              variant="contained"
+              size="large"
+              fullWidth
+              startIcon={<AddIcon />}
+              onClick={handleOpenDialog}
+              sx={{ py: 1.5 }}
+            >
+              Create New Gap
+            </Button>
+          </Box>
+        </Grid>
+
+        {/* All Gaps List */}
+        <Grid item xs={12}>
+          <Box sx={{
+            p: 3,
+            bgcolor: 'background.paper',
+            borderRadius: 2,
+            border: 1,
+            borderColor: 'divider',
+          }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+              <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                All Gaps
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {gaps.length} total
+              </Typography>
+            </Box>
+
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+              {gaps.map((gap) => {
+                const statusColors = getStatusColor(gap.status);
+                return (
+                  <Box
+                    key={gap.id}
+                    sx={{
+                      p: 2.5,
+                      borderRadius: 2,
+                      border: 1,
+                      borderColor: 'divider',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                      '&:hover': {
+                        borderColor: 'primary.main',
+                        boxShadow: mode === 'dark' ? '0 4px 12px rgba(99, 102, 241, 0.15)' : '0 4px 12px rgba(99, 102, 241, 0.1)',
+                      }
+                    }}
+                  >
+                    <Box sx={{ display: 'flex', gap: 2, alignItems: 'start' }}>
+                      <Box
+                        sx={{
+                          width: 6,
+                          height: 6,
+                          borderRadius: '50%',
+                          bgcolor: getPriorityColor(gap.severity),
+                          mt: 1,
+                          flexShrink: 0
+                        }}
+                      />
+
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
+                          <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                            {gap.title}
+                          </Typography>
+                          <Box
+                            sx={{
+                              px: 1.5,
+                              py: 0.25,
+                              borderRadius: 1,
+                              bgcolor: statusColors.bg,
+                            }}
+                          >
+                            <Typography variant="caption" sx={{ color: statusColors.text, fontWeight: 600 }}>
+                              {gap.status}
+                            </Typography>
+                          </Box>
+                        </Box>
+
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+                          {gap.description}
+                        </Typography>
+
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                            <Box
+                              sx={{
+                                width: 6,
+                                height: 6,
+                                borderRadius: '50%',
+                                bgcolor: getPriorityColor(gap.severity),
+                              }}
+                            />
+                            <Typography variant="caption" color="text.secondary">
+                              {gap.severity}
+                            </Typography>
+                          </Box>
+
+                          <Typography variant="caption" color="text.secondary">•</Typography>
+
+                          <Typography variant="caption" color="text.secondary">
+                            {gap.category}
+                          </Typography>
+
+                          <Typography variant="caption" color="text.secondary">•</Typography>
+
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                            <Avatar sx={{ width: 20, height: 20, fontSize: '0.65rem', bgcolor: 'primary.main' }}>
+                              {gap.assignee?.charAt(0)}
+                            </Avatar>
+                            <Typography variant="caption" color="text.secondary">
+                              {gap.assignee}
+                            </Typography>
+                          </Box>
+
+                          <Typography variant="caption" color="text.secondary">•</Typography>
+
+                          <Typography variant="caption" color="text.secondary">
+                            {gap.createdAt}
+                          </Typography>
+                        </Box>
+                      </Box>
+
+                      <IconButton size="small" sx={{ color: 'text.secondary' }}>
+                        <MoreVertIcon fontSize="small" />
+                      </IconButton>
+                    </Box>
+                  </Box>
+                );
+              })}
             </Box>
           </Box>
         </Grid>
@@ -401,17 +416,18 @@ function DashboardHome() {
 
       {/* Add Gap Dialog */}
       <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
-        <DialogTitle sx={{ fontWeight: 600, pb: 1 }}>
-          Add New Gap
+        <DialogTitle sx={{ fontWeight: 600 }}>
+          Create New Gap
         </DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 2, display: 'flex', flexDirection: 'column', gap: 2.5 }}>
             <TextField
-              label="Gap Title"
+              label="Title"
               fullWidth
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              placeholder="e.g., Mobile App Offline Mode"
+              placeholder="Brief description of the gap"
+              autoFocus
             />
 
             <TextField
@@ -421,16 +437,16 @@ function DashboardHome() {
               rows={3}
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="Describe the gap in detail..."
+              placeholder="Add more details about this gap..."
             />
 
             <Grid container spacing={2}>
               <Grid item xs={12} sm={6}>
                 <FormControl fullWidth>
-                  <InputLabel>Severity</InputLabel>
+                  <InputLabel>Priority</InputLabel>
                   <Select
                     value={formData.severity}
-                    label="Severity"
+                    label="Priority"
                     onChange={(e) => setFormData({ ...formData, severity: e.target.value })}
                   >
                     <MenuItem value="Low">Low</MenuItem>
@@ -451,7 +467,6 @@ function DashboardHome() {
                     <MenuItem value="Open">Open</MenuItem>
                     <MenuItem value="In Progress">In Progress</MenuItem>
                     <MenuItem value="Resolved">Resolved</MenuItem>
-                    <MenuItem value="Closed">Closed</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>
@@ -469,7 +484,6 @@ function DashboardHome() {
                     <MenuItem value="UX">UX</MenuItem>
                     <MenuItem value="Performance">Performance</MenuItem>
                     <MenuItem value="Documentation">Documentation</MenuItem>
-                    <MenuItem value="Security">Security</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>
@@ -480,29 +494,22 @@ function DashboardHome() {
                   fullWidth
                   value={formData.assignee}
                   onChange={(e) => setFormData({ ...formData, assignee: e.target.value })}
-                  placeholder="e.g., John Doe"
+                  placeholder="Who's responsible?"
                 />
               </Grid>
             </Grid>
           </Box>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 3 }}>
-          <Button onClick={handleCloseDialog} sx={{ textTransform: 'none', color: '#6B7280' }}>
+          <Button onClick={handleCloseDialog}>
             Cancel
           </Button>
           <Button
             variant="contained"
             onClick={handleSaveGap}
             disabled={!formData.title.trim()}
-            sx={{
-              bgcolor: '#111827',
-              textTransform: 'none',
-              fontWeight: 600,
-              boxShadow: 'none',
-              '&:hover': { bgcolor: '#1F2937', boxShadow: 'none' }
-            }}
           >
-            Add Gap
+            Create Gap
           </Button>
         </DialogActions>
       </Dialog>

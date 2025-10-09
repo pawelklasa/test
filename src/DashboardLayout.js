@@ -14,7 +14,6 @@ import Typography from '@mui/material/Typography';
 import Avatar from '@mui/material/Avatar';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
-import Divider from '@mui/material/Divider';
 import Badge from '@mui/material/Badge';
 import MenuIcon from '@mui/icons-material/Menu';
 import DashboardIcon from '@mui/icons-material/Dashboard';
@@ -30,9 +29,14 @@ import HubIcon from '@mui/icons-material/Hub';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import SearchIcon from '@mui/icons-material/Search';
 import SettingsIcon from '@mui/icons-material/Settings';
+import LightModeIcon from '@mui/icons-material/LightMode';
+import DarkModeIcon from '@mui/icons-material/DarkMode';
+import InputBase from '@mui/material/InputBase';
+import { alpha } from '@mui/material/styles';
 import { getAuth } from 'firebase/auth';
+import { useTheme } from './ThemeContext';
 
-const drawerWidth = 280;
+const drawerWidth = 260;
 
 const menuItems = [
   { text: 'Overview', icon: <DashboardIcon />, path: '/dashboard' },
@@ -54,6 +58,7 @@ function DashboardLayout() {
   const location = useLocation();
   const auth = getAuth();
   const user = auth.currentUser;
+  const { mode, toggleTheme } = useTheme();
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
@@ -78,25 +83,16 @@ function DashboardLayout() {
   };
 
   const drawer = (
-    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', bgcolor: '#1a1d2e' }}>
-      {/* Sidebar Header */}
-      <Box sx={{ p: 3, pb: 2 }}>
-        <Typography variant="h5" sx={{
-          fontWeight: 700,
-          color: 'white',
-          letterSpacing: '-0.5px'
-        }}>
+    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      {/* Sidebar Logo */}
+      <Box sx={{ p: 3 }}>
+        <Typography variant="h6" sx={{ fontWeight: 700, letterSpacing: '-0.02em' }}>
           G.A.P
-        </Typography>
-        <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.5)' }}>
-          Product Gap Analysis
         </Typography>
       </Box>
 
-      <Divider sx={{ borderColor: 'rgba(255,255,255,0.1)' }} />
-
       {/* Navigation Menu */}
-      <List sx={{ flex: 1, pt: 2, px: 2 }}>
+      <List sx={{ flex: 1, px: 2 }}>
         {menuItems.map((item) => {
           const isSelected = location.pathname === item.path;
           return (
@@ -105,27 +101,26 @@ function DashboardLayout() {
                 onClick={() => handleNavigation(item.path)}
                 sx={{
                   borderRadius: 2,
-                  py: 1.5,
-                  bgcolor: isSelected ? 'rgba(102, 126, 234, 0.15)' : 'transparent',
-                  color: isSelected ? '#667eea' : 'rgba(255,255,255,0.7)',
+                  py: 1.25,
+                  bgcolor: isSelected ? (mode === 'dark' ? 'rgba(129, 140, 248, 0.1)' : 'rgba(99, 102, 241, 0.08)') : 'transparent',
                   '&:hover': {
-                    bgcolor: isSelected ? 'rgba(102, 126, 234, 0.2)' : 'rgba(255,255,255,0.05)',
-                    color: isSelected ? '#667eea' : 'white',
+                    bgcolor: mode === 'dark' ? 'rgba(148, 163, 184, 0.05)' : 'rgba(0, 0, 0, 0.04)',
                   },
-                  transition: 'all 0.2s ease'
                 }}
               >
-                <ListItemIcon sx={{
-                  color: 'inherit',
-                  minWidth: 40
-                }}>
+                <ListItemIcon
+                  sx={{
+                    color: isSelected ? 'primary.main' : 'text.secondary',
+                    minWidth: 40,
+                  }}
+                >
                   {item.icon}
                 </ListItemIcon>
                 <ListItemText
                   primary={item.text}
                   primaryTypographyProps={{
                     fontSize: '0.875rem',
-                    fontWeight: isSelected ? 600 : 400
+                    fontWeight: isSelected ? 600 : 400,
                   }}
                 />
               </ListItemButton>
@@ -134,33 +129,36 @@ function DashboardLayout() {
         })}
       </List>
 
-      {/* Sidebar Footer */}
-      <Box sx={{ p: 2, borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-        <Box sx={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 2,
-          p: 1.5,
-          borderRadius: 2,
-          bgcolor: 'rgba(255,255,255,0.05)',
-          cursor: 'pointer',
-          '&:hover': { bgcolor: 'rgba(255,255,255,0.08)' }
-        }}>
-          <Avatar sx={{ width: 36, height: 36, bgcolor: '#667eea', fontSize: '0.875rem' }}>
+      {/* Sidebar Footer - User Profile */}
+      <Box sx={{ p: 2, borderTop: 1, borderColor: 'divider' }}>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1.5,
+            p: 1.5,
+            borderRadius: 2,
+            cursor: 'pointer',
+            '&:hover': { bgcolor: mode === 'dark' ? 'rgba(148, 163, 184, 0.05)' : 'rgba(0, 0, 0, 0.04)' },
+          }}
+        >
+          <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.main', fontSize: '0.875rem' }}>
             {user?.email?.[0].toUpperCase() || 'U'}
           </Avatar>
           <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography variant="body2" sx={{
-              color: 'white',
-              fontWeight: 600,
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap'
-            }}>
+            <Typography
+              variant="body2"
+              sx={{
+                fontWeight: 600,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+            >
               {user?.email?.split('@')[0] || 'User'}
             </Typography>
-            <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.5)' }}>
-              Premium Plan
+            <Typography variant="caption" color="text.secondary">
+              Free Plan
             </Typography>
           </Box>
         </Box>
@@ -169,72 +167,92 @@ function DashboardLayout() {
   );
 
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: '#f8f9fa' }}>
+    <Box sx={{ display: 'flex', minHeight: '100vh' }}>
       {/* Top App Bar */}
       <AppBar
         position="fixed"
         elevation={0}
         sx={{
-          bgcolor: 'white',
-          borderBottom: '1px solid #e0e0e0',
+          bgcolor: 'background.paper',
+          borderBottom: 1,
+          borderColor: 'divider',
           zIndex: (theme) => theme.zIndex.drawer + 1,
           ml: { sm: `${drawerWidth}px` },
-          width: { sm: `calc(100% - ${drawerWidth}px)` }
+          width: { sm: `calc(100% - ${drawerWidth}px)` },
         }}
       >
-        <Toolbar>
+        <Toolbar sx={{ gap: 2 }}>
           <IconButton
             edge="start"
             onClick={handleDrawerToggle}
-            sx={{ mr: 2, display: { sm: 'none' }, color: '#1a1d2e' }}
+            sx={{ mr: 2, display: { sm: 'none' } }}
           >
             <MenuIcon />
           </IconButton>
 
           {/* Search Bar */}
-          <Box sx={{
-            display: 'flex',
-            alignItems: 'center',
-            bgcolor: '#f5f5f5',
-            borderRadius: 2,
-            px: 2,
-            py: 1,
-            flex: { xs: 1, md: 0 },
-            width: { md: 400 }
-          }}>
-            <SearchIcon sx={{ color: '#999', mr: 1 }} />
-            <input
-              type="text"
-              placeholder="Search gaps, insights, or workflows..."
-              style={{
-                border: 'none',
-                outline: 'none',
-                background: 'transparent',
-                width: '100%',
-                fontSize: '0.875rem',
-                color: '#333'
-              }}
-            />
+          <Box
+            sx={{
+              position: 'relative',
+              borderRadius: 2,
+              bgcolor: mode === 'dark' ? 'rgba(148, 163, 184, 0.05)' : alpha('#000', 0.04),
+              '&:hover': {
+                bgcolor: mode === 'dark' ? 'rgba(148, 163, 184, 0.08)' : alpha('#000', 0.06),
+              },
+              width: { xs: '100%', sm: 400 },
+            }}
+          >
+            <Box sx={{ p: 1.5, pl: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+              <SearchIcon sx={{ fontSize: 20, color: 'text.secondary' }} />
+              <InputBase
+                placeholder="Search..."
+                sx={{
+                  flex: 1,
+                  fontSize: '0.875rem',
+                  '& input::placeholder': {
+                    opacity: 0.7,
+                  },
+                }}
+              />
+              <Typography
+                variant="caption"
+                sx={{
+                  px: 1,
+                  py: 0.25,
+                  borderRadius: 1,
+                  bgcolor: mode === 'dark' ? 'rgba(148, 163, 184, 0.1)' : 'rgba(0, 0, 0, 0.06)',
+                  color: 'text.secondary',
+                  fontSize: '0.7rem',
+                  fontWeight: 600,
+                }}
+              >
+                ⌘K
+              </Typography>
+            </Box>
           </Box>
 
           <Box sx={{ flexGrow: 1 }} />
 
           {/* Top Bar Actions */}
-          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-            <IconButton sx={{ color: '#666' }}>
-              <Badge badgeContent={3} color="error">
-                <NotificationsIcon />
-              </Badge>
-            </IconButton>
-            <IconButton sx={{ color: '#666' }} onClick={() => navigate('/settings')}>
-              <SettingsIcon />
-            </IconButton>
-            <IconButton onClick={handleMenuOpen}>
-              <Avatar sx={{ width: 36, height: 36, bgcolor: '#667eea', fontSize: '0.875rem' }}>
-                {user?.email?.[0].toUpperCase() || 'U'}
-              </Avatar>
-            </IconButton>
-          </Box>
+          <IconButton onClick={toggleTheme}>
+            {mode === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}
+          </IconButton>
+
+          <IconButton>
+            <Badge badgeContent={3} color="error">
+              <NotificationsIcon />
+            </Badge>
+          </IconButton>
+
+          <IconButton onClick={() => navigate('/settings')}>
+            <SettingsIcon />
+          </IconButton>
+
+          <IconButton onClick={handleMenuOpen} sx={{ ml: 1 }}>
+            <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.main', fontSize: '0.875rem' }}>
+              {user?.email?.[0].toUpperCase() || 'U'}
+            </Avatar>
+          </IconButton>
 
           <Menu
             anchorEl={anchorEl}
@@ -260,7 +278,7 @@ function DashboardLayout() {
           '& .MuiDrawer-paper': {
             boxSizing: 'border-box',
             width: drawerWidth,
-            border: 'none'
+            border: 'none',
           },
         }}
       >
@@ -277,7 +295,9 @@ function DashboardLayout() {
           '& .MuiDrawer-paper': {
             width: drawerWidth,
             boxSizing: 'border-box',
-            border: 'none'
+            border: 'none',
+            borderRight: 1,
+            borderColor: 'divider',
           },
         }}
         open
@@ -293,8 +313,8 @@ function DashboardLayout() {
           p: { xs: 2, sm: 3 },
           width: { sm: `calc(100% - ${drawerWidth}px)` },
           mt: 8,
-          bgcolor: '#f8f9fa',
-          minHeight: 'calc(100vh - 64px)'
+          bgcolor: 'background.default',
+          minHeight: 'calc(100vh - 64px)',
         }}
       >
         <Outlet />

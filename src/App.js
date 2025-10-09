@@ -3,14 +3,24 @@ import NavBar from "./NavBar";
 import SettingsPage from "./SettingsPage";
 import AboutPage from "./AboutPage";
 import PricingPage from "./PricingPage";
+import LandingPage from "./LandingPage";
+import DashboardLayout from "./DashboardLayout";
+import DashboardHome from "./pages/DashboardHome";
+import VisualGapAnalysis from "./pages/VisualGapAnalysis";
+import ActionableInsights from "./pages/ActionableInsights";
+import TeamCollaboration from "./pages/TeamCollaboration";
+import RealtimeTracking from "./pages/RealtimeTracking";
+import SmartPrioritization from "./pages/SmartPrioritization";
+import GrowthMetrics from "./pages/GrowthMetrics";
+import DataVisualization from "./pages/DataVisualization";
+import AutomatedWorkflows from "./pages/AutomatedWorkflows";
+import IntegrationHub from "./pages/IntegrationHub";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { useEffect, useState } from "react";
 import Container from '@mui/material/Container';
-import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
 import Modal from '@mui/material/Modal';
-import { BrowserRouter as Router, Routes, Route, useNavigate } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, useNavigate, Navigate } from "react-router-dom";
 
 import './App.css';
 
@@ -69,49 +79,70 @@ function AppContent({ user, setUser, showAuth, setShowAuth, isLogin, setIsLogin 
         onLogoClick={handleLogoClick}
       />
       <Routes>
-        <Route path="/settings" element={<SettingsPage />} />
-        onLogoClick={handleLogoClick}
+        <Route path="/settings" element={
+          <Container maxWidth="md" sx={{ mt: 8 }}>
+            <SettingsPage />
+          </Container>
+        } />
         <Route path="/about" element={<AboutPage />} />
         <Route path="/pricing" element={<PricingPage />} />
         <Route path="/" element={
-          <Container maxWidth="md" sx={{ mt: 8 }}>
+          <>
             {user ? (
-              <>
-                <Typography variant="h3" align="center" gutterBottom>Welcome to G.A.P Dashboard</Typography>
-                <Typography variant="body1" align="center">This is your workspace for product gap analysis.</Typography>
-              </>
+              <Navigate to="/dashboard" replace />
             ) : (
-              <>
-                <Box sx={{ textAlign: 'center', py: 8, px: 2, bgcolor: 'background.paper', borderRadius: 3, boxShadow: 3 }}>
-                  <Typography variant="h2" color="primary" gutterBottom fontWeight={700}>
-                    G.A.P Analysis
-                  </Typography>
-                  <Typography variant="h5" color="text.secondary" gutterBottom>
-                    The professional gap analysis app for product owners
-                  </Typography>
-                  <Typography variant="body1" sx={{ mt: 2, mb: 4 }}>
-                    Identify, visualize, and close gaps in your product strategy. <br />
-                    Sign up or log in to get started and unlock actionable insights for your team.
-                  </Typography>
-                  <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mt: 4 }}>
-                    <Button variant="contained" color="primary" size="large" onClick={() => { setShowAuth(true); setIsLogin(false); }}>
-                      Get Started
-                    </Button>
-                    <Button variant="outlined" color="primary" size="large" onClick={() => { setShowAuth(true); setIsLogin(true); }}>
-                      Log In
-                    </Button>
-                  </Box>
-                </Box>
-                <Modal open={showAuth} onClose={() => setShowAuth(false)}>
-                  <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', bgcolor: 'background.paper', p: 4, borderRadius: 2, boxShadow: 24, minWidth: 350 }}>
-                    <AuthForm isLogin={isLogin} setIsLogin={setIsLogin} />
-                  </Box>
-                </Modal>
-              </>
+              <LandingPage
+                onGetStarted={() => { setShowAuth(true); setIsLogin(false); }}
+                onLogin={() => { setShowAuth(true); setIsLogin(true); }}
+              />
             )}
-          </Container>
+          </>
         } />
+
+        {/* Dashboard Routes - Only accessible when logged in */}
+        {user && (
+          <Route path="/dashboard" element={<DashboardLayout />}>
+            <Route index element={<DashboardHome />} />
+            <Route path="visual-gap-analysis" element={<VisualGapAnalysis />} />
+            <Route path="actionable-insights" element={<ActionableInsights />} />
+            <Route path="team-collaboration" element={<TeamCollaboration />} />
+            <Route path="realtime-tracking" element={<RealtimeTracking />} />
+            <Route path="smart-prioritization" element={<SmartPrioritization />} />
+            <Route path="growth-metrics" element={<GrowthMetrics />} />
+            <Route path="data-visualization" element={<DataVisualization />} />
+            <Route path="automated-workflows" element={<AutomatedWorkflows />} />
+            <Route path="integration-hub" element={<IntegrationHub />} />
+          </Route>
+        )}
       </Routes>
+      <Modal
+        open={showAuth}
+        onClose={() => setShowAuth(false)}
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}
+      >
+        <Box
+          sx={{
+            bgcolor: 'background.paper',
+            p: 4,
+            borderRadius: 3,
+            boxShadow: 24,
+            minWidth: { xs: '90%', sm: 400 },
+            maxWidth: 500,
+            maxHeight: '90vh',
+            overflow: 'auto'
+          }}
+        >
+          <AuthForm
+            isLogin={isLogin}
+            setIsLogin={setIsLogin}
+            onClose={() => setShowAuth(false)}
+          />
+        </Box>
+      </Modal>
     </div>
   );
 }

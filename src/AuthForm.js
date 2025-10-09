@@ -1,13 +1,18 @@
+
 import React, { useState } from "react";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
 import app from "./firebase";
+import Box from '@mui/material/Box';
+import TextField from '@mui/material/TextField';
+import Button from '@mui/material/Button';
+import Typography from '@mui/material/Typography';
+import Alert from '@mui/material/Alert';
 
 const auth = getAuth(app);
 
 function AuthForm({ isLogin, setIsLogin }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [user, setUser] = useState(null);
   const [error, setError] = useState("");
 
   const handleSubmit = async (e) => {
@@ -15,56 +20,47 @@ function AuthForm({ isLogin, setIsLogin }) {
     setError("");
     try {
       if (isLogin) {
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        setUser(userCredential.user);
+        await signInWithEmailAndPassword(auth, email, password);
       } else {
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        setUser(userCredential.user);
+        await createUserWithEmailAndPassword(auth, email, password);
       }
     } catch (err) {
       setError(err.message);
     }
   };
 
-  const handleLogout = async () => {
-    await signOut(auth);
-    setUser(null);
-    setEmail("");
-    setPassword("");
-  };
 
   return (
-    <div className="auth-form">
-      {user ? (
-        <div>
-          <p>Welcome, {user.email}!</p>
-          <button onClick={handleLogout}>Log Out</button>
-        </div>
-      ) : (
-        <form onSubmit={handleSubmit}>
-          <h2>{isLogin ? "Log In" : "Sign Up"}</h2>
-          <input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-          <button type="submit">{isLogin ? "Log In" : "Sign Up"}</button>
-          <button type="button" onClick={() => setIsLogin(!isLogin)}>
-            {isLogin ? "Create an account" : "Already have an account? Log In"}
-          </button>
-          {error && <p className="error">{error}</p>}
-        </form>
-      )}
-    </div>
+    <Box sx={{ mt: 4, p: 3, bgcolor: 'background.paper', borderRadius: 2, boxShadow: 2 }}>
+      <form onSubmit={handleSubmit}>
+        <Typography variant="h5" align="center" gutterBottom>{isLogin ? "Log In" : "Sign Up"}</Typography>
+        <TextField
+          label="Email"
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          fullWidth
+          required
+          margin="normal"
+        />
+        <TextField
+          label="Password"
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          fullWidth
+          required
+          margin="normal"
+        />
+        <Button type="submit" variant="contained" color="primary" fullWidth sx={{ mt: 2 }}>
+          {isLogin ? "Log In" : "Sign Up"}
+        </Button>
+        <Button type="button" color="secondary" fullWidth sx={{ mt: 1 }} onClick={() => setIsLogin(!isLogin)}>
+          {isLogin ? "Create an account" : "Already have an account? Log In"}
+        </Button>
+        {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
+      </form>
+    </Box>
   );
 }
 

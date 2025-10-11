@@ -156,18 +156,20 @@ function ProjectsPage() {
           const statusColors = getStatusColor(project.status);
           return (
             <Grid item xs={12} sm={6} lg={4} key={project.id}>
-              <Card
-                sx={{
-                  height: '100%',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  transition: 'all 0.2s',
-                  '&:hover': {
-                    transform: 'translateY(-4px)',
-                    boxShadow: mode === 'dark' ? '0 8px 16px rgba(99, 102, 241, 0.15)' : '0 8px 16px rgba(99, 102, 241, 0.1)',
-                  }
-                }}
-              >
+                <Card
+                  sx={{
+                    minWidth: 300,
+                    maxWidth: 300,
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    transition: 'all 0.2s',
+                    '&:hover': {
+                      transform: 'translateY(-4px)',
+                      boxShadow: mode === 'dark' ? '0 8px 16px rgba(99, 102, 241, 0.15)' : '0 8px 16px rgba(99, 102, 241, 0.1)',
+                    }
+                  }}
+                >
                 <CardContent sx={{ flex: 1 }}>
                   <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 2 }}>
                     <Box

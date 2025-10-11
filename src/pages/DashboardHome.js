@@ -133,7 +133,7 @@ function DashboardHome() {
           justifyContent: 'center',
         }}>
           <Typography variant="caption" color="text.secondary">
-            Total Gaps
+            Total Features
           </Typography>
           <Typography variant="h4" sx={{ fontWeight: 700, my: 0.5 }}>
             {stats.total}
@@ -214,13 +214,13 @@ function DashboardHome() {
             fullWidth
             sx={{ fontWeight: 600 }}
           >
-            New Gap
+            New Feature
           </Button>
         </Box>
       </Box>
 
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-        {/* High Priority Gaps */}
+  {/* High Priority Features */}
         <Box sx={{
           flex: { xs: '1 1 100%', lg: '1' },
           minWidth: { xs: '100%', lg: 0 },
@@ -303,7 +303,7 @@ function DashboardHome() {
           </Box>
         </Box>
 
-        {/* In Progress Gaps */}
+  {/* In Progress Features */}
         <Box sx={{
           flex: { xs: '1 1 100%', lg: '1' },
           minWidth: { xs: '100%', lg: 0 },
@@ -386,7 +386,7 @@ function DashboardHome() {
           </Box>
         </Box>
 
-        {/* Open Gaps */}
+  {/* Open Features */}
         <Box sx={{
           flex: { xs: '1 1 100%', lg: '1' },
           minWidth: { xs: '100%', lg: 0 },
@@ -470,10 +470,10 @@ function DashboardHome() {
         </Box>
       </Box>
 
-      {/* Add Gap Dialog */}
+  {/* Add Feature Dialog */}
       <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
         <DialogTitle sx={{ fontWeight: 600 }}>
-          Create New Gap
+          Create New Feature
         </DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 2, display: 'flex', flexDirection: 'column', gap: 2.5 }}>

@@ -1,11 +1,11 @@
 import AuthForm from "./AuthForm";
 import NavBar from "./NavBar";
-import SettingsPage from "./SettingsPage";
 import AboutPage from "./AboutPage";
 import PricingPage from "./PricingPage";
 import LandingPage from "./LandingPage";
 import DashboardLayout from "./DashboardLayout";
 import DashboardHome from "./pages/DashboardHome";
+import ProjectsPage from "./pages/ProjectsPage";
 import VisualGapAnalysis from "./pages/VisualGapAnalysis";
 import ActionableInsights from "./pages/ActionableInsights";
 import TeamCollaboration from "./pages/TeamCollaboration";
@@ -16,12 +16,13 @@ import DataVisualization from "./pages/DataVisualization";
 import AutomatedWorkflows from "./pages/AutomatedWorkflows";
 import IntegrationHub from "./pages/IntegrationHub";
 import { ThemeProvider } from "./ThemeContext";
+import { ProjectProvider } from "./ProjectContext";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { useEffect, useState } from "react";
 import Container from '@mui/material/Container';
 import Box from '@mui/material/Box';
 import Modal from '@mui/material/Modal';
-import { BrowserRouter as Router, Routes, Route, useNavigate, Navigate } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, useNavigate, Navigate, useLocation } from "react-router-dom";
 
 import './App.css';
 
@@ -32,22 +33,26 @@ function App() {
 
   return (
     <ThemeProvider>
-      <Router>
-        <AppContent
-          user={user}
-          setUser={setUser}
-          showAuth={showAuth}
-          setShowAuth={setShowAuth}
-          isLogin={isLogin}
-          setIsLogin={setIsLogin}
-        />
-      </Router>
+      <ProjectProvider>
+        <Router>
+          <AppContent
+            user={user}
+            setUser={setUser}
+            showAuth={showAuth}
+            setShowAuth={setShowAuth}
+            isLogin={isLogin}
+            setIsLogin={setIsLogin}
+          />
+        </Router>
+      </ProjectProvider>
     </ThemeProvider>
   );
 }
 
 function AppContent({ user, setUser, showAuth, setShowAuth, isLogin, setIsLogin }) {
   const navigate = useNavigate();
+  const location = useLocation();
+  const isDashboard = location.pathname.startsWith('/dashboard');
 
   useEffect(() => {
     const auth = getAuth();
@@ -63,30 +68,22 @@ function AppContent({ user, setUser, showAuth, setShowAuth, isLogin, setIsLogin 
     auth.signOut();
   };
 
-  const handleSettings = () => {
-    navigate('/settings');
-  };
-
   const handleLogoClick = () => {
     setShowAuth(false);
     navigate('/');
   };
   return (
     <div className="App">
-      <NavBar
-        user={user}
-        onLogout={handleLogout}
-        onSettings={handleSettings}
-        onSignIn={() => { setShowAuth(true); setIsLogin(true); }}
-        onSignUp={() => { setShowAuth(true); setIsLogin(false); }}
-        onLogoClick={handleLogoClick}
-      />
+      {!isDashboard && (
+        <NavBar
+          user={user}
+          onLogout={handleLogout}
+          onSignIn={() => { setShowAuth(true); setIsLogin(true); }}
+          onSignUp={() => { setShowAuth(true); setIsLogin(false); }}
+          onLogoClick={handleLogoClick}
+        />
+      )}
       <Routes>
-        <Route path="/settings" element={
-          <Container maxWidth="md" sx={{ mt: 8 }}>
-            <SettingsPage />
-          </Container>
-        } />
         <Route path="/about" element={<AboutPage />} />
         <Route path="/pricing" element={<PricingPage />} />
         <Route path="/" element={
@@ -106,6 +103,7 @@ function AppContent({ user, setUser, showAuth, setShowAuth, isLogin, setIsLogin 
         {user && (
           <Route path="/dashboard" element={<DashboardLayout />}>
             <Route index element={<DashboardHome />} />
+            <Route path="projects" element={<ProjectsPage />} />
             <Route path="visual-gap-analysis" element={<VisualGapAnalysis />} />
             <Route path="actionable-insights" element={<ActionableInsights />} />
             <Route path="team-collaboration" element={<TeamCollaboration />} />

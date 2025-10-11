@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
@@ -18,17 +18,28 @@ import InputLabel from '@mui/material/InputLabel';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import { useTheme } from '../ThemeContext';
+import { useProject } from '../ProjectContext';
 
 function DashboardHome() {
   const { mode } = useTheme();
+  const { selectedProject } = useProject();
   const [gaps, setGaps] = useState([
-    { id: 1, title: 'Mobile App Offline Mode', severity: 'High', status: 'Open', category: 'Feature', assignee: 'Sarah Johnson', createdAt: '2024-01-15', description: 'Users need ability to access core features without internet connection' },
-    { id: 2, title: 'API Documentation Updates', severity: 'Medium', status: 'In Progress', category: 'Documentation', assignee: 'Mike Chen', createdAt: '2024-01-14', description: 'API docs need examples and better descriptions' },
-    { id: 3, title: 'User Onboarding Simplification', severity: 'High', status: 'Open', category: 'UX', assignee: 'Emily Davis', createdAt: '2024-01-13', description: 'Reduce steps in initial user setup flow' },
-    { id: 4, title: 'Payment Gateway Integration', severity: 'High', status: 'In Progress', category: 'Feature', assignee: 'Alex Kumar', createdAt: '2024-01-12', description: 'Add Stripe payment processing' },
-    { id: 5, title: 'Performance Monitoring Dashboard', severity: 'Medium', status: 'Open', category: 'Performance', assignee: 'Sarah Johnson', createdAt: '2024-01-10', description: 'Real-time performance metrics dashboard' },
-    { id: 6, title: 'Dark Mode Support', severity: 'Low', status: 'Open', category: 'Feature', assignee: 'Mike Chen', createdAt: '2024-01-09', description: 'Add dark mode theme option' },
+    { id: 1, projectId: '1', title: 'Mobile App Offline Mode', severity: 'High', status: 'Open', category: 'Feature', assignee: 'Sarah Johnson', createdAt: '2024-01-15', description: 'Users need ability to access core features without internet connection' },
+    { id: 2, projectId: '1', title: 'API Documentation Updates', severity: 'Medium', status: 'In Progress', category: 'Documentation', assignee: 'Mike Chen', createdAt: '2024-01-14', description: 'API docs need examples and better descriptions' },
+    { id: 3, projectId: '1', title: 'User Onboarding Simplification', severity: 'High', status: 'Open', category: 'UX', assignee: 'Emily Davis', createdAt: '2024-01-13', description: 'Reduce steps in initial user setup flow' },
+    { id: 4, projectId: '1', title: 'Payment Gateway Integration', severity: 'High', status: 'In Progress', category: 'Feature', assignee: 'Alex Kumar', createdAt: '2024-01-12', description: 'Add Stripe payment processing' },
+    { id: 5, projectId: '1', title: 'Performance Monitoring Dashboard', severity: 'Medium', status: 'Open', category: 'Performance', assignee: 'Sarah Johnson', createdAt: '2024-01-10', description: 'Real-time performance metrics dashboard' },
+    { id: 6, projectId: '1', title: 'Dark Mode Support', severity: 'Low', status: 'Open', category: 'Feature', assignee: 'Mike Chen', createdAt: '2024-01-09', description: 'Add dark mode theme option' },
+    { id: 7, projectId: '2', title: 'Push Notification Support', severity: 'High', status: 'Open', category: 'Feature', assignee: 'John Smith', createdAt: '2024-01-15', description: 'Implement push notifications for mobile app' },
+    { id: 8, projectId: '2', title: 'App Store Optimization', severity: 'Medium', status: 'In Progress', category: 'Marketing', assignee: 'Lisa Wong', createdAt: '2024-01-14', description: 'Improve app store listing and screenshots' },
+    { id: 9, projectId: '3', title: 'Rate Limiting Implementation', severity: 'High', status: 'Open', category: 'Security', assignee: 'David Lee', createdAt: '2024-01-13', description: 'Add rate limiting to prevent API abuse' },
+    { id: 10, projectId: '3', title: 'API Performance Optimization', severity: 'Medium', status: 'In Progress', category: 'Performance', assignee: 'Maria Garcia', createdAt: '2024-01-12', description: 'Optimize slow API endpoints' },
   ]);
+
+  // Filter gaps by selected project
+  const filteredGaps = useMemo(() => {
+    return gaps.filter(gap => gap.projectId === selectedProject);
+  }, [gaps, selectedProject]);
 
   const [openDialog, setOpenDialog] = useState(false);
   const [formData, setFormData] = useState({
@@ -60,6 +71,7 @@ function DashboardHome() {
     if (formData.title.trim()) {
       setGaps([...gaps, {
         id: Date.now(),
+        projectId: selectedProject,
         ...formData,
         createdAt: new Date().toISOString().split('T')[0]
       }]);
@@ -68,13 +80,13 @@ function DashboardHome() {
   };
 
   const stats = {
-    total: gaps.length,
-    open: gaps.filter(g => g.status === 'Open').length,
-    inProgress: gaps.filter(g => g.status === 'In Progress').length,
-    resolved: gaps.filter(g => g.status === 'Resolved').length,
-    high: gaps.filter(g => g.severity === 'High').length,
-    medium: gaps.filter(g => g.severity === 'Medium').length,
-    low: gaps.filter(g => g.severity === 'Low').length,
+    total: filteredGaps.length,
+    open: filteredGaps.filter(g => g.status === 'Open').length,
+    inProgress: filteredGaps.filter(g => g.status === 'In Progress').length,
+    resolved: filteredGaps.filter(g => g.status === 'Resolved').length,
+    high: filteredGaps.filter(g => g.severity === 'High').length,
+    medium: filteredGaps.filter(g => g.severity === 'Medium').length,
+    low: filteredGaps.filter(g => g.severity === 'Low').length,
   };
 
   const getPriorityColor = (severity) => {
@@ -105,11 +117,12 @@ function DashboardHome() {
   };
 
   return (
-    <Box sx={{ height: '100%', width: '100%', p: 2, pt: 0 }}>
-      <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+    <Box sx={{ height: '100%', width: '100%', px: 3, py: 2 }}>
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 2 }}>
         {/* Stats Section - Top Row */}
         <Box sx={{
-          flex: 1,
+          flex: { xs: '1 1 100%', sm: '1 1 45%', md: '1 1 30%', lg: '1' },
+          minWidth: { xs: '100%', sm: '45%', md: '30%', lg: 0 },
           p: 2,
           bgcolor: 'background.paper',
           borderRadius: 1,
@@ -134,7 +147,8 @@ function DashboardHome() {
         </Box>
 
         <Box sx={{
-          flex: 1,
+          flex: { xs: '1 1 100%', sm: '1 1 45%', md: '1 1 30%', lg: '1' },
+          minWidth: { xs: '100%', sm: '45%', md: '30%', lg: 0 },
           p: 2,
           bgcolor: 'background.paper',
           borderRadius: 1,
@@ -149,7 +163,8 @@ function DashboardHome() {
         </Box>
 
         <Box sx={{
-          flex: 1,
+          flex: { xs: '1 1 100%', sm: '1 1 45%', md: '1 1 30%', lg: '1' },
+          minWidth: { xs: '100%', sm: '45%', md: '30%', lg: 0 },
           p: 2,
           bgcolor: 'background.paper',
           borderRadius: 1,
@@ -164,7 +179,8 @@ function DashboardHome() {
         </Box>
 
         <Box sx={{
-          flex: 1,
+          flex: { xs: '1 1 100%', sm: '1 1 45%', md: '1 1 30%', lg: '1' },
+          minWidth: { xs: '100%', sm: '45%', md: '30%', lg: 0 },
           p: 2,
           bgcolor: 'background.paper',
           borderRadius: 1,
@@ -179,7 +195,8 @@ function DashboardHome() {
         </Box>
 
         <Box sx={{
-          flex: 1,
+          flex: { xs: '1 1 100%', sm: '1 1 45%', md: '1 1 30%', lg: '1' },
+          minWidth: { xs: '100%', sm: '45%', md: '30%', lg: 0 },
           p: 2,
           bgcolor: 'background.paper',
           borderRadius: 1,
@@ -202,15 +219,18 @@ function DashboardHome() {
         </Box>
       </Box>
 
-      <Box sx={{ display: 'flex', gap: 2 }}>
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
         {/* High Priority Gaps */}
         <Box sx={{
-          flex: 1,
+          flex: { xs: '1 1 100%', lg: '1' },
+          minWidth: { xs: '100%', lg: 0 },
           p: 2,
           bgcolor: 'background.paper',
           borderRadius: 1,
           border: 1,
           borderColor: 'divider',
+          display: 'flex',
+          flexDirection: 'column',
         }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
             <Typography variant="body1" sx={{ fontWeight: 600 }}>
@@ -224,8 +244,8 @@ function DashboardHome() {
             </Box>
           </Box>
 
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-            {gaps.filter(g => g.severity === 'High').map((gap) => {
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, flex: 1, overflow: 'auto' }}>
+            {filteredGaps.filter(g => g.severity === 'High').map((gap) => {
               const statusColors = getStatusColor(gap.status);
               return (
                 <Box
@@ -285,12 +305,15 @@ function DashboardHome() {
 
         {/* In Progress Gaps */}
         <Box sx={{
-          flex: 1,
+          flex: { xs: '1 1 100%', lg: '1' },
+          minWidth: { xs: '100%', lg: 0 },
           p: 2,
           bgcolor: 'background.paper',
           borderRadius: 1,
           border: 1,
           borderColor: 'divider',
+          display: 'flex',
+          flexDirection: 'column',
         }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
             <Typography variant="body1" sx={{ fontWeight: 600 }}>
@@ -304,8 +327,8 @@ function DashboardHome() {
             </Box>
           </Box>
 
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-            {gaps.filter(g => g.status === 'In Progress').map((gap) => {
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, flex: 1, overflow: 'auto' }}>
+            {filteredGaps.filter(g => g.status === 'In Progress').map((gap) => {
               const statusColors = getStatusColor(gap.status);
               return (
                 <Box
@@ -365,12 +388,15 @@ function DashboardHome() {
 
         {/* Open Gaps */}
         <Box sx={{
-          flex: 1,
+          flex: { xs: '1 1 100%', lg: '1' },
+          minWidth: { xs: '100%', lg: 0 },
           p: 2,
           bgcolor: 'background.paper',
           borderRadius: 1,
           border: 1,
           borderColor: 'divider',
+          display: 'flex',
+          flexDirection: 'column',
         }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
             <Typography variant="body1" sx={{ fontWeight: 600 }}>
@@ -384,8 +410,8 @@ function DashboardHome() {
             </Box>
           </Box>
 
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-            {gaps.filter(g => g.status === 'Open').map((gap) => {
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, flex: 1, overflow: 'auto' }}>
+            {filteredGaps.filter(g => g.status === 'Open').map((gap) => {
               const statusColors = getStatusColor(gap.status);
               return (
                 <Box

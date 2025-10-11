@@ -10,7 +10,7 @@ import IconButton from '@mui/material/IconButton';
 import AccountCircle from '@mui/icons-material/AccountCircle';
 import { Link, useLocation } from 'react-router-dom';
 
-function NavBar({ user, onLogout, onSettings, onSignIn, onSignUp, onLogoClick }) {
+function NavBar({ user, onLogout, onSignIn, onSignUp, onLogoClick }) {
   const [anchorEl, setAnchorEl] = React.useState(null);
   const location = useLocation();
   const isHomePage = location.pathname === '/';
@@ -86,7 +86,6 @@ function NavBar({ user, onLogout, onSettings, onSignIn, onSignUp, onLogoClick })
             open={Boolean(anchorEl)}
             onClose={handleClose}
           >
-            <MenuItem onClick={() => { handleClose(); onSettings(); }}>Settings</MenuItem>
             <MenuItem onClick={() => { handleClose(); onLogout(); }}>Log Out</MenuItem>
           </Menu>
         )}

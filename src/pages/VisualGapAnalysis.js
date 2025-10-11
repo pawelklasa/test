@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
@@ -20,13 +20,22 @@ import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import IconButton from '@mui/material/IconButton';
+import { useProject } from '../ProjectContext';
 
 function VisualGapAnalysis() {
+  const { selectedProject } = useProject();
   const [gaps, setGaps] = useState([
-    { id: 1, title: 'Mobile App Feature', description: 'Need to add offline mode for mobile users', severity: 'High', status: 'Open', category: 'Feature', assignee: 'Sarah Johnson' },
-    { id: 2, title: 'API Documentation', description: 'API endpoints need better documentation with examples', severity: 'Medium', status: 'In Progress', category: 'Documentation', assignee: 'Mike Chen' },
-    { id: 3, title: 'User Onboarding Flow', description: 'Simplify the initial user setup process', severity: 'High', status: 'Open', category: 'UX', assignee: 'Emily Davis' }
+    { id: 1, projectId: '1', title: 'Mobile App Feature', description: 'Need to add offline mode for mobile users', severity: 'High', status: 'Open', category: 'Feature', assignee: 'Sarah Johnson' },
+    { id: 2, projectId: '1', title: 'API Documentation', description: 'API endpoints need better documentation with examples', severity: 'Medium', status: 'In Progress', category: 'Documentation', assignee: 'Mike Chen' },
+    { id: 3, projectId: '1', title: 'User Onboarding Flow', description: 'Simplify the initial user setup process', severity: 'High', status: 'Open', category: 'UX', assignee: 'Emily Davis' },
+    { id: 4, projectId: '2', title: 'Push Notifications', description: 'Implement push notification system', severity: 'High', status: 'Open', category: 'Feature', assignee: 'John Smith' },
+    { id: 5, projectId: '3', title: 'API Rate Limiting', description: 'Add rate limiting to prevent abuse', severity: 'High', status: 'In Progress', category: 'Security', assignee: 'David Lee' }
   ]);
+
+  // Filter gaps by selected project
+  const filteredGaps = useMemo(() => {
+    return gaps.filter(gap => gap.projectId === selectedProject);
+  }, [gaps, selectedProject]);
 
   const [openDialog, setOpenDialog] = useState(false);
   const [editingGap, setEditingGap] = useState(null);
@@ -90,6 +99,7 @@ function VisualGapAnalysis() {
         // Add new gap
         setGaps([...gaps, {
           id: Date.now(),
+          projectId: selectedProject,
           ...formData
         }]);
       }
@@ -154,7 +164,7 @@ function VisualGapAnalysis() {
           <Card sx={{ bgcolor: '#667eea', color: 'white' }}>
             <CardContent>
               <Typography variant="h3" sx={{ fontWeight: 700 }}>
-                {gaps.length}
+                {filteredGaps.length}
               </Typography>
               <Typography variant="body2">Total Gaps</Typography>
             </CardContent>
@@ -164,7 +174,7 @@ function VisualGapAnalysis() {
           <Card sx={{ bgcolor: '#f093fb', color: 'white' }}>
             <CardContent>
               <Typography variant="h3" sx={{ fontWeight: 700 }}>
-                {gaps.filter(g => g.severity === 'High').length}
+                {filteredGaps.filter(g => g.severity === 'High').length}
               </Typography>
               <Typography variant="body2">High Priority</Typography>
             </CardContent>
@@ -174,7 +184,7 @@ function VisualGapAnalysis() {
           <Card sx={{ bgcolor: '#43e97b', color: 'white' }}>
             <CardContent>
               <Typography variant="h3" sx={{ fontWeight: 700 }}>
-                {gaps.filter(g => g.status === 'In Progress').length}
+                {filteredGaps.filter(g => g.status === 'In Progress').length}
               </Typography>
               <Typography variant="body2">In Progress</Typography>
             </CardContent>
@@ -184,7 +194,7 @@ function VisualGapAnalysis() {
           <Card sx={{ bgcolor: '#4facfe', color: 'white' }}>
             <CardContent>
               <Typography variant="h3" sx={{ fontWeight: 700 }}>
-                {gaps.filter(g => g.status === 'Resolved').length}
+                {filteredGaps.filter(g => g.status === 'Resolved').length}
               </Typography>
               <Typography variant="body2">Resolved</Typography>
             </CardContent>
@@ -195,10 +205,10 @@ function VisualGapAnalysis() {
       {/* Gaps List */}
       <Paper sx={{ p: 3, bgcolor: 'white', borderRadius: 2 }}>
         <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
-          Identified Gaps ({gaps.length})
+          Identified Gaps ({filteredGaps.length})
         </Typography>
         <Box sx={{ mt: 3 }}>
-          {gaps.length === 0 ? (
+          {filteredGaps.length === 0 ? (
             <Box sx={{ textAlign: 'center', py: 8 }}>
               <Typography variant="body1" color="text.secondary" gutterBottom>
                 No gaps identified yet
@@ -213,7 +223,7 @@ function VisualGapAnalysis() {
               </Button>
             </Box>
           ) : (
-            gaps.map((gap) => (
+            filteredGaps.map((gap) => (
               <Card key={gap.id} sx={{ mb: 2, border: '1px solid #e0e0e0', boxShadow: 'none' }}>
                 <CardContent>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>

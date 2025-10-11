@@ -4,19 +4,28 @@ import Box from '@mui/material/Box';
 import Drawer from '@mui/material/Drawer';
 import AppBar from '@mui/material/AppBar';
 import Toolbar from '@mui/material/Toolbar';
+import IconButton from '@mui/material/IconButton';
+import InputBase from '@mui/material/InputBase';
+import Badge from '@mui/material/Badge';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
+import Select from '@mui/material/Select';
+import FormControl from '@mui/material/FormControl';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
-import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import Avatar from '@mui/material/Avatar';
-import Menu from '@mui/material/Menu';
-import MenuItem from '@mui/material/MenuItem';
-import Badge from '@mui/material/Badge';
 import MenuIcon from '@mui/icons-material/Menu';
+import SearchIcon from '@mui/icons-material/Search';
+import NotificationsIcon from '@mui/icons-material/Notifications';
+import SettingsIcon from '@mui/icons-material/Settings';
+import LightModeIcon from '@mui/icons-material/LightMode';
+import DarkModeIcon from '@mui/icons-material/DarkMode';
 import DashboardIcon from '@mui/icons-material/Dashboard';
+import FolderIcon from '@mui/icons-material/Folder';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import LightbulbIcon from '@mui/icons-material/Lightbulb';
 import GroupsIcon from '@mui/icons-material/Groups';
@@ -26,20 +35,15 @@ import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import BarChartIcon from '@mui/icons-material/BarChart';
 import AutorenewIcon from '@mui/icons-material/Autorenew';
 import HubIcon from '@mui/icons-material/Hub';
-import NotificationsIcon from '@mui/icons-material/Notifications';
-import SearchIcon from '@mui/icons-material/Search';
-import SettingsIcon from '@mui/icons-material/Settings';
-import LightModeIcon from '@mui/icons-material/LightMode';
-import DarkModeIcon from '@mui/icons-material/DarkMode';
-import InputBase from '@mui/material/InputBase';
-import { alpha } from '@mui/material/styles';
 import { getAuth } from 'firebase/auth';
 import { useTheme } from './ThemeContext';
+import { useProject } from './ProjectContext';
 
 const drawerWidth = 260;
 
 const menuItems = [
   { text: 'Overview', icon: <DashboardIcon />, path: '/dashboard' },
+  { text: 'Projects', icon: <FolderIcon />, path: '/dashboard/projects' },
   { text: 'Visual Gap Analysis', icon: <VisibilityIcon />, path: '/dashboard/visual-gap-analysis' },
   { text: 'Actionable Insights', icon: <LightbulbIcon />, path: '/dashboard/actionable-insights' },
   { text: 'Team Collaboration', icon: <GroupsIcon />, path: '/dashboard/team-collaboration' },
@@ -59,6 +63,7 @@ function DashboardLayout() {
   const auth = getAuth();
   const user = auth.currentUser;
   const { mode, toggleTheme } = useTheme();
+  const { selectedProject, setSelectedProject, projects } = useProject();
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
@@ -78,8 +83,9 @@ function DashboardLayout() {
   };
 
   const handleLogout = () => {
-    auth.signOut();
     handleMenuClose();
+    auth.signOut();
+    navigate('/');
   };
 
   const drawer = (
@@ -168,21 +174,22 @@ function DashboardLayout() {
 
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh' }}>
-      {/* Top App Bar */}
+      {/* Top AppBar */}
       <AppBar
         position="fixed"
         elevation={0}
         sx={{
+          width: { sm: `calc(100% - ${drawerWidth}px)` },
+          ml: { sm: `${drawerWidth}px` },
           bgcolor: 'background.paper',
+          color: 'text.primary',
           borderBottom: 1,
           borderColor: 'divider',
-          zIndex: (theme) => theme.zIndex.drawer + 1,
-          ml: { sm: `${drawerWidth}px` },
-          width: { sm: `calc(100% - ${drawerWidth}px)` },
         }}
       >
-        <Toolbar sx={{ gap: 2 }}>
+        <Toolbar>
           <IconButton
+            color="inherit"
             edge="start"
             onClick={handleDrawerToggle}
             sx={{ mr: 2, display: { sm: 'none' } }}
@@ -194,78 +201,120 @@ function DashboardLayout() {
           <Box
             sx={{
               position: 'relative',
-              borderRadius: 2,
-              bgcolor: mode === 'dark' ? 'rgba(148, 163, 184, 0.05)' : alpha('#000', 0.04),
+              borderRadius: 1,
+              bgcolor: mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)',
               '&:hover': {
-                bgcolor: mode === 'dark' ? 'rgba(148, 163, 184, 0.08)' : alpha('#000', 0.06),
+                bgcolor: mode === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)',
               },
-              width: { xs: '100%', sm: 400 },
+              mr: 2,
+              ml: 0,
+              width: { xs: '100%', sm: 'auto' },
+              flexGrow: { xs: 1, sm: 0 },
             }}
           >
-            <Box sx={{ p: 1.5, pl: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-              <SearchIcon sx={{ fontSize: 20, color: 'text.secondary' }} />
-              <InputBase
-                placeholder="Search..."
-                sx={{
-                  flex: 1,
-                  fontSize: '0.875rem',
-                  '& input::placeholder': {
-                    opacity: 0.7,
-                  },
-                }}
-              />
-              <Typography
-                variant="caption"
-                sx={{
-                  px: 1,
-                  py: 0.25,
-                  borderRadius: 1,
-                  bgcolor: mode === 'dark' ? 'rgba(148, 163, 184, 0.1)' : 'rgba(0, 0, 0, 0.06)',
-                  color: 'text.secondary',
-                  fontSize: '0.7rem',
-                  fontWeight: 600,
-                }}
-              >
-                ⌘K
-              </Typography>
+            <Box
+              sx={{
+                padding: '0 16px',
+                height: '100%',
+                position: 'absolute',
+                pointerEvents: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <SearchIcon />
             </Box>
+            <InputBase
+              placeholder="Search…"
+              sx={{
+                color: 'inherit',
+                width: '100%',
+                '& .MuiInputBase-input': {
+                  padding: '8px 8px 8px 0',
+                  paddingLeft: `calc(1em + 32px)`,
+                  width: { xs: '100%', sm: '30ch' },
+                },
+              }}
+            />
           </Box>
 
           <Box sx={{ flexGrow: 1 }} />
 
-          {/* Top Bar Actions */}
-          <IconButton onClick={toggleTheme}>
-            {mode === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}
-          </IconButton>
+          {/* Project Selector */}
+          {projects.length > 0 && (
+            <FormControl
+              size="small"
+              sx={{
+                mr: 2,
+                minWidth: 200,
+                display: { xs: 'none', md: 'block' },
+              }}
+            >
+              <Select
+                value={selectedProject || ''}
+                onChange={(e) => setSelectedProject(e.target.value)}
+                displayEmpty
+                sx={{
+                  borderRadius: 1,
+                  bgcolor: mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)',
+                  '& .MuiOutline-notchedOutline': {
+                    border: 'none',
+                  },
+                  '&:hover': {
+                    bgcolor: mode === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)',
+                  },
+                }}
+              >
+                {projects.map((project) => (
+                  <MenuItem key={project.id} value={project.id}>
+                    {project.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          )}
 
-          <IconButton>
-            <Badge badgeContent={3} color="error">
-              <NotificationsIcon />
-            </Badge>
-          </IconButton>
-
-          <IconButton onClick={() => navigate('/settings')}>
-            <SettingsIcon />
-          </IconButton>
-
-          <IconButton onClick={handleMenuOpen} sx={{ ml: 1 }}>
-            <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.main', fontSize: '0.875rem' }}>
-              {user?.email?.[0].toUpperCase() || 'U'}
-            </Avatar>
-          </IconButton>
-
-          <Menu
-            anchorEl={anchorEl}
-            open={Boolean(anchorEl)}
-            onClose={handleMenuClose}
-            transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-            anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-          >
-            <MenuItem onClick={() => { navigate('/settings'); handleMenuClose(); }}>Settings</MenuItem>
-            <MenuItem onClick={handleLogout}>Logout</MenuItem>
-          </Menu>
+          {/* Right side icons */}
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <IconButton color="inherit" onClick={toggleTheme}>
+              {mode === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}
+            </IconButton>
+            <IconButton color="inherit">
+              <Badge badgeContent={3} color="error">
+                <NotificationsIcon />
+              </Badge>
+            </IconButton>
+            <IconButton color="inherit">
+              <SettingsIcon />
+            </IconButton>
+            <IconButton onClick={handleMenuOpen} sx={{ p: 0.5 }}>
+              <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.main', fontSize: '0.875rem' }}>
+                {user?.email?.[0].toUpperCase() || 'U'}
+              </Avatar>
+            </IconButton>
+          </Box>
         </Toolbar>
       </AppBar>
+
+      {/* User Menu */}
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleMenuClose}
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'right',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'right',
+        }}
+      >
+        <MenuItem onClick={handleMenuClose}>Profile</MenuItem>
+        <MenuItem onClick={handleMenuClose}>Settings</MenuItem>
+        <MenuItem onClick={handleLogout}>Logout</MenuItem>
+      </Menu>
 
       {/* Mobile drawer */}
       <Drawer
@@ -298,6 +347,7 @@ function DashboardLayout() {
             border: 'none',
             borderRight: 1,
             borderColor: 'divider',
+            bgcolor: 'background.paper',
           },
         }}
         open
@@ -311,9 +361,9 @@ function DashboardLayout() {
         sx={{
           flexGrow: 1,
           width: { sm: `calc(100% - ${drawerWidth}px)` },
-          mt: '64px',
           bgcolor: 'background.default',
-          minHeight: 'calc(100vh - 64px)',
+          minHeight: '100vh',
+          pt: 11,
         }}
       >
         <Outlet />

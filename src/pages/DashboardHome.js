@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
@@ -19,28 +19,10 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import { useTheme } from '../ThemeContext';
 import { useProject } from '../ProjectContext';
+import { useFeatures } from '../hooks/useFeatures';
 
 function DashboardHome() {
-  const { mode } = useTheme();
-  const { selectedProject } = useProject();
-  const [gaps, setGaps] = useState([
-    { id: 1, projectId: '1', title: 'Mobile App Offline Mode', severity: 'High', status: 'Open', category: 'Feature', assignee: 'Sarah Johnson', createdAt: '2024-01-15', description: 'Users need ability to access core features without internet connection' },
-    { id: 2, projectId: '1', title: 'API Documentation Updates', severity: 'Medium', status: 'In Progress', category: 'Documentation', assignee: 'Mike Chen', createdAt: '2024-01-14', description: 'API docs need examples and better descriptions' },
-    { id: 3, projectId: '1', title: 'User Onboarding Simplification', severity: 'High', status: 'Open', category: 'UX', assignee: 'Emily Davis', createdAt: '2024-01-13', description: 'Reduce steps in initial user setup flow' },
-    { id: 4, projectId: '1', title: 'Payment Gateway Integration', severity: 'High', status: 'In Progress', category: 'Feature', assignee: 'Alex Kumar', createdAt: '2024-01-12', description: 'Add Stripe payment processing' },
-    { id: 5, projectId: '1', title: 'Performance Monitoring Dashboard', severity: 'Medium', status: 'Open', category: 'Performance', assignee: 'Sarah Johnson', createdAt: '2024-01-10', description: 'Real-time performance metrics dashboard' },
-    { id: 6, projectId: '1', title: 'Dark Mode Support', severity: 'Low', status: 'Open', category: 'Feature', assignee: 'Mike Chen', createdAt: '2024-01-09', description: 'Add dark mode theme option' },
-    { id: 7, projectId: '2', title: 'Push Notification Support', severity: 'High', status: 'Open', category: 'Feature', assignee: 'John Smith', createdAt: '2024-01-15', description: 'Implement push notifications for mobile app' },
-    { id: 8, projectId: '2', title: 'App Store Optimization', severity: 'Medium', status: 'In Progress', category: 'Marketing', assignee: 'Lisa Wong', createdAt: '2024-01-14', description: 'Improve app store listing and screenshots' },
-    { id: 9, projectId: '3', title: 'Rate Limiting Implementation', severity: 'High', status: 'Open', category: 'Security', assignee: 'David Lee', createdAt: '2024-01-13', description: 'Add rate limiting to prevent API abuse' },
-    { id: 10, projectId: '3', title: 'API Performance Optimization', severity: 'Medium', status: 'In Progress', category: 'Performance', assignee: 'Maria Garcia', createdAt: '2024-01-12', description: 'Optimize slow API endpoints' },
-  ]);
-
-  // Filter gaps by selected project
-  const filteredGaps = useMemo(() => {
-    return gaps.filter(gap => gap.projectId === selectedProject);
-  }, [gaps, selectedProject]);
-
+  // Dialog state for Add Feature
   const [openDialog, setOpenDialog] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
@@ -48,78 +30,98 @@ function DashboardHome() {
     severity: 'Medium',
     status: 'Open',
     category: 'Feature',
-    assignee: ''
+    assignee: '',
   });
 
-  const handleOpenDialog = () => {
+  const { mode } = useTheme();
+  const { selectedProject } = useProject();
+  const { features, loading, error, addFeature } = useFeatures(selectedProject);
+
+  // Open dialog handler
+  const handleOpenDialog = () => setOpenDialog(true);
+  // Close dialog handler
+  const handleCloseDialog = () => {
+    setOpenDialog(false);
     setFormData({
       title: '',
       description: '',
       severity: 'Medium',
       status: 'Open',
       category: 'Feature',
-      assignee: ''
+      assignee: '',
     });
-    setOpenDialog(true);
   };
 
-  const handleCloseDialog = () => {
-    setOpenDialog(false);
-  };
-
-  const handleSaveGap = () => {
-    if (formData.title.trim()) {
-      setGaps([...gaps, {
-        id: Date.now(),
-        projectId: selectedProject,
-        ...formData,
-        createdAt: new Date().toISOString().split('T')[0]
-      }]);
-      handleCloseDialog();
-    }
-  };
-
-  const stats = {
-    total: filteredGaps.length,
-    open: filteredGaps.filter(g => g.status === 'Open').length,
-    inProgress: filteredGaps.filter(g => g.status === 'In Progress').length,
-    resolved: filteredGaps.filter(g => g.status === 'Resolved').length,
-    high: filteredGaps.filter(g => g.severity === 'High').length,
-    medium: filteredGaps.filter(g => g.severity === 'Medium').length,
-    low: filteredGaps.filter(g => g.severity === 'Low').length,
-  };
-
-  const getPriorityColor = (severity) => {
-    switch (severity) {
-      case 'High': return '#EF4444';
-      case 'Medium': return '#F59E0B';
-      case 'Low': return '#10B981';
-      default: return '#6B7280';
-    }
-  };
-
-  const getStatusColor = (status) => {
-    if (mode === 'dark') {
-      switch (status) {
-        case 'Open': return { bg: 'rgba(251, 191, 36, 0.1)', text: '#FCD34D' };
-        case 'In Progress': return { bg: 'rgba(96, 165, 250, 0.1)', text: '#60A5FA' };
-        case 'Resolved': return { bg: 'rgba(74, 222, 128, 0.1)', text: '#4ADE80' };
-        default: return { bg: 'rgba(148, 163, 184, 0.1)', text: '#94A3B8' };
-      }
+  // Rename handler to handleSaveFeature for clarity
+  const handleSaveFeature = async () => {
+    if (!formData.title.trim()) return;
+    console.log('Adding feature:', formData);
+    const result = await addFeature({
+      ...formData,
+      status: formData.status,
+      severity: formData.severity,
+      category: formData.category,
+      assignee: formData.assignee,
+      title: formData.title,
+      description: formData.description
+    });
+    if (!result.success) {
+      alert('Error adding feature: ' + result.error);
+      console.error('Add feature error:', result.error);
     } else {
-      switch (status) {
-        case 'Open': return { bg: '#FEF3C7', text: '#92400E' };
-        case 'In Progress': return { bg: '#DBEAFE', text: '#1E40AF' };
-        case 'Resolved': return { bg: '#D1FAE5', text: '#065F46' };
-        default: return { bg: '#F3F4F6', text: '#374151' };
-      }
+      console.log('Feature added successfully:', result);
     }
+    handleCloseDialog();
   };
 
+  // Helper: get color for status
+  function getStatusColor(status) {
+    switch (status) {
+      case 'Open':
+        return { bg: '#FDE68A', text: '#F59E0B' };
+      case 'In Progress':
+        return { bg: '#DBEAFE', text: '#3B82F6' };
+      case 'Resolved':
+        return { bg: '#A7F3D0', text: '#10B981' };
+      default:
+        return { bg: '#F3F4F6', text: '#6B7280' };
+    }
+  }
+
+  // Helper: get color for priority/severity
+  function getPriorityColor(severity) {
+    switch (severity) {
+      case 'High':
+        return '#EF4444';
+      case 'Medium':
+        return '#F59E0B';
+      case 'Low':
+        return '#10B981';
+      default:
+        return '#6B7280';
+    }
+  }
+
+  // Dashboard stats
+  const stats = useMemo(() => {
+    const filtered = features;
+    return {
+      total: filtered.length,
+      open: filtered.filter(f => f.status === 'Open').length,
+      inProgress: filtered.filter(f => f.status === 'In Progress').length,
+      resolved: filtered.filter(f => f.status === 'Resolved').length,
+      high: filtered.filter(f => f.severity === 'High').length,
+    };
+  }, [features]);
+
+  // Filter gaps by selected project
+
+  // Main return block
   return (
-    <Box sx={{ height: '100%', width: '100%', px: 3, py: 2 }}>
+    <Box sx={{ height: '100vh', width: '100%', p: 3, display: 'flex', flexDirection: 'column', gap: 3, bgcolor: mode === 'dark' ? '#121212' : '#FFFFFF', minHeight: '100vh' }}>
+      {/* Dashboard stats - first row */}
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 2 }}>
-        {/* Stats Section - Top Row */}
+        {/* Total Features */}
         <Box sx={{
           flex: { xs: '1 1 100%', sm: '1 1 45%', md: '1 1 30%', lg: '1' },
           minWidth: { xs: '100%', sm: '45%', md: '30%', lg: 0 },
@@ -132,20 +134,14 @@ function DashboardHome() {
           flexDirection: 'column',
           justifyContent: 'center',
         }}>
-          <Typography variant="caption" color="text.secondary">
-            Total Features
-          </Typography>
-          <Typography variant="h4" sx={{ fontWeight: 700, my: 0.5 }}>
-            {stats.total}
-          </Typography>
+          <Typography variant="caption" color="text.secondary">Total Features</Typography>
+          <Typography variant="h4" sx={{ fontWeight: 700, my: 0.5 }}>{stats.total}</Typography>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
             <TrendingUpIcon sx={{ fontSize: 14, color: '#10B981' }} />
-            <Typography variant="caption" sx={{ color: '#10B981', fontWeight: 600 }}>
-              +12%
-            </Typography>
+            <Typography variant="caption" sx={{ color: '#10B981', fontWeight: 600 }}>+12%</Typography>
           </Box>
         </Box>
-
+        {/* Open */}
         <Box sx={{
           flex: { xs: '1 1 100%', sm: '1 1 45%', md: '1 1 30%', lg: '1' },
           minWidth: { xs: '100%', sm: '45%', md: '30%', lg: 0 },
@@ -161,7 +157,7 @@ function DashboardHome() {
           <Typography variant="caption" color="text.secondary">Open</Typography>
           <Typography variant="h4" sx={{ fontWeight: 700, color: '#F59E0B' }}>{stats.open}</Typography>
         </Box>
-
+        {/* In Progress */}
         <Box sx={{
           flex: { xs: '1 1 100%', sm: '1 1 45%', md: '1 1 30%', lg: '1' },
           minWidth: { xs: '100%', sm: '45%', md: '30%', lg: 0 },
@@ -177,7 +173,7 @@ function DashboardHome() {
           <Typography variant="caption" color="text.secondary">In Progress</Typography>
           <Typography variant="h4" sx={{ fontWeight: 700, color: '#3B82F6' }}>{stats.inProgress}</Typography>
         </Box>
-
+        {/* Resolved */}
         <Box sx={{
           flex: { xs: '1 1 100%', sm: '1 1 45%', md: '1 1 30%', lg: '1' },
           minWidth: { xs: '100%', sm: '45%', md: '30%', lg: 0 },
@@ -193,7 +189,7 @@ function DashboardHome() {
           <Typography variant="caption" color="text.secondary">Resolved</Typography>
           <Typography variant="h4" sx={{ fontWeight: 700, color: '#10B981' }}>{stats.resolved}</Typography>
         </Box>
-
+        {/* Add Feature Button */}
         <Box sx={{
           flex: { xs: '1 1 100%', sm: '1 1 45%', md: '1 1 30%', lg: '1' },
           minWidth: { xs: '100%', sm: '45%', md: '30%', lg: 0 },
@@ -214,16 +210,16 @@ function DashboardHome() {
             fullWidth
             sx={{ fontWeight: 600 }}
           >
-            New Feature
+            Add Feature
           </Button>
         </Box>
       </Box>
-
-      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-  {/* High Priority Features */}
+      {/* Dashboard stats - second row */}
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 2 }}>
+        {/* High Priority */}
         <Box sx={{
-          flex: { xs: '1 1 100%', lg: '1' },
-          minWidth: { xs: '100%', lg: 0 },
+          flex: { xs: '1 1 100%', sm: '1 1 30%', md: '1 1 30%', lg: '1' },
+          minWidth: { xs: '100%', sm: '30%', md: '30%', lg: 0 },
           p: 2,
           bgcolor: 'background.paper',
           borderRadius: 1,
@@ -231,82 +227,15 @@ function DashboardHome() {
           borderColor: 'divider',
           display: 'flex',
           flexDirection: 'column',
+          justifyContent: 'center',
         }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-            <Typography variant="body1" sx={{ fontWeight: 600 }}>
-              High Priority
-            </Typography>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#EF4444' }} />
-              <Typography variant="caption" color="text.secondary">
-                {stats.high}
-              </Typography>
-            </Box>
-          </Box>
-
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, flex: 1, overflow: 'auto' }}>
-            {filteredGaps.filter(g => g.severity === 'High').map((gap) => {
-              const statusColors = getStatusColor(gap.status);
-              return (
-                <Box
-                  key={gap.id}
-                  sx={{
-                    p: 1.5,
-                    borderRadius: 1,
-                    border: 1,
-                    borderColor: 'divider',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s',
-                    '&:hover': {
-                      borderColor: 'primary.main',
-                      boxShadow: mode === 'dark' ? '0 2px 8px rgba(99, 102, 241, 0.15)' : '0 2px 8px rgba(99, 102, 241, 0.1)',
-                    }
-                  }}
-                >
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                    <Box
-                      sx={{
-                        width: 5,
-                        height: 5,
-                        borderRadius: '50%',
-                        bgcolor: '#EF4444',
-                        flexShrink: 0
-                      }}
-                    />
-                    <Box sx={{ flex: 1, minWidth: 0 }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                        <Typography variant="body2" sx={{ fontWeight: 600, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {gap.title}
-                        </Typography>
-                        <Box
-                          sx={{
-                            px: 1,
-                            py: 0.25,
-                            borderRadius: 0.75,
-                            bgcolor: statusColors.bg,
-                            flexShrink: 0
-                          }}
-                        >
-                          <Typography variant="caption" sx={{ color: statusColors.text, fontWeight: 600, fontSize: '0.65rem' }}>
-                            {gap.status}
-                          </Typography>
-                        </Box>
-                      </Box>
-                      <Typography variant="caption" color="text.secondary">
-                        {gap.assignee} • {gap.category}
-                      </Typography>
-                    </Box>
-                  </Box>
-                </Box>
-              );
-            })}
-          </Box>
+          <Typography variant="caption" color="text.secondary">High Priority</Typography>
+          <Typography variant="h4" sx={{ fontWeight: 700, color: '#EF4444' }}>{stats.high}</Typography>
         </Box>
-
-  {/* In Progress Features */}
+        {/* In Progress */}
         <Box sx={{
-          flex: { xs: '1 1 100%', lg: '1' },
-          minWidth: { xs: '100%', lg: 0 },
+          flex: { xs: '1 1 100%', sm: '1 1 30%', md: '1 1 30%', lg: '1' },
+          minWidth: { xs: '100%', sm: '30%', md: '30%', lg: 0 },
           p: 2,
           bgcolor: 'background.paper',
           borderRadius: 1,
@@ -314,82 +243,15 @@ function DashboardHome() {
           borderColor: 'divider',
           display: 'flex',
           flexDirection: 'column',
+          justifyContent: 'center',
         }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-            <Typography variant="body1" sx={{ fontWeight: 600 }}>
-              In Progress
-            </Typography>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#3B82F6' }} />
-              <Typography variant="caption" color="text.secondary">
-                {stats.inProgress}
-              </Typography>
-            </Box>
-          </Box>
-
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, flex: 1, overflow: 'auto' }}>
-            {filteredGaps.filter(g => g.status === 'In Progress').map((gap) => {
-              const statusColors = getStatusColor(gap.status);
-              return (
-                <Box
-                  key={gap.id}
-                  sx={{
-                    p: 1.5,
-                    borderRadius: 1,
-                    border: 1,
-                    borderColor: 'divider',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s',
-                    '&:hover': {
-                      borderColor: 'primary.main',
-                      boxShadow: mode === 'dark' ? '0 2px 8px rgba(99, 102, 241, 0.15)' : '0 2px 8px rgba(99, 102, 241, 0.1)',
-                    }
-                  }}
-                >
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                    <Box
-                      sx={{
-                        width: 5,
-                        height: 5,
-                        borderRadius: '50%',
-                        bgcolor: getPriorityColor(gap.severity),
-                        flexShrink: 0
-                      }}
-                    />
-                    <Box sx={{ flex: 1, minWidth: 0 }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                        <Typography variant="body2" sx={{ fontWeight: 600, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {gap.title}
-                        </Typography>
-                        <Box
-                          sx={{
-                            px: 1,
-                            py: 0.25,
-                            borderRadius: 0.75,
-                            bgcolor: statusColors.bg,
-                            flexShrink: 0
-                          }}
-                        >
-                          <Typography variant="caption" sx={{ color: statusColors.text, fontWeight: 600, fontSize: '0.65rem' }}>
-                            {gap.status}
-                          </Typography>
-                        </Box>
-                      </Box>
-                      <Typography variant="caption" color="text.secondary">
-                        {gap.assignee} • {gap.category}
-                      </Typography>
-                    </Box>
-                  </Box>
-                </Box>
-              );
-            })}
-          </Box>
+          <Typography variant="caption" color="text.secondary">In Progress</Typography>
+          <Typography variant="h4" sx={{ fontWeight: 700, color: '#3B82F6' }}>{stats.inProgress}</Typography>
         </Box>
-
-  {/* Open Features */}
+        {/* Open */}
         <Box sx={{
-          flex: { xs: '1 1 100%', lg: '1' },
-          minWidth: { xs: '100%', lg: 0 },
+          flex: { xs: '1 1 100%', sm: '1 1 30%', md: '1 1 30%', lg: '1' },
+          minWidth: { xs: '100%', sm: '30%', md: '30%', lg: 0 },
           p: 2,
           bgcolor: 'background.paper',
           borderRadius: 1,
@@ -397,83 +259,36 @@ function DashboardHome() {
           borderColor: 'divider',
           display: 'flex',
           flexDirection: 'column',
+          justifyContent: 'center',
         }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-            <Typography variant="body1" sx={{ fontWeight: 600 }}>
-              Open
-            </Typography>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#F59E0B' }} />
-              <Typography variant="caption" color="text.secondary">
-                {stats.open}
-              </Typography>
-            </Box>
-          </Box>
-
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, flex: 1, overflow: 'auto' }}>
-            {filteredGaps.filter(g => g.status === 'Open').map((gap) => {
-              const statusColors = getStatusColor(gap.status);
-              return (
-                <Box
-                  key={gap.id}
-                  sx={{
-                    p: 1.5,
-                    borderRadius: 1,
-                    border: 1,
-                    borderColor: 'divider',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s',
-                    '&:hover': {
-                      borderColor: 'primary.main',
-                      boxShadow: mode === 'dark' ? '0 2px 8px rgba(99, 102, 241, 0.15)' : '0 2px 8px rgba(99, 102, 241, 0.1)',
-                    }
-                  }}
-                >
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                    <Box
-                      sx={{
-                        width: 5,
-                        height: 5,
-                        borderRadius: '50%',
-                        bgcolor: getPriorityColor(gap.severity),
-                        flexShrink: 0
-                      }}
-                    />
-                    <Box sx={{ flex: 1, minWidth: 0 }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                        <Typography variant="body2" sx={{ fontWeight: 600, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {gap.title}
-                        </Typography>
-                        <Box
-                          sx={{
-                            px: 1,
-                            py: 0.25,
-                            borderRadius: 0.75,
-                            bgcolor: statusColors.bg,
-                            flexShrink: 0
-                          }}
-                        >
-                          <Typography variant="caption" sx={{ color: statusColors.text, fontWeight: 600, fontSize: '0.65rem' }}>
-                            {gap.status}
-                          </Typography>
-                        </Box>
-                      </Box>
-                      <Typography variant="caption" color="text.secondary">
-                        {gap.assignee} • {gap.category}
-                      </Typography>
-                    </Box>
-                  </Box>
-                </Box>
-              );
-            })}
-          </Box>
+          <Typography variant="caption" color="text.secondary">Open</Typography>
+          <Typography variant="h4" sx={{ fontWeight: 700, color: '#F59E0B' }}>{stats.open}</Typography>
         </Box>
       </Box>
-
-  {/* Add Feature Dialog */}
+      {/* Features table or list */}
+      <Box sx={{ flex: 1, bgcolor: 'background.paper', borderRadius: 1, p: 3, border: 1, borderColor: 'divider' }}>
+        {/* Map through features and display them */}
+        {features.map(feature => (
+          <Box key={feature.id} sx={{ mb: 2, p: 2, borderRadius: 1, bgcolor: getStatusColor(feature.status).bg, border: `1px solid ${getPriorityColor(feature.severity)}` }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 500, color: getStatusColor(feature.status).text }}>{feature.title}</Typography>
+            <Typography variant="caption" color="text.secondary">{feature.description}</Typography>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Avatar sx={{ bgcolor: getPriorityColor(feature.severity), width: 24, height: 24, fontSize: 14 }}>{feature.severity.charAt(0)}</Avatar>
+                <Typography variant="caption" sx={{ fontWeight: 600, color: getPriorityColor(feature.severity) }}>{feature.severity}</Typography>
+              </Box>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <MoreVertIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+                <Typography variant="caption" color="text.secondary">{feature.createdAt ? new Date(feature.createdAt.seconds ? feature.createdAt.seconds * 1000 : feature.createdAt).toLocaleDateString() : ''}</Typography>
+              </Box>
+            </Box>
+          </Box>
+        ))}
+      </Box>
+      {/* Add Feature Dialog */}
       <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
         <DialogTitle sx={{ fontWeight: 600 }}>
-          Create New Feature
+          Add Feature
         </DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 2, display: 'flex', flexDirection: 'column', gap: 2.5 }}>
@@ -482,10 +297,9 @@ function DashboardHome() {
               fullWidth
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              placeholder="Brief description of the gap"
+              placeholder="Brief description of the feature"
               autoFocus
             />
-
             <TextField
               label="Description"
               fullWidth
@@ -493,9 +307,8 @@ function DashboardHome() {
               rows={3}
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="Add more details about this gap..."
+              placeholder="Add more details about this feature..."
             />
-
             <Grid container spacing={2}>
               <Grid item xs={12} sm={6}>
                 <FormControl fullWidth>
@@ -511,7 +324,6 @@ function DashboardHome() {
                   </Select>
                 </FormControl>
               </Grid>
-
               <Grid item xs={12} sm={6}>
                 <FormControl fullWidth>
                   <InputLabel>Status</InputLabel>
@@ -526,7 +338,6 @@ function DashboardHome() {
                   </Select>
                 </FormControl>
               </Grid>
-
               <Grid item xs={12} sm={6}>
                 <FormControl fullWidth>
                   <InputLabel>Category</InputLabel>
@@ -543,7 +354,6 @@ function DashboardHome() {
                   </Select>
                 </FormControl>
               </Grid>
-
               <Grid item xs={12} sm={6}>
                 <TextField
                   label="Assignee"
@@ -556,21 +366,20 @@ function DashboardHome() {
             </Grid>
           </Box>
         </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 3 }}>
-          <Button onClick={handleCloseDialog}>
-            Cancel
-          </Button>
-          <Button
-            variant="contained"
-            onClick={handleSaveGap}
-            disabled={!formData.title.trim()}
-          >
-            Create Gap
-          </Button>
-        </DialogActions>
+            <DialogActions sx={{ px: 3, pb: 3 }}>
+              <Button onClick={handleCloseDialog}>
+                Cancel
+              </Button>
+              <Button
+                variant="contained"
+                onClick={handleSaveFeature}
+                disabled={!formData.title.trim()}
+              >
+                Add Feature
+              </Button>
+            </DialogActions>
       </Dialog>
-    </Box>
+  </Box>
   );
-}
-
-export default DashboardHome;
+  }
+  export default DashboardHome;

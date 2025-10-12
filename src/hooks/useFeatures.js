@@ -7,9 +7,22 @@ import {
   addDoc,
   deleteDoc,
   doc,
-  serverTimestamp
+  serverTimestamp,
+  updateDoc
 } from 'firebase/firestore';
 import { db } from '../firebase';
+
+const updateFeature = async (featureId, featureData) => {
+    try {
+      await updateDoc(doc(db, 'features', featureId), {
+        ...featureData,
+        updatedAt: serverTimestamp()
+      });
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
+  };
 
 export function useFeatures(projectId) {
   const [features, setFeatures] = useState([]);
@@ -70,10 +83,11 @@ export function useFeatures(projectId) {
   };
 
   return {
-    features,
-    loading,
-    error,
-    addFeature,
-    deleteFeature
+  features,
+  loading,
+  error,
+  addFeature,
+  deleteFeature,
+  updateFeature
   };
 }

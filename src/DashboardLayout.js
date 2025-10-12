@@ -26,15 +26,6 @@ import LightModeIcon from '@mui/icons-material/LightMode';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import FolderIcon from '@mui/icons-material/Folder';
-import VisibilityIcon from '@mui/icons-material/Visibility';
-import LightbulbIcon from '@mui/icons-material/Lightbulb';
-import GroupsIcon from '@mui/icons-material/Groups';
-import TrackChangesIcon from '@mui/icons-material/TrackChanges';
-import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
-import TrendingUpIcon from '@mui/icons-material/TrendingUp';
-import BarChartIcon from '@mui/icons-material/BarChart';
-import AutorenewIcon from '@mui/icons-material/Autorenew';
-import HubIcon from '@mui/icons-material/Hub';
 import { getAuth } from 'firebase/auth';
 import { useTheme } from './ThemeContext';
 import { useProject } from './ProjectContext';
@@ -43,16 +34,7 @@ const drawerWidth = 260;
 
 const menuItems = [
   { text: 'Overview', icon: <DashboardIcon />, path: '/dashboard' },
-  { text: 'Projects', icon: <FolderIcon />, path: '/dashboard/projects' },
-  { text: 'Visual Gap Analysis', icon: <VisibilityIcon />, path: '/dashboard/visual-gap-analysis' },
-  { text: 'Actionable Insights', icon: <LightbulbIcon />, path: '/dashboard/actionable-insights' },
-  { text: 'Team Collaboration', icon: <GroupsIcon />, path: '/dashboard/team-collaboration' },
-  { text: 'Real-time Tracking', icon: <TrackChangesIcon />, path: '/dashboard/realtime-tracking' },
-  { text: 'Smart Prioritization', icon: <AutoAwesomeIcon />, path: '/dashboard/smart-prioritization' },
-  { text: 'Growth Metrics', icon: <TrendingUpIcon />, path: '/dashboard/growth-metrics' },
-  { text: 'Data Visualization', icon: <BarChartIcon />, path: '/dashboard/data-visualization' },
-  { text: 'Automated Workflows', icon: <AutorenewIcon />, path: '/dashboard/automated-workflows' },
-  { text: 'Integration Hub', icon: <HubIcon />, path: '/dashboard/integration-hub' },
+  { text: 'Projects', icon: <FolderIcon />, path: '/dashboard/projects' }
 ];
 
 function DashboardLayout() {

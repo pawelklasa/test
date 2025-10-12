@@ -31,6 +31,7 @@ import { useTheme } from './ThemeContext';
 import { useProject } from './ProjectContext';
 
 const drawerWidth = 260;
+const collapsedDrawerWidth = 64;
 
 const menuItems = [
   { text: 'Overview', icon: <DashboardIcon />, path: '/dashboard' },
@@ -39,6 +40,7 @@ const menuItems = [
 
 function DashboardLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
@@ -71,46 +73,59 @@ function DashboardLayout() {
   };
 
   const drawer = (
-    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', width: collapsed ? collapsedDrawerWidth : drawerWidth, transition: 'width 0.2s' }}>
       {/* Sidebar Logo */}
-      <Box sx={{ p: 3 }}>
-        <Typography variant="h6" sx={{ fontWeight: 700, letterSpacing: '-0.02em' }}>
+      <Box sx={{ p: 3, display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'space-between' }}>
+        <Typography variant="h6" sx={{ fontWeight: 700, letterSpacing: '-0.02em', display: collapsed ? 'none' : 'block' }}>
           G.A.P
         </Typography>
+        <IconButton size="small" onClick={() => setCollapsed(c => !c)} sx={{ ml: collapsed ? 0 : 1 }}>
+          <MenuIcon />
+        </IconButton>
       </Box>
 
       {/* Navigation Menu */}
-      <List sx={{ flex: 1, px: 2 }}>
+  <List sx={{ flex: 1, px: collapsed ? 0.5 : 2 }}>
         {menuItems.map((item) => {
           const isSelected = location.pathname === item.path;
           return (
             <ListItem key={item.text} disablePadding sx={{ mb: 0.5 }}>
-              <ListItemButton
-                onClick={() => handleNavigation(item.path)}
-                sx={{
-                  borderRadius: 2,
-                  py: 1.25,
-                  bgcolor: isSelected ? (mode === 'dark' ? 'rgba(129, 140, 248, 0.1)' : 'rgba(99, 102, 241, 0.08)') : 'transparent',
-                  '&:hover': {
-                    bgcolor: mode === 'dark' ? 'rgba(148, 163, 184, 0.05)' : 'rgba(0, 0, 0, 0.04)',
-                  },
-                }}
-              >
+                <ListItemButton
+                  onClick={() => handleNavigation(item.path)}
+                  sx={{
+                    borderRadius: 2,
+                    py: 1.25,
+                    bgcolor: isSelected ? (mode === 'dark' ? 'rgba(129, 140, 248, 0.1)' : 'rgba(99, 102, 241, 0.08)') : 'transparent',
+                    '&:hover': {
+                      bgcolor: mode === 'dark' ? 'rgba(148, 163, 184, 0.05)' : 'rgba(0, 0, 0, 0.04)',
+                    },
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: collapsed ? 'center' : 'flex-start',
+                    height: collapsed ? 56 : 'auto',
+                  }}
+                >
                 <ListItemIcon
                   sx={{
                     color: isSelected ? 'primary.main' : 'text.secondary',
                     minWidth: 40,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    height: collapsed ? 40 : 'auto',
                   }}
                 >
                   {item.icon}
                 </ListItemIcon>
-                <ListItemText
-                  primary={item.text}
-                  primaryTypographyProps={{
-                    fontSize: '0.875rem',
-                    fontWeight: isSelected ? 600 : 400,
-                  }}
-                />
+                {!collapsed && (
+                  <ListItemText
+                    primary={item.text}
+                    primaryTypographyProps={{
+                      fontSize: '0.875rem',
+                      fontWeight: isSelected ? 600 : 400,
+                    }}
+                  />
+                )}
               </ListItemButton>
             </ListItem>
           );
@@ -118,37 +133,40 @@ function DashboardLayout() {
       </List>
 
       {/* Sidebar Footer - User Profile */}
-      <Box sx={{ p: 2, borderTop: 1, borderColor: 'divider' }}>
+      <Box sx={{ p: 2, borderTop: 1, borderColor: 'divider', display: collapsed ? 'flex' : 'block', justifyContent: 'center' }}>
         <Box
           sx={{
             display: 'flex',
             alignItems: 'center',
-            gap: 1.5,
+            gap: collapsed ? 0 : 1.5,
             p: 1.5,
             borderRadius: 2,
             cursor: 'pointer',
+            justifyContent: collapsed ? 'center' : 'flex-start',
             '&:hover': { bgcolor: mode === 'dark' ? 'rgba(148, 163, 184, 0.05)' : 'rgba(0, 0, 0, 0.04)' },
           }}
         >
           <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.main', fontSize: '0.875rem' }}>
             {user?.email?.[0].toUpperCase() || 'U'}
           </Avatar>
-          <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography
-              variant="body2"
-              sx={{
-                fontWeight: 600,
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {user?.email?.split('@')[0] || 'User'}
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              Free Plan
-            </Typography>
-          </Box>
+          {!collapsed && (
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              <Typography
+                variant="body2"
+                sx={{
+                  fontWeight: 600,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {user?.email?.split('@')[0] || 'User'}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                Free Plan
+              </Typography>
+            </Box>
+          )}
         </Box>
       </Box>
     </Box>
@@ -321,15 +339,17 @@ function DashboardLayout() {
         variant="permanent"
         sx={{
           display: { xs: 'none', sm: 'block' },
-          width: drawerWidth,
+          width: collapsed ? collapsedDrawerWidth : drawerWidth,
           flexShrink: 0,
+          transition: 'width 0.2s',
           '& .MuiDrawer-paper': {
-            width: drawerWidth,
+            width: collapsed ? collapsedDrawerWidth : drawerWidth,
             boxSizing: 'border-box',
             border: 'none',
             borderRight: 1,
             borderColor: 'divider',
             bgcolor: 'background.paper',
+            transition: 'width 0.2s',
           },
         }}
         open
@@ -342,7 +362,7 @@ function DashboardLayout() {
         component="main"
         sx={{
           flexGrow: 1,
-          width: { sm: `calc(100% - ${drawerWidth}px)` },
+          width: { sm: `calc(100% - ${collapsed ? collapsedDrawerWidth : drawerWidth}px)` },
           bgcolor: 'background.default',
           minHeight: '100vh',
           pt: 11,

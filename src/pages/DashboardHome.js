@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import EditIcon from '@mui/icons-material/Edit';
 import { useProject } from '../ProjectContext';
 import { useTheme as useMuiTheme } from '@mui/material/styles';
@@ -13,6 +13,7 @@ import IconButton from '@mui/material/IconButton';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { useFeatures } from '../hooks/useFeatures';
 import { useCategories } from '../hooks/useCategories';
+import { trackFeatureAdded, trackFeatureDeleted, trackFilterUsed, trackCategoryCreated, trackPageView } from '../services/analytics';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -95,9 +96,10 @@ function DashboardHome() {
   }
 
   // Handle delete with confirmation
-  const handleDeleteFeature = (featureId, featureName) => {
+  const handleDeleteFeature = (featureId, featureName, featureCategory = 'unknown') => {
     if (window.confirm(`Are you sure you want to delete "${featureName}"?\n\nThis action cannot be undone.`)) {
       deleteFeature(featureId);
+      trackFeatureDeleted(featureCategory);
     }
   };
 
@@ -106,6 +108,11 @@ function DashboardHome() {
   const { selectedProject } = useProject();
   const { features, addFeature, deleteFeature, updateFeature, loading } = useFeatures(selectedProject);
   const { categories, addCategory, removeCategory, loading: categoriesLoading } = useCategories(selectedProject);
+
+  // Track page view
+  useEffect(() => {
+    trackPageView('dashboard', selectedProject);
+  }, [selectedProject]);
   const [openDialog, setOpenDialog] = useState(false);
   const [openDetailsModal, setOpenDetailsModal] = useState(false);
   const [selectedFeature, setSelectedFeature] = useState(null);
@@ -147,9 +154,18 @@ function DashboardHome() {
   const handleAddCategory = async () => {
     if (newCategoryInput.trim() && !categories.includes(newCategoryInput.trim())) {
       await addCategory(newCategoryInput.trim());
+      trackCategoryCreated(newCategoryInput.trim());
       setForm({ ...form, category: newCategoryInput.trim() });
       setNewCategoryInput('');
     }
+  };
+
+  // Filter change handlers with analytics tracking
+  const handleFilterChange = (filterType, value) => {
+    if (value) {
+      trackFilterUsed(filterType, value, selectedProject);
+    }
+    setFilters(f => ({ ...f, [filterType]: value }));
   };
 
   // Clear all filters
@@ -180,6 +196,7 @@ function DashboardHome() {
     } else {
       // Add new feature
       addFeature(form);
+      trackFeatureAdded(form.category || 'uncategorized', form.moscow || 'unspecified');
     }
     setForm({
       name: '', desc: '', targetQuarter: '', moscow: '', goal: '', tshirtSize: '', state: '', gapTypes: [], dependencies: '', category: '', workflowStatus: 'Planning',
@@ -445,7 +462,7 @@ function DashboardHome() {
               <Select
                 value={filters.priority}
                 label="Priority"
-                onChange={(e) => setFilters(f => ({ ...f, priority: e.target.value }))}
+                onChange={(e) => handleFilterChange('priority', e.target.value)}
                 sx={{
                   fontSize: '0.875rem',
                   '& .MuiSelect-select': {
@@ -466,7 +483,7 @@ function DashboardHome() {
               <Select
                 value={filters.category}
                 label="Category"
-                onChange={(e) => setFilters(f => ({ ...f, category: e.target.value }))}
+                onChange={(e) => handleFilterChange('category', e.target.value)}
                 sx={{
                   fontSize: '0.875rem',
                   '& .MuiSelect-select': {
@@ -487,7 +504,7 @@ function DashboardHome() {
               <Select
                 value={filters.state}
                 label="State"
-                onChange={(e) => setFilters(f => ({ ...f, state: e.target.value }))}
+                onChange={(e) => handleFilterChange('state', e.target.value)}
                 sx={{
                   fontSize: '0.875rem',
                   '& .MuiSelect-select': {
@@ -508,7 +525,7 @@ function DashboardHome() {
               <Select
                 value={filters.quarter}
                 label="Quarter"
-                onChange={(e) => setFilters(f => ({ ...f, quarter: e.target.value }))}
+                onChange={(e) => handleFilterChange('quarter', e.target.value)}
                 sx={{
                   fontSize: '0.875rem',
                   '& .MuiSelect-select': {
@@ -529,7 +546,7 @@ function DashboardHome() {
               <Select
                 value={filters.size}
                 label="Size"
-                onChange={(e) => setFilters(f => ({ ...f, size: e.target.value }))}
+                onChange={(e) => handleFilterChange('size', e.target.value)}
                 sx={{
                   fontSize: '0.875rem',
                   '& .MuiSelect-select': {
@@ -550,7 +567,7 @@ function DashboardHome() {
               <Select
                 value={filters.goal}
                 label="Goal"
-                onChange={(e) => setFilters(f => ({ ...f, goal: e.target.value }))}
+                onChange={(e) => handleFilterChange('goal', e.target.value)}
                 sx={{
                   fontSize: '0.875rem',
                   '& .MuiSelect-select': {
@@ -571,7 +588,7 @@ function DashboardHome() {
               <Select
                 value={filters.gap}
                 label="Gap"
-                onChange={(e) => setFilters(f => ({ ...f, gap: e.target.value }))}
+                onChange={(e) => handleFilterChange('gap', e.target.value)}
                 sx={{
                   fontSize: '0.875rem',
                   '& .MuiSelect-select': {

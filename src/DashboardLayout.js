@@ -33,6 +33,7 @@ import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from './firebase';
 import { useTheme } from './ThemeContext';
 import { useProject } from './ProjectContext';
+import { trackSearchUsed } from './services/analytics';
 
 const drawerWidth = 260;
 const collapsedDrawerWidth = 64;
@@ -87,6 +88,9 @@ function DashboardLayout() {
       setSearchOpen(false);
       return;
     }
+
+    // Track search usage
+    trackSearchUsed(value.trim(), selectedProject || 'all_projects');
 
     setSearching(true);
     setSearchOpen(true);

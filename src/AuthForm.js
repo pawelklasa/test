@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
 import app from "./firebase";
+import { trackUserSignup, trackUserLogin } from "./services/analytics";
 import Box from '@mui/material/Box';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
@@ -25,8 +26,10 @@ function AuthForm({ isLogin, setIsLogin, onClose }) {
     try {
       if (isLogin) {
         await signInWithEmailAndPassword(auth, email, password);
+        trackUserLogin();
       } else {
         await createUserWithEmailAndPassword(auth, email, password);
+        trackUserSignup();
       }
     } catch (err) {
       setError(err.message);

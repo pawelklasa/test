@@ -1,6 +1,7 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import { useProject } from '../ProjectContext';
 import { useFeatures } from '../hooks/useFeatures';
+import { trackPageView } from '../services/analytics';
 import { useTheme as useMuiTheme } from '@mui/material/styles';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
@@ -17,6 +18,11 @@ function FeatureTTL() {
   const isDark = theme.palette.mode === 'dark';
   const { selectedProject } = useProject();
   const { features, loading } = useFeatures(selectedProject);
+
+  // Track page view
+  useEffect(() => {
+    trackPageView('time-to-market', selectedProject);
+  }, [selectedProject]);
 
   // Calculate Time to Market for a feature
   const calculateTTL = (feature) => {

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
@@ -23,6 +23,7 @@ import FolderIcon from '@mui/icons-material/Folder';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../ThemeContext';
 import { useProject } from '../ProjectContext';
+import { trackProjectCreated, trackProjectSwitched, trackPageView } from '../services/analytics';
 
 function ProjectsPage() {
   const navigate = useNavigate();
@@ -30,6 +31,11 @@ function ProjectsPage() {
   const { projects, loading, addProject, deleteProject, setSelectedProject } = useProject();
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedProjectForMenu, setSelectedProjectForMenu] = useState(null);
+
+  // Track page view
+  useEffect(() => {
+    trackPageView('projects');
+  }, []);
 
   const [openDialog, setOpenDialog] = useState(false);
   const [formData, setFormData] = useState({
@@ -54,6 +60,7 @@ function ProjectsPage() {
   };
 
   const handleProjectClick = (project) => {
+    trackProjectSwitched('projects_page', project.name);
     setSelectedProject(project.id);
     navigate('/dashboard');
   };
@@ -77,6 +84,7 @@ function ProjectsPage() {
 
       if (result.success) {
         console.log('Project created successfully:', result.id);
+        trackProjectCreated(formData.name);
         handleCloseDialog();
       } else {
         console.error('Failed to create project:', result.error);

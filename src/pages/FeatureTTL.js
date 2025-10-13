@@ -304,11 +304,8 @@ function FeatureTTL() {
           >
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
               <Box sx={{ flex: 1 }}>
-                <Typography variant="h6" sx={{ fontWeight: 600, mb: 0.5 }}>
+                <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
                   {feature.name}
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                  {feature.desc || 'No description'}
                 </Typography>
                 <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                   <Chip

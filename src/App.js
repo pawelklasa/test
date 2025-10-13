@@ -16,6 +16,7 @@ import GrowthMetrics from "./pages/GrowthMetrics";
 import DataVisualization from "./pages/DataVisualization";
 import AutomatedWorkflows from "./pages/AutomatedWorkflows";
 import IntegrationHub from "./pages/IntegrationHub";
+import ProjectGuard from "./ProjectGuard";
 import { ThemeProvider } from "./ThemeContext";
 import { ProjectProvider } from "./ProjectContext";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
@@ -103,18 +104,18 @@ function AppContent({ user, setUser, showAuth, setShowAuth, isLogin, setIsLogin 
         {/* Dashboard Routes - Only accessible when logged in */}
         {user && (
           <Route path="/dashboard" element={<DashboardLayout />}>
-            <Route index element={<DashboardHome />} />
+            <Route index element={<ProjectGuard><DashboardHome /></ProjectGuard>} />
             <Route path="projects" element={<ProjectsPage />} />
-            <Route path="ttl" element={<FeatureTTL />} />
-            <Route path="visual-gap-analysis" element={<VisualGapAnalysis />} />
-            <Route path="actionable-insights" element={<ActionableInsights />} />
-            <Route path="team-collaboration" element={<TeamCollaboration />} />
-            <Route path="realtime-tracking" element={<RealtimeTracking />} />
-            <Route path="smart-prioritization" element={<SmartPrioritization />} />
-            <Route path="growth-metrics" element={<GrowthMetrics />} />
-            <Route path="data-visualization" element={<DataVisualization />} />
-            <Route path="automated-workflows" element={<AutomatedWorkflows />} />
-            <Route path="integration-hub" element={<IntegrationHub />} />
+            <Route path="ttl" element={<ProjectGuard><FeatureTTL /></ProjectGuard>} />
+            <Route path="visual-gap-analysis" element={<ProjectGuard><VisualGapAnalysis /></ProjectGuard>} />
+            <Route path="actionable-insights" element={<ProjectGuard><ActionableInsights /></ProjectGuard>} />
+            <Route path="team-collaboration" element={<ProjectGuard><TeamCollaboration /></ProjectGuard>} />
+            <Route path="realtime-tracking" element={<ProjectGuard><RealtimeTracking /></ProjectGuard>} />
+            <Route path="smart-prioritization" element={<ProjectGuard><SmartPrioritization /></ProjectGuard>} />
+            <Route path="growth-metrics" element={<ProjectGuard><GrowthMetrics /></ProjectGuard>} />
+            <Route path="data-visualization" element={<ProjectGuard><DataVisualization /></ProjectGuard>} />
+            <Route path="automated-workflows" element={<ProjectGuard><AutomatedWorkflows /></ProjectGuard>} />
+            <Route path="integration-hub" element={<ProjectGuard><IntegrationHub /></ProjectGuard>} />
           </Route>
         )}
       </Routes>

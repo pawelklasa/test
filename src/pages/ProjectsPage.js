@@ -136,18 +136,23 @@ function ProjectsPage() {
         </Box>
       ) : projects.length === 0 ? (
         <Box sx={{ textAlign: 'center', py: 8 }}>
-          <Typography variant="h6" color="text.secondary" gutterBottom>
-            No projects yet
+          <Typography variant="h5" color="text.primary" gutterBottom sx={{ fontWeight: 600 }}>
+            Welcome to Gapple! 👋
           </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-            Create your first project to get started
+          <Typography variant="h6" color="text.secondary" gutterBottom>
+            Let's create your first project
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 4, maxWidth: 400, mx: 'auto' }}>
+            Projects help you organize your features and track progress. Once you create a project, you'll be able to access the dashboard and start managing your features.
           </Typography>
           <Button
             variant="contained"
+            size="large"
             startIcon={<AddIcon />}
             onClick={handleOpenDialog}
+            sx={{ px: 4, py: 1.5 }}
           >
-            Create Project
+            Create Your First Project
           </Button>
         </Box>
       ) : (

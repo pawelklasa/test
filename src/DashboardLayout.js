@@ -372,9 +372,6 @@ function DashboardLayout() {
                         <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
                           {result.name}
                         </Typography>
-                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
-                          {result.desc}
-                        </Typography>
                         <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
                           <Typography variant="caption" sx={{ fontSize: '0.7rem', color: 'primary.main' }}>
                             {result.projectName}

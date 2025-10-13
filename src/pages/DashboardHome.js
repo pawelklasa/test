@@ -70,29 +70,17 @@ function DashboardHome() {
   // Handle adding new category
   const handleAddCategory = async () => {
     if (newCategoryInput.trim() && !categories.includes(newCategoryInput.trim())) {
-      console.log('Adding category:', newCategoryInput.trim(), 'to project:', selectedProject);
-      console.log('Current categories:', categories);
       await addCategory(newCategoryInput.trim());
       setForm({ ...form, category: newCategoryInput.trim() });
       setNewCategoryInput('');
-      console.log('Category added, new categories should be:', [...categories, newCategoryInput.trim()]);
-    } else {
-      console.log('Category not added - either empty or already exists');
-      console.log('Input:', newCategoryInput.trim());
-      console.log('Exists in categories:', categories.includes(newCategoryInput.trim()));
     }
   };
 
   // Replace local state with Firestore features
   // Use selectedProject from ProjectContext (top nav dropdown)
   const { selectedProject } = useProject();
-  console.log('Selected Project in DashboardHome:', selectedProject);
-  
   const { features, addFeature, deleteFeature, updateFeature, loading } = useFeatures(selectedProject);
   const { categories, addCategory, removeCategory, loading: categoriesLoading } = useCategories(selectedProject);
-  
-  console.log('Current categories:', categories);
-  console.log('Categories loading:', categoriesLoading);
   const [openDialog, setOpenDialog] = useState(false);
   const [openDetailsModal, setOpenDetailsModal] = useState(false);
   const [selectedFeature, setSelectedFeature] = useState(null);

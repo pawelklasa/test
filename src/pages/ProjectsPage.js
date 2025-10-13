@@ -20,12 +20,14 @@ import AddIcon from '@mui/icons-material/Add';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import DeleteIcon from '@mui/icons-material/Delete';
 import FolderIcon from '@mui/icons-material/Folder';
+import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../ThemeContext';
 import { useProject } from '../ProjectContext';
 
 function ProjectsPage() {
+  const navigate = useNavigate();
   const { mode } = useTheme();
-  const { projects, loading, addProject, deleteProject } = useProject();
+  const { projects, loading, addProject, deleteProject, setSelectedProject } = useProject();
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedProjectForMenu, setSelectedProjectForMenu] = useState(null);
 
@@ -49,6 +51,11 @@ function ProjectsPage() {
 
   const handleCloseDialog = () => {
     setOpenDialog(false);
+  };
+
+  const handleProjectClick = (project) => {
+    setSelectedProject(project.id);
+    navigate('/dashboard');
   };
 
   const handleSaveProject = async () => {
@@ -169,11 +176,13 @@ function ProjectsPage() {
                     display: 'flex',
                     flexDirection: 'column',
                     transition: 'all 0.2s',
+                    cursor: 'pointer',
                     '&:hover': {
                       transform: 'translateY(-4px)',
                       boxShadow: mode === 'dark' ? '0 8px 16px rgba(99, 102, 241, 0.15)' : '0 8px 16px rgba(99, 102, 241, 0.1)',
                     }
                   }}
+                  onClick={() => handleProjectClick(project)}
                 >
                 <CardContent sx={{ flex: 1 }}>
                   <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 2 }}>
@@ -191,7 +200,7 @@ function ProjectsPage() {
                     >
                       <FolderIcon sx={{ fontSize: 28 }} />
                     </Box>
-                    <IconButton size="small" onClick={(e) => handleMenuOpen(e, project)}>
+                    <IconButton size="small" onClick={(e) => { e.stopPropagation(); handleMenuOpen(e, project); }}>
                       <MoreVertIcon fontSize="small" />
                     </IconButton>
                   </Box>
@@ -230,8 +239,13 @@ function ProjectsPage() {
                 </CardContent>
 
                 <CardActions sx={{ px: 2, pb: 2 }}>
-                  <Button size="small" fullWidth variant="outlined">
-                    View Details
+                  <Button 
+                    size="small" 
+                    fullWidth 
+                    variant="outlined"
+                    onClick={(e) => { e.stopPropagation(); handleProjectClick(project); }}
+                  >
+                    Open Dashboard
                   </Button>
                 </CardActions>
               </Card>

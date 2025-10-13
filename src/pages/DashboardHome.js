@@ -21,6 +21,7 @@ import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import TextField from '@mui/material/TextField';
+import Autocomplete from '@mui/material/Autocomplete';
 import Slider from '@mui/material/Slider';
 import Chip from '@mui/material/Chip';
 
@@ -106,7 +107,12 @@ function DashboardHome() {
   });
   const [editingId, setEditingId] = useState(null);
 
-  const handleAddFeature = () => {
+  const handleAddFeature = async () => {
+    // If there's a category that's not in the categories list, add it
+    if (form.category && form.category.trim() && !categories.includes(form.category.trim())) {
+      await addCategory(form.category.trim());
+    }
+
     if (editingId) {
       // Update existing feature
       updateFeature(editingId, form);
@@ -924,38 +930,25 @@ function DashboardHome() {
           />
           
           {/* Category Selection with ability to add new */}
-          <Box sx={{ mb: 2 }}>
-            <FormControl fullWidth sx={{ mb: 1 }}>
-              <InputLabel>Category</InputLabel>
-              <Select
-                value={form.category}
-                label="Category"
-                onChange={e => setForm(f => ({ ...f, category: e.target.value }))}
-              >
-                {categories.map(cat => <MenuItem key={cat} value={cat}>{cat}</MenuItem>)}
-              </Select>
-            </FormControl>
-            
-            {/* Add new category input */}
-            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+          <Autocomplete
+            freeSolo
+            options={categories}
+            value={form.category || ''}
+            onChange={(event, newValue) => {
+              setForm(f => ({ ...f, category: newValue || '' }));
+            }}
+            onInputChange={(event, newInputValue) => {
+              setForm(f => ({ ...f, category: newInputValue || '' }));
+            }}
+            renderInput={(params) => (
               <TextField
-                size="small"
-                placeholder="Add new category"
-                value={newCategoryInput}
-                onChange={e => setNewCategoryInput(e.target.value)}
-                onKeyPress={e => e.key === 'Enter' && handleAddCategory()}
-                sx={{ flex: 1 }}
+                {...params}
+                label="Category"
+                placeholder="Select or type a new category"
+                sx={{ mb: 2 }}
               />
-              <Button 
-                variant="outlined" 
-                size="small"
-                onClick={handleAddCategory}
-                disabled={!newCategoryInput.trim() || categories.includes(newCategoryInput.trim())}
-              >
-                Add
-              </Button>
-            </Box>
-          </Box>
+            )}
+          />
 
           <FormControl fullWidth sx={{ mb: 2 }}>
             <InputLabel>Target Quarter</InputLabel>

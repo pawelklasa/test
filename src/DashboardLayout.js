@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import Drawer from '@mui/material/Drawer';
@@ -18,6 +18,8 @@ import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import Typography from '@mui/material/Typography';
 import Avatar from '@mui/material/Avatar';
+import Paper from '@mui/material/Paper';
+import ClickAwayListener from '@mui/material/ClickAwayListener';
 import MenuIcon from '@mui/icons-material/Menu';
 import SearchIcon from '@mui/icons-material/Search';
 import NotificationsIcon from '@mui/icons-material/Notifications';
@@ -27,6 +29,8 @@ import DarkModeIcon from '@mui/icons-material/DarkMode';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import FolderIcon from '@mui/icons-material/Folder';
 import { getAuth } from 'firebase/auth';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { db } from './firebase';
 import { useTheme } from './ThemeContext';
 import { useProject } from './ProjectContext';
 
@@ -42,6 +46,10 @@ function DashboardLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searching, setSearching] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const auth = getAuth();
@@ -71,6 +79,75 @@ function DashboardLayout() {
     auth.signOut();
     navigate('/');
   };
+
+  const handleSearch = useCallback(async (value) => {
+    if (!value.trim()) {
+      setSearchResults([]);
+      setSearchOpen(false);
+      return;
+    }
+
+    setSearching(true);
+    setSearchOpen(true);
+
+    try {
+      const results = [];
+      const searchLower = value.toLowerCase();
+
+      // Search across all projects or just selected project
+      const projectsToSearch = selectedProject
+        ? projects.filter(p => p.id === selectedProject)
+        : projects;
+
+      for (const project of projectsToSearch) {
+        const featuresRef = collection(db, 'features');
+        const q = query(featuresRef, where('projectId', '==', project.id));
+        const snapshot = await getDocs(q);
+
+        snapshot.docs.forEach(doc => {
+          const feature = { id: doc.id, ...doc.data() };
+          const matchesName = feature.name?.toLowerCase().includes(searchLower);
+          const matchesDesc = feature.desc?.toLowerCase().includes(searchLower);
+          const matchesDeps = feature.dependencies?.toLowerCase().includes(searchLower);
+          const matchesGoal = feature.goal?.toLowerCase().includes(searchLower);
+
+          if (matchesName || matchesDesc || matchesDeps || matchesGoal) {
+            results.push({
+              ...feature,
+              projectName: project.name
+            });
+          }
+        });
+      }
+
+      setSearchResults(results);
+    } catch (error) {
+      console.error('Search error:', error);
+    } finally {
+      setSearching(false);
+    }
+  }, [selectedProject, projects]);
+
+  const handleSearchResultClick = (feature) => {
+    // Navigate to dashboard and close search
+    if (feature.projectId !== selectedProject) {
+      setSelectedProject(feature.projectId);
+    }
+    navigate('/dashboard');
+    setSearchOpen(false);
+    setSearchQuery('');
+    setSearchResults([]);
+  };
+
+  useEffect(() => {
+    const debounce = setTimeout(() => {
+      if (searchQuery) {
+        handleSearch(searchQuery);
+      }
+    }, 300);
+
+    return () => clearTimeout(debounce);
+  }, [searchQuery]);
 
   const drawer = (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', width: collapsed ? collapsedDrawerWidth : drawerWidth, transition: 'width 0.2s' }}>
@@ -179,12 +256,13 @@ function DashboardLayout() {
         position="fixed"
         elevation={0}
         sx={{
-          width: { sm: `calc(100% - ${drawerWidth}px)` },
-          ml: { sm: `${drawerWidth}px` },
+          width: { sm: `calc(100% - ${collapsed ? collapsedDrawerWidth : drawerWidth}px)` },
+          ml: { sm: `${collapsed ? collapsedDrawerWidth : drawerWidth}px` },
           bgcolor: 'background.paper',
           color: 'text.primary',
           borderBottom: 1,
           borderColor: 'divider',
+          transition: 'width 0.2s, margin 0.2s',
         }}
       >
         <Toolbar>
@@ -198,46 +276,120 @@ function DashboardLayout() {
           </IconButton>
 
           {/* Search Bar */}
-          <Box
-            sx={{
-              position: 'relative',
-              borderRadius: 1,
-              bgcolor: mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)',
-              '&:hover': {
-                bgcolor: mode === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)',
-              },
-              mr: 2,
-              ml: 0,
-              width: { xs: '100%', sm: 'auto' },
-              flexGrow: { xs: 1, sm: 0 },
-            }}
-          >
-            <Box
-              sx={{
-                padding: '0 16px',
-                height: '100%',
-                position: 'absolute',
-                pointerEvents: 'none',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <SearchIcon />
+          <ClickAwayListener onClickAway={() => setSearchOpen(false)}>
+            <Box sx={{ position: 'relative', mr: 2, ml: 0, width: { xs: '100%', sm: 'auto' }, flexGrow: { xs: 1, sm: 0 } }}>
+              <Box
+                sx={{
+                  position: 'relative',
+                  borderRadius: 1,
+                  bgcolor: mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)',
+                  '&:hover': {
+                    bgcolor: mode === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)',
+                  },
+                }}
+              >
+                <Box
+                  sx={{
+                    padding: '0 16px',
+                    height: '100%',
+                    position: 'absolute',
+                    pointerEvents: 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <SearchIcon />
+                </Box>
+                <InputBase
+                  placeholder="Search features…"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onFocus={() => searchQuery && setSearchOpen(true)}
+                  sx={{
+                    color: 'inherit',
+                    width: '100%',
+                    '& .MuiInputBase-input': {
+                      padding: '8px 8px 8px 0',
+                      paddingLeft: `calc(1em + 32px)`,
+                      width: { xs: '100%', sm: '30ch' },
+                    },
+                  }}
+                />
+              </Box>
+
+              {/* Search Results Dropdown */}
+              {searchOpen && (
+                <Paper
+                  sx={{
+                    position: 'absolute',
+                    top: 'calc(100% + 8px)',
+                    left: 0,
+                    right: 0,
+                    maxHeight: '400px',
+                    overflowY: 'auto',
+                    zIndex: 1300,
+                    bgcolor: 'background.paper',
+                    border: 1,
+                    borderColor: 'divider',
+                    boxShadow: mode === 'dark'
+                      ? '0 8px 16px rgba(0, 0, 0, 0.4)'
+                      : '0 8px 16px rgba(0, 0, 0, 0.1)',
+                  }}
+                >
+                  {searching ? (
+                    <Box sx={{ p: 2, textAlign: 'center' }}>
+                      <Typography variant="body2" color="text.secondary">
+                        Searching...
+                      </Typography>
+                    </Box>
+                  ) : searchResults.length === 0 ? (
+                    <Box sx={{ p: 2, textAlign: 'center' }}>
+                      <Typography variant="body2" color="text.secondary">
+                        No results found
+                      </Typography>
+                    </Box>
+                  ) : (
+                    searchResults.map((result) => (
+                      <Box
+                        key={result.id}
+                        onClick={() => handleSearchResultClick(result)}
+                        sx={{
+                          p: 2,
+                          cursor: 'pointer',
+                          borderBottom: 1,
+                          borderColor: 'divider',
+                          '&:hover': {
+                            bgcolor: mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)',
+                          },
+                          '&:last-child': {
+                            borderBottom: 0,
+                          },
+                        }}
+                      >
+                        <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
+                          {result.name}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
+                          {result.desc}
+                        </Typography>
+                        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                          <Typography variant="caption" sx={{ fontSize: '0.7rem', color: 'primary.main' }}>
+                            {result.projectName}
+                          </Typography>
+                          {result.moscow && (
+                            <Typography variant="caption" sx={{ fontSize: '0.7rem', color: 'text.secondary' }}>
+                              • {result.moscow}
+                            </Typography>
+                          )}
+                        </Box>
+                      </Box>
+                    ))
+                  )}
+                </Paper>
+              )}
             </Box>
-            <InputBase
-              placeholder="Search…"
-              sx={{
-                color: 'inherit',
-                width: '100%',
-                '& .MuiInputBase-input': {
-                  padding: '8px 8px 8px 0',
-                  paddingLeft: `calc(1em + 32px)`,
-                  width: { xs: '100%', sm: '30ch' },
-                },
-              }}
-            />
-          </Box>
+          </ClickAwayListener>
 
           <Box sx={{ flexGrow: 1 }} />
 

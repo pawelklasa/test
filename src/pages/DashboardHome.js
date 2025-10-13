@@ -67,15 +67,6 @@ function DashboardHome() {
     }
   };
 
-  // Handle adding new category
-  const handleAddCategory = async () => {
-    if (newCategoryInput.trim() && !categories.includes(newCategoryInput.trim())) {
-      await addCategory(newCategoryInput.trim());
-      setForm({ ...form, category: newCategoryInput.trim() });
-      setNewCategoryInput('');
-    }
-  };
-
   // Replace local state with Firestore features
   // Use selectedProject from ProjectContext (top nav dropdown)
   const { selectedProject } = useProject();
@@ -105,6 +96,44 @@ function DashboardHome() {
     requirementsClarity: 3
   });
   const [editingId, setEditingId] = useState(null);
+  
+  // Filter state
+  const [filters, setFilters] = useState({
+    priority: '',
+    category: '',
+    state: '',
+    quarter: '',
+    size: '',
+    goal: '',
+    gaps: []
+  });
+
+  // Handle adding new category
+  const handleAddCategory = async () => {
+    if (newCategoryInput.trim() && !categories.includes(newCategoryInput.trim())) {
+      await addCategory(newCategoryInput.trim());
+      setForm({ ...form, category: newCategoryInput.trim() });
+      setNewCategoryInput('');
+    }
+  };
+
+  // Clear all filters
+  const clearAllFilters = () => {
+    setFilters({
+      priority: '',
+      category: '',
+      state: '',
+      quarter: '',
+      size: '',
+      goal: '',
+      gaps: []
+    });
+  };
+
+  // Check if any filters are active
+  const hasActiveFilters = Object.values(filters).some(filter => 
+    Array.isArray(filter) ? filter.length > 0 : filter !== ''
+  );
 
   const handleAddFeature = async () => {
     // If there's a category that's not in the categories list, add it
@@ -149,14 +178,44 @@ function DashboardHome() {
     setOpenDialog(true);
   };
 
-  // Calculate dashboard metrics
-  const totalFeatures = features.length;
-  const mustHave = features.filter(f => f.moscow === 'Must-Have').length;
-  const shouldHave = features.filter(f => f.moscow === 'Should-Have').length;
+  // Filter features based on active filters
+  const filteredFeatures = features.filter(feature => {
+    // Priority filter
+    if (filters.priority && feature.moscow !== filters.priority) return false;
+    
+    // Category filter
+    if (filters.category && feature.category !== filters.category) return false;
+    
+    // State filter
+    if (filters.state && feature.state !== filters.state) return false;
+    
+    // Quarter filter
+    if (filters.quarter && feature.targetQuarter !== filters.quarter) return false;
+    
+    // Size filter
+    if (filters.size && feature.tshirtSize !== filters.size) return false;
+    
+    // Goal filter
+    if (filters.goal && feature.goal !== filters.goal) return false;
+    
+    // Gaps filter (feature must have ALL selected gaps)
+    if (filters.gaps.length > 0) {
+      const featureGaps = Array.isArray(feature.gapTypes) ? feature.gapTypes : [];
+      const hasAllSelectedGaps = filters.gaps.every(gap => featureGaps.includes(gap));
+      if (!hasAllSelectedGaps) return false;
+    }
+    
+    return true;
+  });
+
+  // Calculate dashboard metrics (using filtered features)
+  const totalFeatures = filteredFeatures.length;
+  const mustHave = filteredFeatures.filter(f => f.moscow === 'Must-Have').length;
+  const shouldHave = filteredFeatures.filter(f => f.moscow === 'Should-Have').length;
   const avgImpact = totalFeatures > 0
-    ? Math.round(features.reduce((sum, f) => sum + getImpactScore(f), 0) / totalFeatures)
+    ? Math.round(filteredFeatures.reduce((sum, f) => sum + getImpactScore(f), 0) / totalFeatures)
     : 0;
-  const highImpact = features.filter(f => getImpactScore(f) >= 18).length; // 18+ is considered high (out of 30 max)
+  const highImpact = filteredFeatures.filter(f => getImpactScore(f) >= 18).length; // 18+ is considered high (out of 30 max)
 
   return (
     <Box sx={{ p: 3 }}>
@@ -270,13 +329,169 @@ function DashboardHome() {
         </Box>
       </Box>
 
+      {/* Filtering Controls */}
+      <Box sx={{ mb: 3, p: 2, bgcolor: 'background.paper', border: 1, borderColor: 'divider', borderRadius: '4px' }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Typography variant="h6" sx={{ fontWeight: 600 }}>
+            Filter Features
+          </Typography>
+          {hasActiveFilters && (
+            <Button 
+              variant="outlined" 
+              size="small" 
+              onClick={clearAllFilters}
+              sx={{ minWidth: 'auto' }}
+            >
+              Clear All
+            </Button>
+          )}
+        </Box>
+
+        <Grid container spacing={2}>
+          {/* Priority Filter */}
+          <Grid item xs={12} sm={6} md={3}>
+            <FormControl fullWidth size="small">
+              <InputLabel>Priority</InputLabel>
+              <Select
+                value={filters.priority}
+                label="Priority"
+                onChange={(e) => setFilters(f => ({ ...f, priority: e.target.value }))}
+              >
+                <MenuItem value="">All</MenuItem>
+                {moscowOptions.map(opt => <MenuItem key={opt} value={opt}>{opt}</MenuItem>)}
+              </Select>
+            </FormControl>
+          </Grid>
+
+          {/* Category Filter */}
+          <Grid item xs={12} sm={6} md={3}>
+            <FormControl fullWidth size="small">
+              <InputLabel>Category</InputLabel>
+              <Select
+                value={filters.category}
+                label="Category"
+                onChange={(e) => setFilters(f => ({ ...f, category: e.target.value }))}
+              >
+                <MenuItem value="">All</MenuItem>
+                {categories.map(cat => <MenuItem key={cat} value={cat}>{cat}</MenuItem>)}
+              </Select>
+            </FormControl>
+          </Grid>
+
+          {/* State Filter */}
+          <Grid item xs={12} sm={6} md={3}>
+            <FormControl fullWidth size="small">
+              <InputLabel>State</InputLabel>
+              <Select
+                value={filters.state}
+                label="State"
+                onChange={(e) => setFilters(f => ({ ...f, state: e.target.value }))}
+              >
+                <MenuItem value="">All</MenuItem>
+                {currentStates.map(state => <MenuItem key={state} value={state}>{state}</MenuItem>)}
+              </Select>
+            </FormControl>
+          </Grid>
+
+          {/* Quarter Filter */}
+          <Grid item xs={12} sm={6} md={3}>
+            <FormControl fullWidth size="small">
+              <InputLabel>Quarter</InputLabel>
+              <Select
+                value={filters.quarter}
+                label="Quarter"
+                onChange={(e) => setFilters(f => ({ ...f, quarter: e.target.value }))}
+              >
+                <MenuItem value="">All</MenuItem>
+                {targetQuarters.map(q => <MenuItem key={q} value={q}>{q}</MenuItem>)}
+              </Select>
+            </FormControl>
+          </Grid>
+
+          {/* Size Filter */}
+          <Grid item xs={12} sm={6} md={3}>
+            <FormControl fullWidth size="small">
+              <InputLabel>Size</InputLabel>
+              <Select
+                value={filters.size}
+                label="Size"
+                onChange={(e) => setFilters(f => ({ ...f, size: e.target.value }))}
+              >
+                <MenuItem value="">All</MenuItem>
+                {tshirtSizes.map(size => <MenuItem key={size} value={size}>{size}</MenuItem>)}
+              </Select>
+            </FormControl>
+          </Grid>
+
+          {/* Goal Filter */}
+          <Grid item xs={12} sm={6} md={3}>
+            <FormControl fullWidth size="small">
+              <InputLabel>Goal</InputLabel>
+              <Select
+                value={filters.goal}
+                label="Goal"
+                onChange={(e) => setFilters(f => ({ ...f, goal: e.target.value }))}
+              >
+                <MenuItem value="">All</MenuItem>
+                {companyGoals.map(goal => <MenuItem key={goal} value={goal}>{goal}</MenuItem>)}
+              </Select>
+            </FormControl>
+          </Grid>
+
+          {/* Gaps Filter */}
+          <Grid item xs={12} sm={6} md={6}>
+            <Box>
+              <Typography variant="caption" sx={{ mb: 1, display: 'block', color: 'text.secondary' }}>
+                Gap Types (select multiple)
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+                {gapTypeOptions.map(gap => (
+                  <Chip
+                    key={gap}
+                    label={gap}
+                    size="small"
+                    color={filters.gaps.includes(gap) ? 'primary' : 'default'}
+                    onClick={() => setFilters(f => ({
+                      ...f,
+                      gaps: f.gaps.includes(gap)
+                        ? f.gaps.filter(g => g !== gap)
+                        : [...f.gaps, gap]
+                    }))}
+                    sx={{ cursor: 'pointer' }}
+                  />
+                ))}
+              </Box>
+            </Box>
+          </Grid>
+        </Grid>
+
+        {/* Active Filters Summary */}
+        {hasActiveFilters && (
+          <Box sx={{ mt: 2, pt: 2, borderTop: 1, borderColor: 'divider' }}>
+            <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
+              Showing {totalFeatures} of {features.length} features
+            </Typography>
+          </Box>
+        )}
+      </Box>
+
       {loading || categoriesLoading ? (
         <Typography>Loading features and categories...</Typography>
       ) : (
         <Box>
-          <Grid container spacing={2} sx={{ display: 'flex' }}>
-            <Grid item xs={12} md={6} sx={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1 }}>
-              {features.filter((_, i) => i % 2 === 0).map((f, idx) => {
+          {filteredFeatures.length === 0 && hasActiveFilters ? (
+            <Box sx={{ textAlign: 'center', py: 4 }}>
+              <Typography variant="h6" sx={{ color: 'text.secondary', mb: 1 }}>
+                No features match your filters
+              </Typography>
+              <Button variant="outlined" onClick={clearAllFilters}>
+                Clear All Filters
+              </Button>
+            </Box>
+          ) : (
+            <Grid container spacing={2} sx={{ display: 'flex' }}>
+              <Grid item xs={12} md={6} sx={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1 }}>
+                {filteredFeatures.filter((_, i) => i % 2 === 0).map((f, idx) => {
                 let borderColor = '#e0e0e0';
                 if (f.moscow === 'Must-Have') borderColor = '#fa709a';
                 else if (f.moscow === 'Should-Have') borderColor = '#667eea';
@@ -467,8 +682,8 @@ function DashboardHome() {
                 );
               })}
             </Grid>
-            <Grid item xs={12} md={6} sx={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1 }}>
-              {features.filter((_, i) => i % 2 === 1).map((f, idx) => {
+              <Grid item xs={12} md={6} sx={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1 }}>
+                {filteredFeatures.filter((_, i) => i % 2 === 1).map((f, idx) => {
                 let borderColor = '#e0e0e0';
                 if (f.moscow === 'Must-Have') borderColor = '#fa709a';
                 else if (f.moscow === 'Should-Have') borderColor = '#667eea';
@@ -657,9 +872,10 @@ function DashboardHome() {
                     </Box>
                   </Box>
                 );
-              })}
+                })}
+              </Grid>
             </Grid>
-          </Grid>
+          )}
         </Box>
       )}
 

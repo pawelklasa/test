@@ -6,6 +6,7 @@ import LandingPage from "./LandingPage";
 import DashboardLayout from "./DashboardLayout";
 import DashboardHome from "./pages/DashboardHome";
 import ProjectsPage from "./pages/ProjectsPage";
+import FeatureTTL from "./pages/FeatureTTL";
 import VisualGapAnalysis from "./pages/VisualGapAnalysis";
 import ActionableInsights from "./pages/ActionableInsights";
 import TeamCollaboration from "./pages/TeamCollaboration";
@@ -104,6 +105,7 @@ function AppContent({ user, setUser, showAuth, setShowAuth, isLogin, setIsLogin 
           <Route path="/dashboard" element={<DashboardLayout />}>
             <Route index element={<DashboardHome />} />
             <Route path="projects" element={<ProjectsPage />} />
+            <Route path="ttl" element={<FeatureTTL />} />
             <Route path="visual-gap-analysis" element={<VisualGapAnalysis />} />
             <Route path="actionable-insights" element={<ActionableInsights />} />
             <Route path="team-collaboration" element={<TeamCollaboration />} />

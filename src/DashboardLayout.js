@@ -28,6 +28,7 @@ import LightModeIcon from '@mui/icons-material/LightMode';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import FolderIcon from '@mui/icons-material/Folder';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import { getAuth } from 'firebase/auth';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from './firebase';
@@ -39,7 +40,8 @@ const collapsedDrawerWidth = 64;
 
 const menuItems = [
   { text: 'Overview', icon: <DashboardIcon />, path: '/dashboard' },
-  { text: 'Projects', icon: <FolderIcon />, path: '/dashboard/projects' }
+  { text: 'Projects', icon: <FolderIcon />, path: '/dashboard/projects' },
+  { text: 'Time to Market', icon: <AccessTimeIcon />, path: '/dashboard/ttl' }
 ];
 
 function DashboardLayout() {

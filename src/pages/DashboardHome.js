@@ -23,6 +23,7 @@ import DialogActions from '@mui/material/DialogActions';
 import TextField from '@mui/material/TextField';
 import Slider from '@mui/material/Slider';
 import Chip from '@mui/material/Chip';
+import LinearProgress from '@mui/material/LinearProgress';
 
 const targetQuarters = ['Q1 2026', 'Q2 2026', 'Q3 2026', 'Q4 2026'];
 const moscowOptions = ['Must-Have', 'Should-Have', 'Could-Have', "Won't-Have"];
@@ -36,23 +37,56 @@ const companyGoals = [
 const tshirtSizes = ['S', 'M', 'L', 'XL'];
 const currentStates = ['Missing', 'Partial Endpoints', 'Live in Prod'];
 const gapTypeOptions = ['Documentation/Training', 'Technology/Tech Debt', 'Process', 'Resources'];
+const workflowStatuses = ['Planning', 'In Progress', 'Done', "Won't Do"];
 
 function DashboardHome() {
   const theme = useMuiTheme();
   const isDark = theme.palette.mode === 'dark';
 
-  // Calculate impact score as sum of all sliders
+  // Calculate impact score as percentage
   function getImpactScore(f) {
     const safe = key => typeof f[key] === 'number' ? f[key] : 3;
-    return [
-      safe('technicalComplexity'),
-      safe('dependencyRisk'),
-      safe('unknowns'),
-      safe('businessValue'),
-      safe('effortRequired'),
-      safe('requirementsClarity')
-    ].reduce((a, b) => a + b, 0);
+    const businessValue = safe('businessValue');
+    const requirementsClarity = safe('requirementsClarity');
+    const technicalComplexity = safe('technicalComplexity');
+    const dependencyRisk = safe('dependencyRisk');
+    const unknowns = safe('unknowns');
+    const effort = safe('effortRequired');
+
+    // Higher business value and clarity = good (keep as is)
+    // Lower complexity, risk, unknowns, effort = good (invert these)
+    const positiveScore = businessValue + requirementsClarity;
+    const negativeScore = (6 - technicalComplexity) + (6 - dependencyRisk) + (6 - unknowns) + (6 - effort);
+
+    const totalScore = positiveScore + negativeScore;
+    const maxScore = 30; // 5+5+5+5+5+5
+
+    return Math.round((totalScore / maxScore) * 100);
   }
+
+  // Get color based on impact score
+  function getImpactColor(score) {
+    if (score >= 70) return '#10B981'; // Green - High impact
+    if (score >= 50) return '#3B82F6'; // Blue - Medium impact
+    if (score >= 30) return '#F59E0B'; // Orange - Low-medium impact
+    return '#EF4444'; // Red - Low impact
+  }
+
+  // Get color for workflow status
+  function getWorkflowStatusColor(status) {
+    switch (status) {
+      case 'Done': return '#10B981'; // Green
+      case 'In Progress': return '#3B82F6'; // Blue
+      case 'Planning': return '#F59E0B'; // Orange
+      case "Won't Do": return '#6B7280'; // Gray
+      default: return '#F59E0B'; // Orange (default to Planning)
+    }
+  }
+
+  // Handle status change for a feature
+  const handleStatusChange = async (featureId, newStatus) => {
+    await updateFeature(featureId, { workflowStatus: newStatus });
+  };
 
   // Truncate description for card display
   function getTruncatedDescription(desc) {
@@ -88,6 +122,7 @@ function DashboardHome() {
     gapTypes: [],
     dependencies: '',
     category: '',
+    workflowStatus: 'Planning',
     technicalComplexity: 3,
     dependencyRisk: 3,
     unknowns: 3,
@@ -105,7 +140,7 @@ function DashboardHome() {
     quarter: '',
     size: '',
     goal: '',
-    gaps: []
+    gap: ''
   });
 
   // Handle adding new category
@@ -126,14 +161,12 @@ function DashboardHome() {
       quarter: '',
       size: '',
       goal: '',
-      gaps: []
+      gap: ''
     });
   };
 
   // Check if any filters are active
-  const hasActiveFilters = Object.values(filters).some(filter => 
-    Array.isArray(filter) ? filter.length > 0 : filter !== ''
-  );
+  const hasActiveFilters = Object.values(filters).some(filter => filter !== '');
 
   const handleAddFeature = async () => {
     // If there's a category that's not in the categories list, add it
@@ -149,7 +182,7 @@ function DashboardHome() {
       addFeature(form);
     }
     setForm({
-      name: '', desc: '', targetQuarter: '', moscow: '', goal: '', tshirtSize: '', state: '', gapTypes: [], dependencies: '', category: '',
+      name: '', desc: '', targetQuarter: '', moscow: '', goal: '', tshirtSize: '', state: '', gapTypes: [], dependencies: '', category: '', workflowStatus: 'Planning',
       technicalComplexity: 3, dependencyRisk: 3, unknowns: 3, businessValue: 3, effortRequired: 3, requirementsClarity: 3
     });
     setEditingId(null);
@@ -172,7 +205,15 @@ function DashboardHome() {
       tshirtSize: feature.tshirtSize || '',
       state: feature.state || '',
       gapTypes: Array.isArray(feature.gapTypes) ? feature.gapTypes : [],
-      dependencies: feature.dependencies || ''
+      dependencies: feature.dependencies || '',
+      category: feature.category || '',
+      workflowStatus: feature.workflowStatus || 'Planning',
+      technicalComplexity: feature.technicalComplexity || 3,
+      dependencyRisk: feature.dependencyRisk || 3,
+      unknowns: feature.unknowns || 3,
+      businessValue: feature.businessValue || 3,
+      effortRequired: feature.effortRequired || 3,
+      requirementsClarity: feature.requirementsClarity || 3
     });
     setEditingId(feature.id);
     setOpenDialog(true);
@@ -197,14 +238,13 @@ function DashboardHome() {
     
     // Goal filter
     if (filters.goal && feature.goal !== filters.goal) return false;
-    
-    // Gaps filter (feature must have ALL selected gaps)
-    if (filters.gaps.length > 0) {
+
+    // Gap filter
+    if (filters.gap) {
       const featureGaps = Array.isArray(feature.gapTypes) ? feature.gapTypes : [];
-      const hasAllSelectedGaps = filters.gaps.every(gap => featureGaps.includes(gap));
-      if (!hasAllSelectedGaps) return false;
+      if (!featureGaps.includes(filters.gap)) return false;
     }
-    
+
     return true;
   });
 
@@ -217,8 +257,73 @@ function DashboardHome() {
     : 0;
   const highImpact = filteredFeatures.filter(f => getImpactScore(f) >= 18).length; // 18+ is considered high (out of 30 max)
 
+  // Progress metrics (using ALL features, not filtered - this represents true project progress)
+  const allCompletedFeatures = features.filter(f => f.workflowStatus === 'Done').length;
+  const allInProgressFeatures = features.filter(f => f.workflowStatus === 'In Progress').length;
+  const allPlanningFeatures = features.filter(f => f.workflowStatus === 'Planning' || !f.workflowStatus).length;
+  const allWontDoFeatures = features.filter(f => f.workflowStatus === "Won't Do").length;
+  const progressPercentage = features.length > 0 ? Math.round((allCompletedFeatures / features.length) * 100) : 0;
+
   return (
     <Box sx={{ p: 3 }}>
+      {/* Progress Bar */}
+      <Box sx={{
+        mb: 3,
+        p: 2,
+        bgcolor: 'background.paper',
+        border: 1,
+        borderColor: 'divider',
+        borderRadius: '4px'
+      }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+          <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '0.9rem' }}>
+            Project Progress
+          </Typography>
+          <Typography variant="h4" sx={{ fontWeight: 700, color: '#10B981' }}>
+            {progressPercentage}%
+          </Typography>
+        </Box>
+        <LinearProgress
+          variant="determinate"
+          value={progressPercentage}
+          sx={{
+            height: 12,
+            borderRadius: 1,
+            bgcolor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+            '& .MuiLinearProgress-bar': {
+              bgcolor: '#10B981',
+              borderRadius: 1,
+            }
+          }}
+        />
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1.5, flexWrap: 'wrap', gap: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <Box sx={{ width: 12, height: 12, bgcolor: '#10B981', borderRadius: '2px' }} />
+            <Typography variant="caption" sx={{ fontSize: '0.7rem', color: 'text.secondary' }}>
+              Done: {allCompletedFeatures}
+            </Typography>
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <Box sx={{ width: 12, height: 12, bgcolor: '#3B82F6', borderRadius: '2px' }} />
+            <Typography variant="caption" sx={{ fontSize: '0.7rem', color: 'text.secondary' }}>
+              In Progress: {allInProgressFeatures}
+            </Typography>
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <Box sx={{ width: 12, height: 12, bgcolor: '#F59E0B', borderRadius: '2px' }} />
+            <Typography variant="caption" sx={{ fontSize: '0.7rem', color: 'text.secondary' }}>
+              Planning: {allPlanningFeatures}
+            </Typography>
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <Box sx={{ width: 12, height: 12, bgcolor: '#6B7280', borderRadius: '2px' }} />
+            <Typography variant="caption" sx={{ fontSize: '0.7rem', color: 'text.secondary' }}>
+              Won't Do: {allWontDoFeatures}
+            </Typography>
+          </Box>
+        </Box>
+      </Box>
+
       {/* Dashboard Metrics */}
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3 }}>
         <Box sx={{
@@ -330,149 +435,183 @@ function DashboardHome() {
       </Box>
 
       {/* Filtering Controls */}
-      <Box sx={{ mb: 3, p: 2, bgcolor: 'background.paper', border: 1, borderColor: 'divider', borderRadius: '4px' }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-          <Typography variant="h6" sx={{ fontWeight: 600 }}>
-            Filter Features
-          </Typography>
-          {hasActiveFilters && (
-            <Button 
-              variant="outlined" 
-              size="small" 
-              onClick={clearAllFilters}
-              sx={{ minWidth: 'auto' }}
-            >
-              Clear All
-            </Button>
-          )}
-        </Box>
-
-        <Grid container spacing={2}>
-          {/* Priority Filter */}
-          <Grid item xs={12} sm={6} md={3}>
-            <FormControl fullWidth size="small">
-              <InputLabel>Priority</InputLabel>
+      <Box sx={{ mb: 3, p: 1.5, bgcolor: 'background.paper', border: 1, borderColor: 'divider', borderRadius: '6px' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+          {/* All Filters in One Row */}
+          <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap', flex: 1, alignItems: 'center' }}>
+            {/* Priority Filter */}
+            <FormControl size="small" sx={{ minWidth: 110 }}>
+              <InputLabel sx={{ fontSize: '0.875rem' }}>Priority</InputLabel>
               <Select
                 value={filters.priority}
                 label="Priority"
                 onChange={(e) => setFilters(f => ({ ...f, priority: e.target.value }))}
+                sx={{
+                  fontSize: '0.875rem',
+                  '& .MuiSelect-select': {
+                    py: 1,
+                    display: 'flex',
+                    alignItems: 'center'
+                  }
+                }}
               >
-                <MenuItem value="">All</MenuItem>
-                {moscowOptions.map(opt => <MenuItem key={opt} value={opt}>{opt}</MenuItem>)}
+                <MenuItem value="" sx={{ fontSize: '0.875rem' }}>All</MenuItem>
+                {moscowOptions.map(opt => <MenuItem key={opt} value={opt} sx={{ fontSize: '0.875rem' }}>{opt}</MenuItem>)}
               </Select>
             </FormControl>
-          </Grid>
 
-          {/* Category Filter */}
-          <Grid item xs={12} sm={6} md={3}>
-            <FormControl fullWidth size="small">
-              <InputLabel>Category</InputLabel>
+            {/* Category Filter */}
+            <FormControl size="small" sx={{ minWidth: 110 }}>
+              <InputLabel sx={{ fontSize: '0.875rem' }}>Category</InputLabel>
               <Select
                 value={filters.category}
                 label="Category"
                 onChange={(e) => setFilters(f => ({ ...f, category: e.target.value }))}
+                sx={{
+                  fontSize: '0.875rem',
+                  '& .MuiSelect-select': {
+                    py: 1,
+                    display: 'flex',
+                    alignItems: 'center'
+                  }
+                }}
               >
-                <MenuItem value="">All</MenuItem>
-                {categories.map(cat => <MenuItem key={cat} value={cat}>{cat}</MenuItem>)}
+                <MenuItem value="" sx={{ fontSize: '0.875rem' }}>All</MenuItem>
+                {categories.map(cat => <MenuItem key={cat} value={cat} sx={{ fontSize: '0.875rem' }}>{cat}</MenuItem>)}
               </Select>
             </FormControl>
-          </Grid>
 
-          {/* State Filter */}
-          <Grid item xs={12} sm={6} md={3}>
-            <FormControl fullWidth size="small">
-              <InputLabel>State</InputLabel>
+            {/* State Filter */}
+            <FormControl size="small" sx={{ minWidth: 110 }}>
+              <InputLabel sx={{ fontSize: '0.875rem' }}>State</InputLabel>
               <Select
                 value={filters.state}
                 label="State"
                 onChange={(e) => setFilters(f => ({ ...f, state: e.target.value }))}
+                sx={{
+                  fontSize: '0.875rem',
+                  '& .MuiSelect-select': {
+                    py: 1,
+                    display: 'flex',
+                    alignItems: 'center'
+                  }
+                }}
               >
-                <MenuItem value="">All</MenuItem>
-                {currentStates.map(state => <MenuItem key={state} value={state}>{state}</MenuItem>)}
+                <MenuItem value="" sx={{ fontSize: '0.875rem' }}>All</MenuItem>
+                {currentStates.map(state => <MenuItem key={state} value={state} sx={{ fontSize: '0.875rem' }}>{state}</MenuItem>)}
               </Select>
             </FormControl>
-          </Grid>
 
-          {/* Quarter Filter */}
-          <Grid item xs={12} sm={6} md={3}>
-            <FormControl fullWidth size="small">
-              <InputLabel>Quarter</InputLabel>
+            {/* Quarter Filter */}
+            <FormControl size="small" sx={{ minWidth: 100 }}>
+              <InputLabel sx={{ fontSize: '0.875rem' }}>Quarter</InputLabel>
               <Select
                 value={filters.quarter}
                 label="Quarter"
                 onChange={(e) => setFilters(f => ({ ...f, quarter: e.target.value }))}
+                sx={{
+                  fontSize: '0.875rem',
+                  '& .MuiSelect-select': {
+                    py: 1,
+                    display: 'flex',
+                    alignItems: 'center'
+                  }
+                }}
               >
-                <MenuItem value="">All</MenuItem>
-                {targetQuarters.map(q => <MenuItem key={q} value={q}>{q}</MenuItem>)}
+                <MenuItem value="" sx={{ fontSize: '0.875rem' }}>All</MenuItem>
+                {targetQuarters.map(q => <MenuItem key={q} value={q} sx={{ fontSize: '0.875rem' }}>{q}</MenuItem>)}
               </Select>
             </FormControl>
-          </Grid>
 
-          {/* Size Filter */}
-          <Grid item xs={12} sm={6} md={3}>
-            <FormControl fullWidth size="small">
-              <InputLabel>Size</InputLabel>
+            {/* Size Filter */}
+            <FormControl size="small" sx={{ minWidth: 80 }}>
+              <InputLabel sx={{ fontSize: '0.875rem' }}>Size</InputLabel>
               <Select
                 value={filters.size}
                 label="Size"
                 onChange={(e) => setFilters(f => ({ ...f, size: e.target.value }))}
+                sx={{
+                  fontSize: '0.875rem',
+                  '& .MuiSelect-select': {
+                    py: 1,
+                    display: 'flex',
+                    alignItems: 'center'
+                  }
+                }}
               >
-                <MenuItem value="">All</MenuItem>
-                {tshirtSizes.map(size => <MenuItem key={size} value={size}>{size}</MenuItem>)}
+                <MenuItem value="" sx={{ fontSize: '0.875rem' }}>All</MenuItem>
+                {tshirtSizes.map(size => <MenuItem key={size} value={size} sx={{ fontSize: '0.875rem' }}>{size}</MenuItem>)}
               </Select>
             </FormControl>
-          </Grid>
 
-          {/* Goal Filter */}
-          <Grid item xs={12} sm={6} md={3}>
-            <FormControl fullWidth size="small">
-              <InputLabel>Goal</InputLabel>
+            {/* Goal Filter */}
+            <FormControl size="small" sx={{ minWidth: 140 }}>
+              <InputLabel sx={{ fontSize: '0.875rem' }}>Goal</InputLabel>
               <Select
                 value={filters.goal}
                 label="Goal"
                 onChange={(e) => setFilters(f => ({ ...f, goal: e.target.value }))}
+                sx={{
+                  fontSize: '0.875rem',
+                  '& .MuiSelect-select': {
+                    py: 1,
+                    display: 'flex',
+                    alignItems: 'center'
+                  }
+                }}
               >
-                <MenuItem value="">All</MenuItem>
-                {companyGoals.map(goal => <MenuItem key={goal} value={goal}>{goal}</MenuItem>)}
+                <MenuItem value="" sx={{ fontSize: '0.875rem' }}>All</MenuItem>
+                {companyGoals.map(goal => <MenuItem key={goal} value={goal} sx={{ fontSize: '0.875rem' }}>{goal}</MenuItem>)}
               </Select>
             </FormControl>
-          </Grid>
 
-          {/* Gaps Filter */}
-          <Grid item xs={12} sm={6} md={6}>
-            <Box>
-              <Typography variant="caption" sx={{ mb: 1, display: 'block', color: 'text.secondary' }}>
-                Gap Types (select multiple)
-              </Typography>
-              <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
-                {gapTypeOptions.map(gap => (
-                  <Chip
-                    key={gap}
-                    label={gap}
-                    size="small"
-                    color={filters.gaps.includes(gap) ? 'primary' : 'default'}
-                    onClick={() => setFilters(f => ({
-                      ...f,
-                      gaps: f.gaps.includes(gap)
-                        ? f.gaps.filter(g => g !== gap)
-                        : [...f.gaps, gap]
-                    }))}
-                    sx={{ cursor: 'pointer' }}
-                  />
-                ))}
-              </Box>
-            </Box>
-          </Grid>
-        </Grid>
-
-        {/* Active Filters Summary */}
-        {hasActiveFilters && (
-          <Box sx={{ mt: 2, pt: 2, borderTop: 1, borderColor: 'divider' }}>
-            <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
-              Showing {totalFeatures} of {features.length} features
-            </Typography>
+            {/* Gap Filter */}
+            <FormControl size="small" sx={{ minWidth: 140 }}>
+              <InputLabel sx={{ fontSize: '0.875rem' }}>Gap</InputLabel>
+              <Select
+                value={filters.gap}
+                label="Gap"
+                onChange={(e) => setFilters(f => ({ ...f, gap: e.target.value }))}
+                sx={{
+                  fontSize: '0.875rem',
+                  '& .MuiSelect-select': {
+                    py: 1,
+                    display: 'flex',
+                    alignItems: 'center'
+                  }
+                }}
+              >
+                <MenuItem value="" sx={{ fontSize: '0.875rem' }}>All</MenuItem>
+                {gapTypeOptions.map(gap => <MenuItem key={gap} value={gap} sx={{ fontSize: '0.875rem' }}>{gap}</MenuItem>)}
+              </Select>
+            </FormControl>
           </Box>
-        )}
+
+          {/* Clear All Button and Count */}
+          <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
+            {hasActiveFilters && (
+              <>
+                <Typography variant="caption" sx={{ fontSize: '0.75rem', color: 'text.secondary', whiteSpace: 'nowrap' }}>
+                  {totalFeatures} / {features.length}
+                </Typography>
+                <Button
+                  variant="text"
+                  size="small"
+                  onClick={clearAllFilters}
+                  sx={{
+                    minWidth: 'auto',
+                    fontSize: '0.75rem',
+                    py: 0.5,
+                    px: 1,
+                    textTransform: 'none'
+                  }}
+                >
+                  Clear
+                </Button>
+              </>
+            )}
+          </Box>
+        </Box>
       </Box>
 
       {loading || categoriesLoading ? (
@@ -610,20 +749,54 @@ function DashboardHome() {
                         {getTruncatedDescription(f.desc)}
                       </Typography>
 
-                      {/* Impact Score Badge */}
-                      <Box sx={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        px: 1,
-                        py: 0.4,
-                        bgcolor: '#3B82F6',
-                        color: 'white',
-                        borderRadius: '3px',
-                        fontWeight: 600,
-                        fontSize: '0.7rem',
-                        mb: 1.25
-                      }}>
-                        Impact Score: {getImpactScore(f)}%
+                      {/* Impact Score Badge and Status Dropdown */}
+                      <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', mb: 1.25, flexWrap: 'wrap' }}>
+                        <Box sx={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          px: 1,
+                          py: 0.4,
+                          bgcolor: getImpactColor(getImpactScore(f)),
+                          color: 'white',
+                          borderRadius: '3px',
+                          fontWeight: 600,
+                          fontSize: '0.7rem'
+                        }}>
+                          Impact Score: {getImpactScore(f)}%
+                        </Box>
+
+                        {/* Status Dropdown */}
+                        <FormControl size="small" sx={{ minWidth: 120 }} onClick={(e) => e.stopPropagation()}>
+                          <Select
+                            value={f.workflowStatus || 'Planning'}
+                            onChange={(e) => {
+                              e.stopPropagation();
+                              handleStatusChange(f.id, e.target.value);
+                            }}
+                            sx={{
+                              fontSize: '0.7rem',
+                              height: '26px',
+                              bgcolor: getWorkflowStatusColor(f.workflowStatus || 'Planning'),
+                              color: 'white',
+                              fontWeight: 600,
+                              '& .MuiOutline-notchedOutline': { border: 'none' },
+                              '& .MuiSelect-icon': { color: 'white' },
+                              '&:hover': { opacity: 0.9 },
+                              '& .MuiSelect-select': {
+                                py: 0.5,
+                                px: 1,
+                                display: 'flex',
+                                alignItems: 'center'
+                              }
+                            }}
+                          >
+                            {workflowStatuses.map(status => (
+                              <MenuItem key={status} value={status} sx={{ fontSize: '0.75rem' }}>
+                                {status}
+                              </MenuItem>
+                            ))}
+                          </Select>
+                        </FormControl>
                       </Box>
 
                       {/* Metadata - Simple Text Labels */}
@@ -802,20 +975,54 @@ function DashboardHome() {
                         {getTruncatedDescription(f.desc)}
                       </Typography>
 
-                      {/* Impact Score Badge */}
-                      <Box sx={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        px: 1,
-                        py: 0.4,
-                        bgcolor: '#3B82F6',
-                        color: 'white',
-                        borderRadius: '3px',
-                        fontWeight: 600,
-                        fontSize: '0.7rem',
-                        mb: 1.25
-                      }}>
-                        Impact Score: {getImpactScore(f)}%
+                      {/* Impact Score Badge and Status Dropdown */}
+                      <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', mb: 1.25, flexWrap: 'wrap' }}>
+                        <Box sx={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          px: 1,
+                          py: 0.4,
+                          bgcolor: getImpactColor(getImpactScore(f)),
+                          color: 'white',
+                          borderRadius: '3px',
+                          fontWeight: 600,
+                          fontSize: '0.7rem'
+                        }}>
+                          Impact Score: {getImpactScore(f)}%
+                        </Box>
+
+                        {/* Status Dropdown */}
+                        <FormControl size="small" sx={{ minWidth: 120 }} onClick={(e) => e.stopPropagation()}>
+                          <Select
+                            value={f.workflowStatus || 'Planning'}
+                            onChange={(e) => {
+                              e.stopPropagation();
+                              handleStatusChange(f.id, e.target.value);
+                            }}
+                            sx={{
+                              fontSize: '0.7rem',
+                              height: '26px',
+                              bgcolor: getWorkflowStatusColor(f.workflowStatus || 'Planning'),
+                              color: 'white',
+                              fontWeight: 600,
+                              '& .MuiOutline-notchedOutline': { border: 'none' },
+                              '& .MuiSelect-icon': { color: 'white' },
+                              '&:hover': { opacity: 0.9 },
+                              '& .MuiSelect-select': {
+                                py: 0.5,
+                                px: 1,
+                                display: 'flex',
+                                alignItems: 'center'
+                              }
+                            }}
+                          >
+                            {workflowStatuses.map(status => (
+                              <MenuItem key={status} value={status} sx={{ fontSize: '0.75rem' }}>
+                                {status}
+                              </MenuItem>
+                            ))}
+                          </Select>
+                        </FormControl>
                       </Box>
 
                       {/* Metadata - Simple Text Labels */}
@@ -904,13 +1111,13 @@ function DashboardHome() {
                 alignItems: 'center',
                 px: 1.5,
                 py: 0.5,
-                bgcolor: 'primary.main',
+                bgcolor: selectedFeature ? getImpactColor(getImpactScore(selectedFeature)) : 'primary.main',
                 color: 'white',
                 borderRadius: '4px',
                 fontWeight: 600,
                 fontSize: '0.875rem'
               }}>
-                Impact Score: {selectedFeature && getImpactScore(selectedFeature)}
+                Impact Score: {selectedFeature && getImpactScore(selectedFeature)}%
               </Box>
             </Box>
             <Box sx={{ display: 'flex', gap: 1 }}>
@@ -1099,33 +1306,6 @@ function DashboardHome() {
       <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="sm" fullWidth>
         <DialogTitle>{editingId ? 'Edit Feature' : 'Add Feature'}</DialogTitle>
         <DialogContent>
-          <Box sx={{ mb: 2 }}>
-            <Typography variant="h6" sx={{ mb: 1 }}>Feature Scoring & Prioritization</Typography>
-            <FormControl fullWidth sx={{ mb: 2 }}>
-              <Typography>Technical Complexity (1=Simple, 5=Very Complex)</Typography>
-              <Slider min={1} max={5} value={form.technicalComplexity} onChange={(_, v) => setForm(f => ({ ...f, technicalComplexity: v }))} valueLabelDisplay="auto" />
-            </FormControl>
-            <FormControl fullWidth sx={{ mb: 2 }}>
-              <Typography>Dependency Risk (1=No Dependencies, 5=Many Dependencies)</Typography>
-              <Slider min={1} max={5} value={form.dependencyRisk} onChange={(_, v) => setForm(f => ({ ...f, dependencyRisk: v }))} valueLabelDisplay="auto" />
-            </FormControl>
-            <FormControl fullWidth sx={{ mb: 2 }}>
-              <Typography>Unknowns / Uncertainty (1=Clear, 5=Many Unknowns)</Typography>
-              <Slider min={1} max={5} value={form.unknowns} onChange={(_, v) => setForm(f => ({ ...f, unknowns: v }))} valueLabelDisplay="auto" />
-            </FormControl>
-            <FormControl fullWidth sx={{ mb: 2 }}>
-              <Typography>Business Value (1=Low Value, 5=High Value)</Typography>
-              <Slider min={1} max={5} value={form.businessValue} onChange={(_, v) => setForm(f => ({ ...f, businessValue: v }))} valueLabelDisplay="auto" />
-            </FormControl>
-            <FormControl fullWidth sx={{ mb: 2 }}>
-              <Typography>Effort Required (1=Small, 5=Very Large)</Typography>
-              <Slider min={1} max={5} value={form.effortRequired} onChange={(_, v) => setForm(f => ({ ...f, effortRequired: v }))} valueLabelDisplay="auto" />
-            </FormControl>
-            <FormControl fullWidth sx={{ mb: 2 }}>
-              <Typography>Requirements Clarity (1=Vague, 5=Crystal Clear)</Typography>
-              <Slider min={1} max={5} value={form.requirementsClarity} onChange={(_, v) => setForm(f => ({ ...f, requirementsClarity: v }))} valueLabelDisplay="auto" />
-            </FormControl>
-          </Box>
           <TextField
             label="Feature Name"
             fullWidth
@@ -1252,6 +1432,35 @@ function DashboardHome() {
             onChange={e => setForm(f => ({ ...f, dependencies: e.target.value }))}
             sx={{ mb: 2 }}
           />
+
+          {/* Feature Scoring & Prioritization - Moved to bottom */}
+          <Box sx={{ mb: 2, pt: 2, borderTop: 1, borderColor: 'divider' }}>
+            <Typography variant="h6" sx={{ mb: 1 }}>Feature Scoring & Prioritization</Typography>
+            <FormControl fullWidth sx={{ mb: 2 }}>
+              <Typography>Technical Complexity (1=Simple, 5=Very Complex)</Typography>
+              <Slider min={1} max={5} value={form.technicalComplexity} onChange={(_, v) => setForm(f => ({ ...f, technicalComplexity: v }))} valueLabelDisplay="auto" />
+            </FormControl>
+            <FormControl fullWidth sx={{ mb: 2 }}>
+              <Typography>Dependency Risk (1=No Dependencies, 5=Many Dependencies)</Typography>
+              <Slider min={1} max={5} value={form.dependencyRisk} onChange={(_, v) => setForm(f => ({ ...f, dependencyRisk: v }))} valueLabelDisplay="auto" />
+            </FormControl>
+            <FormControl fullWidth sx={{ mb: 2 }}>
+              <Typography>Unknowns / Uncertainty (1=Clear, 5=Many Unknowns)</Typography>
+              <Slider min={1} max={5} value={form.unknowns} onChange={(_, v) => setForm(f => ({ ...f, unknowns: v }))} valueLabelDisplay="auto" />
+            </FormControl>
+            <FormControl fullWidth sx={{ mb: 2 }}>
+              <Typography>Business Value (1=Low Value, 5=High Value)</Typography>
+              <Slider min={1} max={5} value={form.businessValue} onChange={(_, v) => setForm(f => ({ ...f, businessValue: v }))} valueLabelDisplay="auto" />
+            </FormControl>
+            <FormControl fullWidth sx={{ mb: 2 }}>
+              <Typography>Effort Required (1=Small, 5=Very Large)</Typography>
+              <Slider min={1} max={5} value={form.effortRequired} onChange={(_, v) => setForm(f => ({ ...f, effortRequired: v }))} valueLabelDisplay="auto" />
+            </FormControl>
+            <FormControl fullWidth sx={{ mb: 2 }}>
+              <Typography>Requirements Clarity (1=Vague, 5=Crystal Clear)</Typography>
+              <Slider min={1} max={5} value={form.requirementsClarity} onChange={(_, v) => setForm(f => ({ ...f, requirementsClarity: v }))} valueLabelDisplay="auto" />
+            </FormControl>
+          </Box>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => {

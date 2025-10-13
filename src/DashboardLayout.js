@@ -154,7 +154,7 @@ function DashboardLayout() {
       {/* Sidebar Logo */}
       <Box sx={{ p: 3, display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'space-between' }}>
         <Typography variant="h6" sx={{ fontWeight: 700, letterSpacing: '-0.02em', display: collapsed ? 'none' : 'block' }}>
-          G.A.P
+          Gapple
         </Typography>
         <IconButton size="small" onClick={() => setCollapsed(c => !c)} sx={{ ml: collapsed ? 0 : 1 }}>
           <MenuIcon />

@@ -45,7 +45,7 @@ function NavBar({ user, onLogout, onSignIn, onSignUp, onLogoClick }) {
             position: 'absolute',
             left: { xs: 16, md: 32 },
             fontWeight: 'bold',
-            letterSpacing: 2,
+            letterSpacing: 1,
             cursor: 'pointer',
             textDecoration: 'none',
             fontSize: { xs: '1.1rem', md: '1.25rem' }
@@ -53,7 +53,7 @@ function NavBar({ user, onLogout, onSignIn, onSignUp, onLogoClick }) {
           onClick={onLogoClick}
           component="span"
         >
-          G.A.P
+          Gapple
         </Typography>
         <Box sx={{ display: 'flex', justifyContent: 'center', flexGrow: 1, gap: 2 }}>
           {user ? null : (

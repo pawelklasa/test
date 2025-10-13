@@ -1,4 +1,6 @@
-# Getting Started with Create React App
+# Gapple
+
+Gapple is a project management and feature prioritization platform built with React and Firebase.
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 

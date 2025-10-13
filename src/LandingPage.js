@@ -183,6 +183,18 @@ function LandingPage({ onGetStarted, onLogin }) {
                       textShadow: '2px 2px 4px rgba(0,0,0,0.2)'
                     }}
                   >
+                    Gapple
+                  </Typography>
+                  <Typography
+                    variant="h2"
+                    sx={{
+                      color: 'rgba(255,255,255,0.9)',
+                      fontWeight: 400,
+                      fontSize: { xs: '1.5rem', md: '2.5rem' },
+                      mb: 2,
+                      textShadow: '2px 2px 4px rgba(0,0,0,0.2)'
+                    }}
+                  >
                     Close the Gap Between Vision & Reality
                   </Typography>
                 </AnimatedBox>

@@ -88,10 +88,15 @@ function DashboardLayout() {
     setAnchorEl(null);
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     handleMenuClose();
-    auth.signOut();
-    navigate('/');
+    try {
+      await auth.signOut();
+      // Navigation will be handled by the auth state change in App.js
+      // No need to navigate manually here
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
   };
 
   const handleSearch = useCallback(async (value) => {

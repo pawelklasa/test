@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import EditIcon from '@mui/icons-material/Edit';
 import DownloadIcon from '@mui/icons-material/Download';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useProject } from '../ProjectContext';
 import { useTheme as useMuiTheme } from '@mui/material/styles';
 import FormControl from '@mui/material/FormControl';
@@ -436,26 +435,6 @@ function DashboardHome() {
 
   return (
     <Box sx={{ p: 3 }}>
-      {/* Back to Projects Button */}
-      <Box sx={{ mb: 2 }}>
-        <Button
-          onClick={() => navigate('/dashboard/projects')}
-          startIcon={<ArrowBackIcon />}
-          sx={{
-            color: 'text.secondary',
-            textTransform: 'none',
-            fontSize: '0.9rem',
-            fontWeight: 500,
-            '&:hover': {
-              bgcolor: 'action.hover',
-              color: 'primary.main'
-            }
-          }}
-        >
-          Back to Projects
-        </Button>
-      </Box>
-
       {/* Progress Bar */}
       <Box sx={{
         mb: 3,

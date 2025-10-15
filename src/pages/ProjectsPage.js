@@ -85,7 +85,7 @@ function ProjectsPage() {
   const handleProjectClick = (project) => {
     trackProjectSwitched('projects_page', project.name);
     setSelectedProject(project.id);
-    navigate('/dashboard');
+    navigate(`/dashboard/project/${project.id}`);
   };
 
   const handleSaveProject = async () => {

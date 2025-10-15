@@ -93,7 +93,7 @@ function AppContent({ user, setUser, showAuth, setShowAuth, isLogin, setIsLogin 
         <Route path="/" element={
           <>
             {user ? (
-              <Navigate to="/dashboard" replace />
+              <Navigate to="/dashboard/projects" replace />
             ) : (
               <LandingPage
                 onGetStarted={() => { setShowAuth(true); setIsLogin(false); }}
@@ -105,8 +105,9 @@ function AppContent({ user, setUser, showAuth, setShowAuth, isLogin, setIsLogin 
 
         {/* Dashboard Routes - Always available but protected by authentication */}
         <Route path="/dashboard" element={<DashboardLayout />}>
-          <Route index element={<ProjectGuard><DashboardHome /></ProjectGuard>} />
+          <Route index element={<Navigate to="/dashboard/projects" replace />} />
           <Route path="projects" element={<ProjectsPage />} />
+          <Route path="project/:projectId" element={<ProjectGuard><DashboardHome /></ProjectGuard>} />
           <Route path="ttl" element={<ProjectGuard><FeatureTTL /></ProjectGuard>} />
           <Route path="users" element={<ProjectGuard><UserManagement /></ProjectGuard>} />
           <Route path="visual-gap-analysis" element={<ProjectGuard><VisualGapAnalysis /></ProjectGuard>} />

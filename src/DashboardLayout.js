@@ -39,7 +39,6 @@ const drawerWidth = 260;
 const collapsedDrawerWidth = 64;
 
 const menuItems = [
-  { text: 'Overview', icon: <DashboardIcon />, path: '/dashboard' },
   { text: 'Projects', icon: <FolderIcon />, path: '/dashboard/projects' },
   { text: 'Time to Market', icon: <AccessTimeIcon />, path: '/dashboard/ttl' },
   { text: 'User Management', icon: <PeopleIcon />, path: '/dashboard/users' }
@@ -324,8 +323,8 @@ function DashboardLayout() {
                       <MenuItem
                         key={result.id}
                         onClick={() => {
-                          // Navigate to dashboard with feature ID as URL param
-                          navigate(`/dashboard?featureId=${result.id}`);
+                          // Navigate to project dashboard with feature ID as URL param
+                          navigate(`/dashboard/project/${result.projectId}?featureId=${result.id}`);
                           setSearchQuery('');
                           setSearchOpen(false);
                         }}

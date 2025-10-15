@@ -109,6 +109,11 @@ function DashboardHome() {
     if (window.confirm(`Are you sure you want to delete "${featureName}"?\n\nThis action cannot be undone.`)) {
       deleteFeature(featureId);
       trackFeatureDeleted(featureCategory);
+      // Close modal if deleting the currently selected feature
+      if (selectedFeature?.id === featureId) {
+        setOpenDetailsModal(false);
+        setSelectedFeature(null);
+      }
     }
   };
 
@@ -1358,8 +1363,7 @@ function DashboardHome() {
                 size="small"
                 onClick={(e) => {
                   e.stopPropagation();
-                  deleteFeature(selectedFeature?.id);
-                  setOpenDetailsModal(false);
+                  handleDeleteFeature(selectedFeature?.id, selectedFeature?.name, selectedFeature?.category);
                 }}
                 sx={{
                   color: 'text.secondary',

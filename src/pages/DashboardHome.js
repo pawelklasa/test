@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import EditIcon from '@mui/icons-material/Edit';
 import DownloadIcon from '@mui/icons-material/Download';
 import { useProject } from '../ProjectContext';
@@ -50,7 +50,6 @@ function DashboardHome() {
   const theme = useMuiTheme();
   const isDark = theme.palette.mode === 'dark';
   const [searchParams, setSearchParams] = useSearchParams();
-  const navigate = useNavigate();
 
   // Calculate impact score as percentage
   function getImpactScore(f) {

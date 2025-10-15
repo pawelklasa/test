@@ -26,6 +26,7 @@ import LightModeIcon from '@mui/icons-material/LightMode';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import FolderIcon from '@mui/icons-material/Folder';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import TimelineIcon from '@mui/icons-material/Timeline';
 import PeopleIcon from '@mui/icons-material/People';
 import { getAuth } from 'firebase/auth';
 import { collection, query, where, getDocs } from 'firebase/firestore';
@@ -40,6 +41,7 @@ const collapsedDrawerWidth = 64;
 const menuItems = [
   { text: 'Projects', icon: <FolderIcon />, path: '/dashboard/projects' },
   { text: 'Time to Market', icon: <AccessTimeIcon />, path: '/dashboard/ttl' },
+  { text: 'Portfolio Roadmap', icon: <TimelineIcon />, path: '/dashboard/roadmap' },
   { text: 'User Management', icon: <PeopleIcon />, path: '/dashboard/users' }
 ];
 

@@ -8,6 +8,7 @@ import DashboardHome from "./pages/DashboardHome";
 import ProjectsPage from "./pages/ProjectsPage";
 import FeatureTTL from "./pages/FeatureTTL";
 import PortfolioRoadmap from "./pages/PortfolioRoadmap";
+import FeatureLifecycleManagement from "./pages/FeatureLifecycleManagement";
 import VisualGapAnalysis from "./pages/VisualGapAnalysis";
 import ActionableInsights from "./pages/ActionableInsights";
 import TeamCollaboration from "./pages/TeamCollaboration";
@@ -111,6 +112,7 @@ function AppContent({ user, setUser, showAuth, setShowAuth, isLogin, setIsLogin 
           <Route path="project/:projectId" element={<ProjectGuard><DashboardHome /></ProjectGuard>} />
           <Route path="ttl" element={<ProjectGuard><FeatureTTL /></ProjectGuard>} />
           <Route path="roadmap" element={<ProjectGuard><PortfolioRoadmap /></ProjectGuard>} />
+          <Route path="lifecycle" element={<ProjectGuard><FeatureLifecycleManagement /></ProjectGuard>} />
           <Route path="users" element={<ProjectGuard><UserManagement /></ProjectGuard>} />
           <Route path="visual-gap-analysis" element={<ProjectGuard><VisualGapAnalysis /></ProjectGuard>} />
           <Route path="actionable-insights" element={<ProjectGuard><ActionableInsights /></ProjectGuard>} />

@@ -7,6 +7,7 @@ import {
   addDoc,
   deleteDoc,
   doc,
+  updateDoc,
   serverTimestamp,
   getDocs,
   getDoc
@@ -17,6 +18,7 @@ export function useProjects(user) {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   useEffect(() => {
     if (!user) {
@@ -29,7 +31,8 @@ export function useProjects(user) {
     console.log('🔍 useProjects: Starting project load for user:', {
       uid: user.uid,
       email: user.email,
-      displayName: user.displayName
+      displayName: user.displayName,
+      refreshTrigger: refreshTrigger
     });
 
     const loadAllUserProjects = async () => {
@@ -124,7 +127,16 @@ export function useProjects(user) {
     };
 
     loadAllUserProjects();
-  }, [user]);
+  }, [user, refreshTrigger]);
+
+  const triggerRefresh = () => {
+    console.log('🔄 triggerRefresh called, current refreshTrigger:', refreshTrigger);
+    setRefreshTrigger(prev => {
+      const newValue = prev + 1;
+      console.log('🔄 Setting refreshTrigger to:', newValue);
+      return newValue;
+    });
+  };
 
   const addProject = async (projectData) => {
     try {
@@ -143,6 +155,7 @@ export function useProjects(user) {
       });
 
       console.log('Project created with ID:', docRef.id);
+      triggerRefresh(); // Refresh the projects list
       return { id: docRef.id, success: true };
     } catch (err) {
       console.error('Error adding project:', err);
@@ -155,6 +168,7 @@ export function useProjects(user) {
   const deleteProject = async (projectId) => {
     try {
       await deleteDoc(doc(db, 'projects', projectId));
+      triggerRefresh(); // Refresh the projects list
       return { success: true };
     } catch (err) {
       console.error('Error deleting project:', err);
@@ -162,11 +176,41 @@ export function useProjects(user) {
     }
   };
 
+  const updateProject = async (projectId, updateData) => {
+    try {
+      console.log('🔄 updateProject called with:', { projectId, updateData });
+      const projectRef = doc(db, 'projects', projectId);
+      console.log('📋 Project reference created:', projectRef.path);
+      
+      await updateDoc(projectRef, {
+        ...updateData,
+        updatedAt: serverTimestamp()
+      });
+      
+      console.log('✅ Project updated successfully in Firestore:', projectId);
+      console.log('🔄 Triggering refresh...');
+      triggerRefresh(); // Refresh the projects list
+      console.log('✅ Refresh triggered');
+      return { success: true };
+    } catch (err) {
+      console.error('❌ Error updating project:', err);
+      console.error('❌ Error code:', err.code);
+      console.error('❌ Error message:', err.message);
+      return { success: false, error: err.message };
+    }
+  };
+
+  const refreshProjects = () => {
+    triggerRefresh();
+  };
+
   return {
     projects,
     loading,
     error,
     addProject,
-    deleteProject
+    deleteProject,
+    updateProject,
+    refreshProjects
   };
 }

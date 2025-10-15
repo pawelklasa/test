@@ -85,3 +85,12 @@ export const trackProjectSwitched = (fromProject, toProject) => {
     to_project: toProject
   });
 };
+
+// Track when users rename projects
+export const trackProjectRenamed = (projectId, oldName, newName) => {
+  logEvent(analytics, 'project_renamed', {
+    project_id: projectId,
+    old_name: oldName,
+    new_name: newName
+  });
+};

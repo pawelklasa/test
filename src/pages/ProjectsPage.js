@@ -19,18 +19,24 @@ import CircularProgress from '@mui/material/CircularProgress';
 import AddIcon from '@mui/icons-material/Add';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit';
 import FolderIcon from '@mui/icons-material/Folder';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../ThemeContext';
 import { useProject } from '../ProjectContext';
-import { trackProjectCreated, trackProjectSwitched, trackPageView } from '../services/analytics';
+import { useProjectStats } from '../hooks/useProjectStats';
+import { trackProjectCreated, trackProjectSwitched, trackProjectRenamed, trackPageView } from '../services/analytics';
 
 function ProjectsPage() {
   const navigate = useNavigate();
   const { mode } = useTheme();
-  const { projects, loading, addProject, deleteProject, setSelectedProject } = useProject();
+  const { projects, loading, addProject, deleteProject, updateProject, setSelectedProject } = useProject();
+  const { projectStats, loading: statsLoading } = useProjectStats(projects);
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedProjectForMenu, setSelectedProjectForMenu] = useState(null);
+  const [renameDialogOpen, setRenameDialogOpen] = useState(false);
+  const [renameProjectName, setRenameProjectName] = useState('');
+  const [projectBeingRenamed, setProjectBeingRenamed] = useState(null);
 
   // Debug - Log user info  
   useEffect(() => {
@@ -93,8 +99,7 @@ function ProjectsPage() {
         name: formData.name,
         description: formData.description,
         status: formData.status,
-        color: formData.color,
-        gaps: 0
+        color: formData.color
       });
 
       console.log('Result:', result);
@@ -127,6 +132,40 @@ function ProjectsPage() {
       await deleteProject(selectedProjectForMenu.id);
       handleMenuClose();
     }
+  };
+
+  const handleRenameProject = () => {
+    if (selectedProjectForMenu) {
+      setProjectBeingRenamed(selectedProjectForMenu); // Store the project being renamed
+      setRenameProjectName(selectedProjectForMenu.name);
+      setRenameDialogOpen(true);
+      handleMenuClose(); // Now it's safe to close the menu
+    }
+  };
+
+  const handleRenameConfirm = async () => {
+    if (projectBeingRenamed && renameProjectName.trim()) {
+      const oldName = projectBeingRenamed.name;
+      const result = await updateProject(projectBeingRenamed.id, {
+        name: renameProjectName.trim()
+      });
+      
+      if (result.success) {
+        console.log('✅ Project renamed successfully');
+        trackProjectRenamed(projectBeingRenamed.id, oldName, renameProjectName.trim());
+      } else {
+        console.error('❌ Failed to rename project:', result.error);
+      }
+    }
+    setRenameDialogOpen(false);
+    setRenameProjectName('');
+    setProjectBeingRenamed(null);
+  };
+
+  const handleRenameCancel = () => {
+    setRenameDialogOpen(false);
+    setRenameProjectName('');
+    setProjectBeingRenamed(null);
   };
 
   const getStatusColor = (status) => {
@@ -252,12 +291,33 @@ function ProjectsPage() {
                         fontSize: '0.7rem',
                       }}
                     />
-                    <Chip
-                      label={`${project.gaps} gaps`}
-                      size="small"
-                      variant="outlined"
-                      sx={{ fontSize: '0.7rem' }}
-                    />
+                    {statsLoading ? (
+                      <Chip
+                        label="Loading..."
+                        size="small"
+                        variant="outlined"
+                        sx={{ fontSize: '0.7rem' }}
+                      />
+                    ) : (
+                      <>
+                        <Chip
+                          label={`${projectStats[project.id]?.totalFeatures || 0} features`}
+                          size="small"
+                          variant="outlined"
+                          sx={{ fontSize: '0.7rem' }}
+                        />
+                        <Chip
+                          label={`${projectStats[project.id]?.completionPercentage || 0}% complete`}
+                          size="small"
+                          variant="outlined"
+                          sx={{ 
+                            fontSize: '0.7rem',
+                            bgcolor: projectStats[project.id]?.completionPercentage > 0 ? 'success.light' : 'transparent',
+                            color: projectStats[project.id]?.completionPercentage > 0 ? 'success.dark' : 'text.secondary'
+                          }}
+                        />
+                      </>
+                    )}
                   </Box>
 
                   <Typography variant="caption" color="text.secondary">
@@ -352,12 +412,49 @@ function ProjectsPage() {
         </DialogActions>
       </Dialog>
 
+      {/* Rename Project Dialog */}
+      <Dialog open={renameDialogOpen} onClose={handleRenameCancel} maxWidth="sm" fullWidth>
+        <DialogTitle>Rename Project</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Project Name"
+            fullWidth
+            variant="outlined"
+            value={renameProjectName}
+            onChange={(e) => setRenameProjectName(e.target.value)}
+            onKeyPress={(e) => {
+              if (e.key === 'Enter') {
+                handleRenameConfirm();
+              }
+            }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleRenameCancel}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleRenameConfirm}
+            disabled={!renameProjectName.trim()}
+          >
+            Rename
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       {/* Project Menu */}
       <Menu
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
         onClose={handleMenuClose}
       >
+        <MenuItem onClick={handleRenameProject}>
+          <EditIcon sx={{ mr: 1, fontSize: 20 }} />
+          Rename Project
+        </MenuItem>
         <MenuItem onClick={handleDeleteProject} sx={{ color: 'error.main' }}>
           <DeleteIcon sx={{ mr: 1, fontSize: 20 }} />
           Delete Project

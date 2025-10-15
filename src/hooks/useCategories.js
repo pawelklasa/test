@@ -9,7 +9,8 @@ import {
   doc,
   serverTimestamp,
   setDoc,
-  getDoc
+  getDoc,
+  getDocs
 } from 'firebase/firestore';
 import { db } from '../firebase';
 
@@ -113,13 +114,26 @@ export const useCategories = (projectId) => {
       const newCategories = categories.filter(cat => cat !== categoryName);
       const categoriesDocRef = doc(db, 'projectCategories', projectId);
       
+      // Update the projectCategories document
       await setDoc(categoriesDocRef, {
         categories: newCategories,
         updatedAt: serverTimestamp()
       }, { merge: true });
 
+      // Also remove from individual categories collection
+      const categoriesCollectionRef = collection(db, 'categories');
+      const categoryQuery = query(categoriesCollectionRef, 
+        where('projectId', '==', projectId), 
+        where('name', '==', categoryName)
+      );
+      
+      const categorySnapshot = await getDocs(categoryQuery);
+      const deletePromises = categorySnapshot.docs.map(doc => deleteDoc(doc.ref));
+      await Promise.all(deletePromises);
+
       // Update local state immediately for better UX
       setCategories(newCategories);
+      console.log(`✅ Successfully removed category "${categoryName}" from both locations`);
     } catch (error) {
       console.error('Error removing category:', error);
     }

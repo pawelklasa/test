@@ -19,7 +19,7 @@ export function ProjectProvider({ children }) {
   }, []);
 
   // Get projects from Firebase
-  const { projects, loading, error, addProject, deleteProject } = useProjects(user);
+  const { projects, loading, error, addProject, deleteProject, updateProject } = useProjects(user);
 
   // Set first project as selected when projects load
   useEffect(() => {
@@ -41,7 +41,8 @@ export function ProjectProvider({ children }) {
       loading,
       error,
       addProject,
-      deleteProject
+      deleteProject,
+      updateProject
     }}>
       {children}
     </ProjectContext.Provider>

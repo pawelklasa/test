@@ -290,6 +290,78 @@ function DashboardLayout() {
                   sx={{ width: { xs: '100%', sm: 300 }, '& .MuiInputBase-input': { py: 1.5, pl: 6, pr: 2, fontSize: '0.875rem' } }}
                 />
               </Box>
+
+              {/* Search Results Dropdown */}
+              {searchOpen && searchQuery && (
+                <Paper
+                  sx={{
+                    position: 'absolute',
+                    top: '100%',
+                    left: 0,
+                    right: 0,
+                    zIndex: 2000,
+                    mt: 0.5,
+                    maxHeight: 400,
+                    overflow: 'auto',
+                    border: 1,
+                    borderColor: 'divider'
+                  }}
+                >
+                  {searching ? (
+                    <Box sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <CircularProgress size={16} />
+                      <Typography variant="body2" color="text.secondary">
+                        Searching...
+                      </Typography>
+                    </Box>
+                  ) : searchResults.length > 0 ? (
+                    searchResults.map((result, index) => (
+                      <MenuItem
+                        key={result.id}
+                        onClick={() => {
+                          // Navigate to dashboard with feature ID as URL param
+                          navigate(`/dashboard?featureId=${result.id}`);
+                          setSearchQuery('');
+                          setSearchOpen(false);
+                        }}
+                        sx={{
+                          py: 1.5,
+                          px: 2,
+                          borderBottom: index < searchResults.length - 1 ? 1 : 0,
+                          borderColor: 'divider',
+                          flexDirection: 'column',
+                          alignItems: 'flex-start'
+                        }}
+                      >
+                        <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 0.5 }}>
+                          {result.name}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5 }}>
+                          {result.projectName} • {result.category}
+                        </Typography>
+                        {result.desc && (
+                          <Typography variant="caption" color="text.secondary" sx={{ 
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            display: '-webkit-box',
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: 'vertical',
+                            lineHeight: 1.3
+                          }}>
+                            {result.desc}
+                          </Typography>
+                        )}
+                      </MenuItem>
+                    ))
+                  ) : searchQuery.length > 0 ? (
+                    <Box sx={{ p: 2 }}>
+                      <Typography variant="body2" color="text.secondary">
+                        No features found matching "{searchQuery}"
+                      </Typography>
+                    </Box>
+                  ) : null}
+                </Paper>
+              )}
             </Box>
           </ClickAwayListener>
 

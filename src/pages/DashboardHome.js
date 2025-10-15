@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import EditIcon from '@mui/icons-material/Edit';
+import DownloadIcon from '@mui/icons-material/Download';
 import { useProject } from '../ProjectContext';
 import { useTheme as useMuiTheme } from '@mui/material/styles';
 import FormControl from '@mui/material/FormControl';
@@ -47,6 +49,7 @@ const workflowStatuses = ['Planning', 'In Progress', 'Done', "Won't Do"];
 function DashboardHome() {
   const theme = useMuiTheme();
   const isDark = theme.palette.mode === 'dark';
+  const [searchParams, setSearchParams] = useSearchParams();
 
   // Calculate impact score as percentage
   function getImpactScore(f) {
@@ -117,12 +120,33 @@ function DashboardHome() {
   useEffect(() => {
     trackPageView('dashboard', selectedProject);
   }, [selectedProject]);
+
+  // Handle feature ID from search results
+  useEffect(() => {
+    const featureId = searchParams.get('featureId');
+    if (featureId && features.length > 0) {
+      const feature = features.find(f => f.id === featureId);
+      if (feature) {
+        setSelectedFeature(feature);
+        setOpenDetailsModal(true);
+        // Remove the featureId from URL to clean it up
+        setSearchParams(prev => {
+          const newParams = new URLSearchParams(prev);
+          newParams.delete('featureId');
+          return newParams;
+        });
+      }
+    }
+  }, [searchParams, features, setSearchParams]);
+
   const [openDialog, setOpenDialog] = useState(false);
   const [openDetailsModal, setOpenDetailsModal] = useState(false);
   const [selectedFeature, setSelectedFeature] = useState(null);
   const [wizardStep, setWizardStep] = useState(1); // 1, 2, or 3 for the wizard
 
   const [newCategoryInput, setNewCategoryInput] = useState('');
+  const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
+  const [addCategoryDropdownOpen, setAddCategoryDropdownOpen] = useState(false);
   const [form, setForm] = useState({
     name: '',
     desc: '',
@@ -174,6 +198,18 @@ function DashboardHome() {
     }
   };
 
+  // Handle deleting category
+  const handleDeleteCategory = async (categoryToDelete, event) => {
+    event.stopPropagation(); // Prevent dropdown from opening/closing
+    if (window.confirm(`Are you sure you want to delete the category "${categoryToDelete}"?`)) {
+      await removeCategory(categoryToDelete);
+      // If the deleted category was selected, clear the form field
+      if (form.category === categoryToDelete) {
+        setForm({ ...form, category: '' });
+      }
+    }
+  };
+
   // Filter change handlers with analytics tracking
   const handleFilterChange = (filterType, value) => {
     if (value) {
@@ -193,6 +229,74 @@ function DashboardHome() {
       goal: '',
       gap: ''
     });
+  };
+
+  // Export features to CSV
+  const exportToCSV = () => {
+    // Log debug info to ensure we're getting all features
+    console.log('🔍 Export Debug Info:');
+    console.log(`📊 Total features in database: ${features.length}`);
+    console.log(`🔎 Filtered features currently shown: ${filteredFeatures.length}`);
+    console.log('🗄️ All features array:', features);
+    
+    if (!features.length) {
+      alert('No features to export');
+      return;
+    }
+
+    // Define the headers for CSV (removed Description)
+    const headers = [
+      'Feature Name',
+      'Category',
+      'Priority (MoSCoW)',
+      'Target Quarter',
+      'T-Shirt Size',
+      'Story Points',
+      'Current State',
+      'Company Goal',
+      'Gap Types',
+      'Workflow Status',
+      'Business Value (1-5)',
+      'Technical Complexity (1-5)',
+      'Effort Required (1-5)',
+      'Created Date'
+    ];
+
+    // Convert ALL features to CSV rows (using 'features' not 'filteredFeatures')
+    const csvRows = features.map(feature => [
+      `"${(feature.name || '').replace(/"/g, '""')}"`,
+      `"${feature.category || ''}"`,
+      `"${feature.moscow || ''}"`,
+      `"${feature.targetQuarter || ''}"`,
+      `"${feature.tshirtSize || ''}"`,
+      `"${feature.storyPoints || ''}"`,
+      `"${feature.state || ''}"`,
+      `"${feature.goal || ''}"`,
+      `"${(feature.gapTypes || []).join(', ')}"`,
+      `"${feature.workflowStatus || ''}"`,
+      `"${feature.businessValue || ''}"`,
+      `"${feature.technicalComplexity || ''}"`,
+      `"${feature.effortRequired || ''}"`,
+      `"${feature.createdAt ? new Date(feature.createdAt.seconds * 1000).toLocaleDateString() : ''}"`
+    ]);
+
+    // Combine headers and rows
+    const csvContent = [headers.join(','), ...csvRows.map(row => row.join(','))].join('\n');
+
+    // Create and download the file
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `features-export-${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    console.log(`✅ Successfully exported ALL ${features.length} features to CSV (not just the ${filteredFeatures.length} filtered ones)`);
+    // Track the export
+    trackFilterUsed('export', 'csv', selectedProject);
   };
 
   // Check if any filters are active
@@ -479,8 +583,8 @@ function DashboardHome() {
           borderColor: 'divider',
           borderRadius: '4px',
           display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center'
+          flexDirection: 'column',
+          gap: 1
         }}>
           <Button
             variant="contained"
@@ -489,6 +593,16 @@ function DashboardHome() {
             sx={{ fontWeight: 600 }}
           >
             Add Feature
+          </Button>
+          <Button
+            variant="outlined"
+            onClick={exportToCSV}
+            fullWidth
+            startIcon={<DownloadIcon />}
+            sx={{ fontWeight: 600 }}
+            disabled={!features.length}
+          >
+            Export CSV
           </Button>
         </Box>
       </Box>
@@ -1501,9 +1615,50 @@ function DashboardHome() {
             <Select
               value={form.category}
               label="Category"
+              open={categoryDropdownOpen}
+              onOpen={() => setCategoryDropdownOpen(true)}
+              onClose={() => setCategoryDropdownOpen(false)}
               onChange={e => setForm(f => ({ ...f, category: e.target.value }))}
             >
-              {categories.map(cat => <MenuItem key={cat} value={cat}>{cat}</MenuItem>)}
+              {categories.map(cat => (
+                <MenuItem key={cat} value={cat}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                    <Box component="span">
+                      {cat}
+                    </Box>
+                    {categoryDropdownOpen && (
+                      <Box
+                        component="span"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleDeleteCategory(cat, e);
+                        }}
+                        sx={{ 
+                          ml: 1,
+                          px: 0.5,
+                          py: 0.5,
+                          fontSize: '12px',
+                          color: 'text.secondary',
+                          cursor: 'pointer',
+                          borderRadius: '50%',
+                          minWidth: '18px',
+                          height: '18px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          '&:hover': { 
+                            bgcolor: 'error.main',
+                            color: 'white'
+                          }
+                        }}
+                      >
+                        ×
+                      </Box>
+                    )}
+                  </Box>
+                </MenuItem>
+              ))}
             </Select>
           </FormControl>
           
@@ -1777,9 +1932,50 @@ function DashboardHome() {
                 <Select
                   value={form.category}
                   label="Category *"
+                  open={addCategoryDropdownOpen}
+                  onOpen={() => setAddCategoryDropdownOpen(true)}
+                  onClose={() => setAddCategoryDropdownOpen(false)}
                   onChange={e => setForm(f => ({ ...f, category: e.target.value }))}
                 >
-                  {categories.map(cat => <MenuItem key={cat} value={cat}>{cat}</MenuItem>)}
+                  {categories.map(cat => (
+                    <MenuItem key={cat} value={cat}>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                        <Box component="span">
+                          {cat}
+                        </Box>
+                        {addCategoryDropdownOpen && (
+                          <Box
+                            component="span"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleDeleteCategory(cat, e);
+                            }}
+                            sx={{ 
+                              ml: 1,
+                              px: 0.5,
+                              py: 0.5,
+                              fontSize: '12px',
+                              color: 'text.secondary',
+                              cursor: 'pointer',
+                              borderRadius: '50%',
+                              minWidth: '18px',
+                              height: '18px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              '&:hover': { 
+                                bgcolor: 'error.main',
+                                color: 'white'
+                              }
+                            }}
+                          >
+                            ×
+                          </Box>
+                        )}
+                      </Box>
+                    </MenuItem>
+                  ))}
                 </Select>
               </FormControl>
 

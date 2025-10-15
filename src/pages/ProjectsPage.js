@@ -32,6 +32,23 @@ function ProjectsPage() {
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedProjectForMenu, setSelectedProjectForMenu] = useState(null);
 
+  // Debug - Log user info  
+  useEffect(() => {
+    import('firebase/auth').then(({ getAuth }) => {
+      const auth = getAuth();
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        console.log('🔍 ProjectsPage: Current user:', {
+          uid: currentUser.uid,
+          email: currentUser.email,
+          displayName: currentUser.displayName
+        });
+        console.log('🔍 ProjectsPage: Projects loaded:', projects.length);
+        console.log('🔍 ProjectsPage: Loading state:', loading);
+      }
+    });
+  }, [projects, loading]);
+
   // Track page view
   useEffect(() => {
     trackPageView('projects');
@@ -146,8 +163,9 @@ function ProjectsPage() {
 
       {/* Loading State */}
       {loading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 8 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', py: 8 }}>
           <CircularProgress />
+          <Typography sx={{ mt: 2 }}>Loading your projects...</Typography>
         </Box>
       ) : projects.length === 0 ? (
         <Box sx={{ textAlign: 'center', py: 8 }}>
@@ -159,6 +177,9 @@ function ProjectsPage() {
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 4, maxWidth: 400, mx: 'auto' }}>
             Projects help you organize your features and track progress. Once you create a project, you'll be able to access the dashboard and start managing your features.
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2, fontStyle: 'italic' }}>
+            📋 Check browser console for debugging information
           </Typography>
           <Button
             variant="contained"

@@ -16,12 +16,13 @@ import GrowthMetrics from "./pages/GrowthMetrics";
 import DataVisualization from "./pages/DataVisualization";
 import AutomatedWorkflows from "./pages/AutomatedWorkflows";
 import IntegrationHub from "./pages/IntegrationHub";
+import UserManagement from "./pages/UserManagement";
 import ProjectGuard from "./ProjectGuard";
 import { ThemeProvider } from "./ThemeContext";
 import { ProjectProvider } from "./ProjectContext";
+import AutoPopulate from "./components/AutoPopulate";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { useEffect, useState } from "react";
-import Container from '@mui/material/Container';
 import Box from '@mui/material/Box';
 import Modal from '@mui/material/Modal';
 import { BrowserRouter as Router, Routes, Route, useNavigate, Navigate, useLocation } from "react-router-dom";
@@ -36,6 +37,7 @@ function App() {
   return (
     <ThemeProvider>
       <ProjectProvider>
+        <AutoPopulate />
         <Router>
           <AppContent
             user={user}
@@ -101,23 +103,22 @@ function AppContent({ user, setUser, showAuth, setShowAuth, isLogin, setIsLogin 
           </>
         } />
 
-        {/* Dashboard Routes - Only accessible when logged in */}
-        {user && (
-          <Route path="/dashboard" element={<DashboardLayout />}>
-            <Route index element={<ProjectGuard><DashboardHome /></ProjectGuard>} />
-            <Route path="projects" element={<ProjectsPage />} />
-            <Route path="ttl" element={<ProjectGuard><FeatureTTL /></ProjectGuard>} />
-            <Route path="visual-gap-analysis" element={<ProjectGuard><VisualGapAnalysis /></ProjectGuard>} />
-            <Route path="actionable-insights" element={<ProjectGuard><ActionableInsights /></ProjectGuard>} />
-            <Route path="team-collaboration" element={<ProjectGuard><TeamCollaboration /></ProjectGuard>} />
-            <Route path="realtime-tracking" element={<ProjectGuard><RealtimeTracking /></ProjectGuard>} />
-            <Route path="smart-prioritization" element={<ProjectGuard><SmartPrioritization /></ProjectGuard>} />
-            <Route path="growth-metrics" element={<ProjectGuard><GrowthMetrics /></ProjectGuard>} />
-            <Route path="data-visualization" element={<ProjectGuard><DataVisualization /></ProjectGuard>} />
-            <Route path="automated-workflows" element={<ProjectGuard><AutomatedWorkflows /></ProjectGuard>} />
-            <Route path="integration-hub" element={<ProjectGuard><IntegrationHub /></ProjectGuard>} />
-          </Route>
-        )}
+        {/* Dashboard Routes - Always available but protected by authentication */}
+        <Route path="/dashboard" element={<DashboardLayout />}>
+          <Route index element={<ProjectGuard><DashboardHome /></ProjectGuard>} />
+          <Route path="projects" element={<ProjectsPage />} />
+          <Route path="ttl" element={<ProjectGuard><FeatureTTL /></ProjectGuard>} />
+          <Route path="users" element={<ProjectGuard><UserManagement /></ProjectGuard>} />
+          <Route path="visual-gap-analysis" element={<ProjectGuard><VisualGapAnalysis /></ProjectGuard>} />
+          <Route path="actionable-insights" element={<ProjectGuard><ActionableInsights /></ProjectGuard>} />
+          <Route path="team-collaboration" element={<ProjectGuard><TeamCollaboration /></ProjectGuard>} />
+          <Route path="realtime-tracking" element={<ProjectGuard><RealtimeTracking /></ProjectGuard>} />
+          <Route path="smart-prioritization" element={<ProjectGuard><SmartPrioritization /></ProjectGuard>} />
+          <Route path="growth-metrics" element={<ProjectGuard><GrowthMetrics /></ProjectGuard>} />
+          <Route path="data-visualization" element={<ProjectGuard><DataVisualization /></ProjectGuard>} />
+          <Route path="automated-workflows" element={<ProjectGuard><AutomatedWorkflows /></ProjectGuard>} />
+          <Route path="integration-hub" element={<ProjectGuard><IntegrationHub /></ProjectGuard>} />
+        </Route>
       </Routes>
       <Modal
         open={showAuth}
@@ -150,6 +151,5 @@ function AppContent({ user, setUser, showAuth, setShowAuth, isLogin, setIsLogin 
     </div>
   );
 }
-// }
 
 export default App;

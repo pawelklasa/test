@@ -6,20 +6,20 @@ const ProjectContext = createContext();
 
 export function ProjectProvider({ children }) {
   const [selectedProject, setSelectedProject] = useState(null);
-  const [userId, setUserId] = useState(null);
+  const [user, setUser] = useState(null);
 
   // Listen to auth state changes
   useEffect(() => {
     const auth = getAuth();
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      console.log('Auth state changed:', user?.uid);
-      setUserId(user?.uid || null);
+    const unsubscribe = auth.onAuthStateChanged((authUser) => {
+      console.log('Auth state changed:', authUser?.uid);
+      setUser(authUser);
     });
     return () => unsubscribe();
   }, []);
 
   // Get projects from Firebase
-  const { projects, loading, error, addProject, deleteProject } = useProjects(userId);
+  const { projects, loading, error, addProject, deleteProject } = useProjects(user);
 
   // Set first project as selected when projects load
   useEffect(() => {

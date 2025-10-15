@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect } from 'react';
+import React, { useMemo, useEffect, useState } from 'react';
 import { useProject } from '../ProjectContext';
 import { useFeatures } from '../hooks/useFeatures';
 import { trackPageView } from '../services/analytics';
@@ -6,12 +6,25 @@ import { useTheme as useMuiTheme } from '@mui/material/styles';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Paper from '@mui/material/Paper';
-import LinearProgress from '@mui/material/LinearProgress';
 import Chip from '@mui/material/Chip';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import WarningIcon from '@mui/icons-material/Warning';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import SettingsIcon from '@mui/icons-material/Settings';
+import FormControl from '@mui/material/FormControl';
+import InputLabel from '@mui/material/InputLabel';
+import Select from '@mui/material/Select';
+import MenuItem from '@mui/material/MenuItem';
+import TextField from '@mui/material/TextField';
+import Collapse from '@mui/material/Collapse';
+import IconButton from '@mui/material/IconButton';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import CloseIcon from '@mui/icons-material/Close';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 
 function FeatureTTL() {
   const theme = useMuiTheme();
@@ -19,61 +32,223 @@ function FeatureTTL() {
   const { selectedProject } = useProject();
   const { features, loading } = useFeatures(selectedProject);
 
+  // Team configuration state
+  const [showSettings, setShowSettings] = useState(false);
+
+  // Breakdown modal state
+  const [selectedFeatureForBreakdown, setSelectedFeatureForBreakdown] = useState(null);
+  const [teamConfig, setTeamConfig] = useState(() => {
+    // Load from localStorage if available
+    const saved = localStorage.getItem('ttm-team-config');
+    if (saved) {
+      return JSON.parse(saved);
+    }
+    return {
+      workMode: 'parallel', // 'parallel' or 'sequential'
+      teamSize: 8, // Number of parallel tracks (for parallel mode)
+      teamVelocity: 25 // Story points per week
+    };
+  });
+
   // Track page view
   useEffect(() => {
     trackPageView('time-to-market', selectedProject);
   }, [selectedProject]);
 
-  // Calculate Time to Market for a feature
+  // Save team config to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('ttm-team-config', JSON.stringify(teamConfig));
+  }, [teamConfig]);
+
+  // Proprietary TTM Algorithm - Revolutionary Edition
   const calculateTTL = (feature) => {
     const safe = key => typeof feature[key] === 'number' ? feature[key] : 3;
+    const safeNum = key => typeof feature[key] === 'number' ? feature[key] : 0;
 
-    // Factors that affect development time
+    // Store breakdown details
+    const breakdown = {
+      steps: []
+    };
+
+    // === STEP 1: BASE EFFORT CALCULATION ===
+    // Use Story Points as primary driver (more accurate than T-shirt sizes)
+    const storyPoints = safeNum('storyPoints') || 5;
+
+    // Team velocity (Story Points per week) - configurable
+    const teamVelocity = teamConfig.teamVelocity;
+
+    // Base time in weeks from story points
+    let baseWeeks = storyPoints / teamVelocity;
+
+    breakdown.steps.push({
+      step: 1,
+      title: 'Base Effort Calculation',
+      description: `Story Points (${storyPoints}) ÷ Team Velocity (${teamVelocity})`,
+      calculation: `${storyPoints} ÷ ${teamVelocity} = ${baseWeeks.toFixed(2)} weeks`,
+      result: baseWeeks,
+      impact: baseWeeks
+    });
+
+    // === STEP 2: COMPLEXITY MULTIPLIER ===
+    // Aggregate all complexity factors
     const technicalComplexity = safe('technicalComplexity');
     const dependencyRisk = safe('dependencyRisk');
     const unknowns = safe('unknowns');
     const effortRequired = safe('effortRequired');
     const requirementsClarity = safe('requirementsClarity');
 
-    // T-shirt size mapping to base DAYS (much more aggressive)
-    const sizeInDays = {
-      'S': 2,     // Small: 2-5 days
-      'M': 5,     // Medium: 5-10 days (1-2 weeks)
-      'L': 10,    // Large: 10-20 days (2-4 weeks)
-      'XL': 20    // Extra Large: 20-30 days (4-6 weeks)
-    };
-    const baseDays = sizeInDays[feature.tshirtSize] || 5;
+    // Complexity increases time, clarity reduces time
+    const complexityScore = (technicalComplexity + dependencyRisk + unknowns + effortRequired) / 4;
+    const complexityMultiplier = 1 + ((complexityScore - 3) * 0.25); // ±50% based on complexity
+    const clarityMultiplier = 1 - ((requirementsClarity - 3) * 0.15); // ±30% based on clarity
 
-    // Calculate average scoring factor (1-5 scale)
-    // Higher scores = more complexity/risk/effort = more time
-    const complexityFactor = (technicalComplexity + dependencyRisk + unknowns + effortRequired) / 4;
+    const beforeComplexity = baseWeeks;
+    baseWeeks = baseWeeks * complexityMultiplier * clarityMultiplier;
 
-    // Clarity is inversed - higher clarity = less time
-    const clarityBonus = (requirementsClarity - 3) * 0.1; // -0.2 to +0.2 multiplier
+    breakdown.steps.push({
+      step: 2,
+      title: 'Complexity & Clarity Adjustments',
+      description: `Complexity Score: ${complexityScore.toFixed(1)}/5, Clarity: ${requirementsClarity}/5`,
+      calculation: `${beforeComplexity.toFixed(2)} × ${complexityMultiplier.toFixed(2)} × ${clarityMultiplier.toFixed(2)} = ${baseWeeks.toFixed(2)} weeks`,
+      result: baseWeeks,
+      impact: baseWeeks - beforeComplexity
+    });
 
-    // Apply complexity as a percentage increase (0% to 50% increase max)
-    // Score of 1 = 0% increase, Score of 5 = 50% increase
-    const complexityMultiplier = 1 + ((complexityFactor - 1) / 8);
+    // === STEP 3: LAYER IMPACT ADJUSTMENT ===
+    // Weight by which layers are affected (Frontend, Backend, Database)
+    const frontendImpact = safe('frontendImpact');
+    const backendImpact = safe('backendImpact');
+    const databaseImpact = safe('databaseImpact');
 
-    let totalDays = baseDays * complexityMultiplier * (1 - clarityBonus);
+    // Calculate weighted impact (higher impact = more time)
+    const avgImpact = (frontendImpact + backendImpact + databaseImpact) / 3;
+    const layerMultiplier = 1 + ((avgImpact - 3) * 0.2); // ±40% based on layer impact
 
-    // Convert to weeks
-    let baseWeeks = totalDays / 5; // 5 working days per week
+    const beforeLayers = baseWeeks;
+    baseWeeks = baseWeeks * layerMultiplier;
 
-    // Ensure reasonable bounds: minimum 2 days (0.4 weeks), maximum 8 weeks
-    baseWeeks = Math.max(0.4, Math.min(8, baseWeeks));
+    breakdown.steps.push({
+      step: 3,
+      title: 'Layer Impact Adjustment',
+      description: `Frontend: ${frontendImpact}/5, Backend: ${backendImpact}/5, Database: ${databaseImpact}/5`,
+      calculation: `${beforeLayers.toFixed(2)} × ${layerMultiplier.toFixed(2)} = ${baseWeeks.toFixed(2)} weeks`,
+      result: baseWeeks,
+      impact: baseWeeks - beforeLayers
+    });
+
+    // === STEP 4: DEPENDENCY DELAY ===
+    // Each dependency adds delay (blocking time)
+    const dependencyCount = safeNum('dependencyCount');
+    const dependencyDelay = dependencyCount * 0.5; // Each dependency adds half a week
+
+    const beforeDeps = baseWeeks;
+    baseWeeks += dependencyDelay;
+
+    breakdown.steps.push({
+      step: 4,
+      title: 'Dependency Delay',
+      description: `${dependencyCount} dependencies (each adds 0.5 weeks)`,
+      calculation: `${beforeDeps.toFixed(2)} + ${dependencyDelay.toFixed(2)} = ${baseWeeks.toFixed(2)} weeks`,
+      result: baseWeeks,
+      impact: dependencyDelay
+    });
+
+    // === STEP 5: QA OVERHEAD ===
+    // Add QA time if estimated, otherwise use 15% of dev time
+    const estimatedQAHours = safeNum('estimatedQAHours');
+    const qaWeeks = estimatedQAHours > 0
+      ? estimatedQAHours / 40 // Convert hours to weeks (40 hours/week)
+      : baseWeeks * 0.15; // Default 15% of dev time
+
+    const beforeQA = baseWeeks;
+    baseWeeks += qaWeeks;
+
+    breakdown.steps.push({
+      step: 5,
+      title: 'QA Overhead',
+      description: estimatedQAHours > 0
+        ? `${estimatedQAHours} hours estimated`
+        : `15% of development time`,
+      calculation: `${beforeQA.toFixed(2)} + ${qaWeeks.toFixed(2)} = ${baseWeeks.toFixed(2)} weeks`,
+      result: baseWeeks,
+      impact: qaWeeks
+    });
+
+    // === STEP 6: FTE EFFICIENCY (if hours are provided) ===
+    const estimatedBackendHours = safeNum('estimatedBackendHours');
+    const estimatedFrontendHours = safeNum('estimatedFrontendHours');
+
+    if (estimatedBackendHours > 0 || estimatedFrontendHours > 0) {
+      // If detailed hours are provided, use those instead
+      const totalDevHours = estimatedBackendHours + estimatedFrontendHours;
+      const availableFTE = 2; // Assume 2 FTE available (configurable)
+      const hoursPerWeek = 40;
+
+      const weeksFromHours = totalDevHours / (availableFTE * hoursPerWeek);
+      const beforeFTE = baseWeeks;
+      // Use the higher of story point estimate or hours estimate
+      baseWeeks = Math.max(baseWeeks, weeksFromHours + qaWeeks);
+
+      breakdown.steps.push({
+        step: 6,
+        title: 'FTE Hours Adjustment',
+        description: `${totalDevHours} hours estimated across ${availableFTE} FTE`,
+        calculation: `max(${beforeFTE.toFixed(2)}, ${weeksFromHours.toFixed(2)} + ${qaWeeks.toFixed(2)}) = ${baseWeeks.toFixed(2)} weeks`,
+        result: baseWeeks,
+        impact: baseWeeks - beforeFTE
+      });
+    }
+
+    // === STEP 7: TECHNOLOGY DEBT TAX ===
+    // If feature has "Technology/Tech Debt" gap type, add 25% buffer
+    const gapTypes = Array.isArray(feature.gapTypes) ? feature.gapTypes : [];
+    const hasTechDebt = gapTypes.includes('Technology/Tech Debt');
+
+    if (hasTechDebt) {
+      const beforeTechDebt = baseWeeks;
+      baseWeeks *= 1.25; // 25% tech debt tax
+
+      breakdown.steps.push({
+        step: 7,
+        title: 'Technology Debt Tax',
+        description: 'Feature involves tech debt (adds 25%)',
+        calculation: `${beforeTechDebt.toFixed(2)} × 1.25 = ${baseWeeks.toFixed(2)} weeks`,
+        result: baseWeeks,
+        impact: baseWeeks - beforeTechDebt
+      });
+    }
+
+    // Ensure reasonable bounds: minimum 2 days (0.4 weeks), maximum 16 weeks
+    const beforeBounds = baseWeeks;
+    baseWeeks = Math.max(0.4, Math.min(16, baseWeeks));
+
+    if (beforeBounds !== baseWeeks) {
+      breakdown.steps.push({
+        step: hasTechDebt ? 8 : 7,
+        title: 'Bounds Check',
+        description: 'Capped between 0.4 and 16 weeks',
+        calculation: `min(16, max(0.4, ${beforeBounds.toFixed(2)})) = ${baseWeeks.toFixed(2)} weeks`,
+        result: baseWeeks,
+        impact: baseWeeks - beforeBounds
+      });
+    }
 
     // Convert to months for display
     const months = (baseWeeks / 4.33).toFixed(1);
     const weeks = parseFloat(baseWeeks.toFixed(1)); // Keep decimal for more precision
     const days = Math.round(baseWeeks * 5);
 
+    breakdown.finalResult = weeks;
+    breakdown.totalWeeks = weeks;
+    breakdown.totalMonths = parseFloat(months);
+
     return {
       weeks: weeks,
       days: days,
       months: parseFloat(months),
       status: weeks <= 1 ? 'fast' : weeks <= 2 ? 'normal' : weeks <= 4 ? 'slow' : 'critical',
-      healthScore: Math.round(Math.max(0, 100 - (weeks * 10))) // Higher score = faster delivery
+      healthScore: Math.round(Math.max(0, 100 - (weeks * 10))), // Higher score = faster delivery
+      breakdown: breakdown
     };
   };
 
@@ -105,7 +280,7 @@ function FeatureTTL() {
       ...feature,
       ttl: calculateTTL(feature)
     })).sort((a, b) => b.ttl.weeks - a.ttl.weeks); // Sort by longest time first
-  }, [features]);
+  }, [features, teamConfig]);
 
   // Calculate summary stats
   const stats = useMemo(() => {
@@ -143,28 +318,32 @@ function FeatureTTL() {
     const planningTime = planningFeatures.reduce((sum, f) => sum + f.ttl.weeks, 0);
     const totalEffortWeeks = inProgressTime + planningTime;
 
-    // Assume team can work on 8 features in parallel (realistic for most teams)
-    // This accounts for: multiple devs, different tracks (backend/frontend/design), etc.
-    const parallelizationFactor = 8;
-
-    // Calculate actual calendar time based on parallel work
-    // Sort remaining features by duration to estimate realistic timeline
+    // Calculate actual calendar time based on work mode
     const remainingFeatures = [...inProgressFeatures, ...planningFeatures]
       .map(f => ({
         weeks: f.workflowStatus === 'In Progress' ? f.ttl.weeks * 0.5 : f.ttl.weeks
       }))
       .sort((a, b) => b.weeks - a.weeks);
 
-    // Simulate parallel execution: distribute features across parallel "tracks"
-    let tracks = Array(parallelizationFactor).fill(0);
-    remainingFeatures.forEach(feature => {
-      // Assign feature to the track that finishes earliest
-      const earliestTrack = tracks.indexOf(Math.min(...tracks));
-      tracks[earliestTrack] += feature.weeks;
-    });
+    let totalRemainingWeeks;
 
-    // Project completion is when the longest track finishes
-    const totalRemainingWeeks = Math.max(...tracks, 0);
+    if (teamConfig.workMode === 'sequential') {
+      // Sequential mode: add all features together
+      totalRemainingWeeks = remainingFeatures.reduce((sum, f) => sum + f.weeks, 0);
+    } else {
+      // Parallel mode: distribute features across parallel "tracks"
+      const parallelizationFactor = teamConfig.teamSize;
+      let tracks = Array(parallelizationFactor).fill(0);
+
+      remainingFeatures.forEach(feature => {
+        // Assign feature to the track that finishes earliest
+        const earliestTrack = tracks.indexOf(Math.min(...tracks));
+        tracks[earliestTrack] += feature.weeks;
+      });
+
+      // Project completion is when the longest track finishes
+      totalRemainingWeeks = Math.max(...tracks, 0);
+    }
     const totalRemainingMonths = (totalRemainingWeeks / 4.33).toFixed(1);
 
     return {
@@ -206,9 +385,150 @@ function FeatureTTL() {
 
   return (
     <Box sx={{ p: 3 }}>
+      {/* Team Configuration Settings */}
+      <Box sx={{
+        mb: 3,
+        bgcolor: 'background.paper',
+        border: 1,
+        borderColor: 'divider',
+        borderRadius: '4px',
+        overflow: 'hidden'
+      }}>
+        <Box
+          sx={{
+            p: 2,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            cursor: 'pointer',
+            transition: 'all 0.2s ease',
+            '&:hover': {
+              bgcolor: isDark ? 'rgba(148, 163, 184, 0.05)' : 'rgba(243, 244, 246, 0.5)',
+            }
+          }}
+          onClick={() => setShowSettings(!showSettings)}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <SettingsIcon sx={{ color: 'primary.main' }} />
+            <Typography variant="h6" sx={{ fontWeight: 600 }}>
+              Team Configuration
+            </Typography>
+            <Chip
+              label={teamConfig.workMode === 'parallel' ? `Parallel (${teamConfig.teamSize} tracks)` : 'Sequential'}
+              size="small"
+              sx={{ ml: 1, bgcolor: 'primary.main', color: 'white', fontWeight: 600 }}
+            />
+          </Box>
+          <IconButton
+            sx={{
+              transform: showSettings ? 'rotate(180deg)' : 'rotate(0deg)',
+              transition: 'transform 0.3s'
+            }}
+          >
+            <ExpandMoreIcon />
+          </IconButton>
+        </Box>
+
+        <Collapse in={showSettings}>
+          <Box sx={{ p: 3, pt: 2, borderTop: 1, borderColor: 'divider' }}>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+              Configure how your team works to get more accurate project completion estimates.
+            </Typography>
+
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, gap: 3 }}>
+              {/* Work Mode */}
+              <FormControl fullWidth>
+                <InputLabel>Work Mode</InputLabel>
+                <Select
+                  value={teamConfig.workMode}
+                  label="Work Mode"
+                  onChange={(e) => setTeamConfig({ ...teamConfig, workMode: e.target.value })}
+                >
+                  <MenuItem value="parallel">
+                    <Box>
+                      <Typography variant="body2" sx={{ fontWeight: 600 }}>Parallel</Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        Multiple features at once
+                      </Typography>
+                    </Box>
+                  </MenuItem>
+                  <MenuItem value="sequential">
+                    <Box>
+                      <Typography variant="body2" sx={{ fontWeight: 600 }}>Sequential</Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        One feature at a time
+                      </Typography>
+                    </Box>
+                  </MenuItem>
+                </Select>
+              </FormControl>
+
+              {/* Team Size (only for parallel mode) */}
+              {teamConfig.workMode === 'parallel' && (
+                <FormControl fullWidth>
+                  <InputLabel>Team Size / Parallel Tracks</InputLabel>
+                  <Select
+                    value={teamConfig.teamSize}
+                    label="Team Size / Parallel Tracks"
+                    onChange={(e) => setTeamConfig({ ...teamConfig, teamSize: e.target.value })}
+                  >
+                    <MenuItem value={1}>1 person (Solo dev)</MenuItem>
+                    <MenuItem value={2}>2 people (Small team)</MenuItem>
+                    <MenuItem value={3}>3 people</MenuItem>
+                    <MenuItem value={4}>4 people</MenuItem>
+                    <MenuItem value={5}>5 people</MenuItem>
+                    <MenuItem value={6}>6 people</MenuItem>
+                    <MenuItem value={8}>8 people (Medium team)</MenuItem>
+                    <MenuItem value={10}>10 people</MenuItem>
+                    <MenuItem value={12}>12+ people (Large team)</MenuItem>
+                  </Select>
+                </FormControl>
+              )}
+
+              {/* Team Velocity */}
+              <TextField
+                fullWidth
+                type="number"
+                label="Team Velocity (Story Points / Week)"
+                value={teamConfig.teamVelocity}
+                onChange={(e) => setTeamConfig({ ...teamConfig, teamVelocity: Number(e.target.value) })}
+                InputProps={{ inputProps: { min: 1, max: 100 } }}
+                helperText="How many story points your team completes per week"
+              />
+            </Box>
+
+            <Box sx={{ mt: 2, p: 2, bgcolor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)', borderRadius: 1 }}>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1, fontWeight: 600 }}>
+                💡 How this works:
+              </Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
+                <strong>Parallel mode:</strong> Simulates team members working on different features simultaneously. The project completion estimate is based on the longest "track" rather than summing all features.
+              </Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                <strong>Sequential mode:</strong> Assumes features are completed one after another. Best for solo developers or teams that must focus on one feature at a time.
+              </Typography>
+            </Box>
+          </Box>
+        </Collapse>
+      </Box>
+
       {/* Summary Stats */}
       <Box sx={{ display: 'flex', gap: 2, mb: 3, flexWrap: 'wrap' }}>
-        <Paper sx={{ p: 2, flex: '1 1 200px', minWidth: 200 }}>
+        <Box sx={{
+          p: 2,
+          flex: '1 1 200px',
+          minWidth: 200,
+          bgcolor: 'background.paper',
+          border: 1,
+          borderColor: 'divider',
+          borderRadius: '4px',
+          transition: 'all 0.2s ease',
+          '&:hover': {
+            boxShadow: isDark
+              ? '0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2)'
+              : '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+          }
+        }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
             <AccessTimeIcon sx={{ color: 'primary.main', fontSize: 20 }} />
             <Typography variant="caption" color="text.secondary">
@@ -221,9 +541,23 @@ function FeatureTTL() {
           <Typography variant="caption" color="text.secondary">
             ~{(stats.avgWeeks / 4.33).toFixed(1)} months
           </Typography>
-        </Paper>
+        </Box>
 
-        <Paper sx={{ p: 2, flex: '1 1 200px', minWidth: 200 }}>
+        <Box sx={{
+          p: 2,
+          flex: '1 1 200px',
+          minWidth: 200,
+          bgcolor: 'background.paper',
+          border: 1,
+          borderColor: 'divider',
+          borderRadius: '4px',
+          transition: 'all 0.2s ease',
+          '&:hover': {
+            boxShadow: isDark
+              ? '0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2)'
+              : '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+          }
+        }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
             <TrendingUpIcon sx={{ color: '#10B981', fontSize: 20 }} />
             <Typography variant="caption" color="text.secondary">
@@ -236,9 +570,23 @@ function FeatureTTL() {
           <Typography variant="caption" color="text.secondary">
             ≤ 1 week
           </Typography>
-        </Paper>
+        </Box>
 
-        <Paper sx={{ p: 2, flex: '1 1 200px', minWidth: 200 }}>
+        <Box sx={{
+          p: 2,
+          flex: '1 1 200px',
+          minWidth: 200,
+          bgcolor: 'background.paper',
+          border: 1,
+          borderColor: 'divider',
+          borderRadius: '4px',
+          transition: 'all 0.2s ease',
+          '&:hover': {
+            boxShadow: isDark
+              ? '0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2)'
+              : '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+          }
+        }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
             <WarningIcon sx={{ color: '#F59E0B', fontSize: 20 }} />
             <Typography variant="caption" color="text.secondary">
@@ -251,9 +599,23 @@ function FeatureTTL() {
           <Typography variant="caption" color="text.secondary">
             2-4 weeks
           </Typography>
-        </Paper>
+        </Box>
 
-        <Paper sx={{ p: 2, flex: '1 1 200px', minWidth: 200 }}>
+        <Box sx={{
+          p: 2,
+          flex: '1 1 200px',
+          minWidth: 200,
+          bgcolor: 'background.paper',
+          border: 1,
+          borderColor: 'divider',
+          borderRadius: '4px',
+          transition: 'all 0.2s ease',
+          '&:hover': {
+            boxShadow: isDark
+              ? '0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2)'
+              : '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+          }
+        }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
             <WarningIcon sx={{ color: '#EF4444', fontSize: 20 }} />
             <Typography variant="caption" color="text.secondary">
@@ -266,9 +628,23 @@ function FeatureTTL() {
           <Typography variant="caption" color="text.secondary">
             &gt; 4 weeks
           </Typography>
-        </Paper>
+        </Box>
 
-        <Paper sx={{ p: 2, flex: '1 1 200px', minWidth: 200, bgcolor: isDark ? 'rgba(59, 130, 246, 0.1)' : 'rgba(59, 130, 246, 0.05)', border: 2, borderColor: '#3B82F6' }}>
+        <Box sx={{
+          p: 2,
+          flex: '1 1 200px',
+          minWidth: 200,
+          bgcolor: 'background.paper',
+          border: 1,
+          borderColor: 'divider',
+          borderRadius: '4px',
+          transition: 'all 0.2s ease',
+          '&:hover': {
+            boxShadow: isDark
+              ? '0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2)'
+              : '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+          }
+        }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
             <CalendarMonthIcon sx={{ color: '#3B82F6', fontSize: 20 }} />
             <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
@@ -286,95 +662,111 @@ function FeatureTTL() {
               Done: {stats.completedCount} | In Progress: {stats.inProgressCount} | Planning: {stats.planningCount}
             </Typography>
           </Box>
-        </Paper>
+        </Box>
       </Box>
 
-      {/* Features List */}
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+      {/* Features List - Two Column Grid */}
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'repeat(2, 1fr)' }, gap: 2 }}>
         {featuresWithTTL.map((feature) => (
-          <Paper
+          <Box
             key={feature.id}
+            onClick={() => setSelectedFeatureForBreakdown(feature)}
             sx={{
-              p: 2,
+              display: 'flex',
+              bgcolor: 'background.paper',
               border: 1,
               borderColor: 'divider',
-              borderLeft: 4,
-              borderLeftColor: getStatusColor(feature.ttl.status),
-              transition: 'all 0.2s',
+              borderRadius: '4px',
+              overflow: 'hidden',
+              transition: 'all 0.2s ease',
+              cursor: 'pointer',
               '&:hover': {
                 boxShadow: isDark
-                  ? '0 4px 12px rgba(0, 0, 0, 0.3)'
-                  : '0 4px 12px rgba(0, 0, 0, 0.1)',
+                  ? '0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2)'
+                  : '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                borderColor: isDark ? 'rgba(148, 163, 184, 0.3)' : 'rgba(209, 213, 219, 1)'
               }
             }}
           >
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-              <Box sx={{ flex: 1 }}>
-                <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
-                  {feature.name}
+            {/* Left Sidebar - Status Color Stripe */}
+            <Box sx={{
+              width: '4px',
+              bgcolor: getStatusColor(feature.ttl.status),
+              flexShrink: 0
+            }} />
+
+            {/* Card Content */}
+            <Box sx={{ flex: 1, p: 1.5 }}>
+              {/* Header: Title */}
+              <Typography
+                variant="h6"
+                sx={{
+                  fontWeight: 600,
+                  fontSize: '0.9rem',
+                  lineHeight: 1.3,
+                  color: 'text.primary',
+                  mb: 0.75
+                }}
+              >
+                {feature.name}
+              </Typography>
+
+              {/* Category */}
+              {feature.category && (
+                <Typography variant="caption" sx={{ fontSize: '0.625rem', color: 'text.secondary', fontStyle: 'italic', display: 'block', mb: 1 }}>
+                  {feature.category}
                 </Typography>
-                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                  <Chip
-                    label={feature.moscow || 'Not set'}
-                    size="small"
-                    sx={{ fontSize: '0.7rem' }}
-                  />
-                  {feature.state && (
-                    <Chip
-                      label={feature.state}
-                      size="small"
-                      variant="outlined"
-                      sx={{ fontSize: '0.7rem' }}
-                    />
-                  )}
+              )}
+
+              {/* Time Estimate and Status */}
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.25 }}>
+                <Box>
+                  <Typography variant="h5" sx={{ fontWeight: 700, color: getStatusColor(feature.ttl.status), lineHeight: 1.2 }}>
+                    {feature.ttl.weeks} wks
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
+                    ~{feature.ttl.months} months
+                  </Typography>
+                </Box>
+
+                {/* Status Badge */}
+                <Box sx={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  px: 1,
+                  py: 0.4,
+                  bgcolor: getStatusColor(feature.ttl.status),
+                  color: 'white',
+                  borderRadius: '3px',
+                  fontWeight: 600,
+                  fontSize: '0.7rem'
+                }}>
+                  {getStatusLabel(feature.ttl.status)}
                 </Box>
               </Box>
 
-              <Box sx={{ minWidth: 200, textAlign: 'right' }}>
-                <Typography variant="h4" sx={{ fontWeight: 700, color: getStatusColor(feature.ttl.status) }}>
-                  {feature.ttl.weeks < 2 ? `${feature.ttl.days} days` : `${feature.ttl.weeks} wks`}
-                </Typography>
-                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
-                  {feature.ttl.weeks < 2 ? `~${feature.ttl.weeks} weeks` : `~${feature.ttl.months} months`}
-                </Typography>
-                <Chip
-                  label={getStatusLabel(feature.ttl.status)}
-                  size="small"
-                  sx={{
-                    bgcolor: getStatusColor(feature.ttl.status),
-                    color: 'white',
-                    fontWeight: 600,
-                    fontSize: '0.7rem'
-                  }}
-                />
-              </Box>
+              {/* Workflow Status */}
+              {feature.workflowStatus && (
+                <Box sx={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  px: 1,
+                  py: 0.4,
+                  bgcolor: feature.workflowStatus === 'Done'
+                    ? '#10B981'
+                    : feature.workflowStatus === 'In Progress'
+                    ? '#3B82F6'
+                    : '#6B7280',
+                  color: 'white',
+                  borderRadius: '3px',
+                  fontWeight: 600,
+                  fontSize: '0.7rem'
+                }}>
+                  {feature.workflowStatus}
+                </Box>
+              )}
             </Box>
-
-            {/* Health Bar */}
-            <Box>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                <Typography variant="caption" color="text.secondary">
-                  Feature Health
-                </Typography>
-                <Typography variant="caption" sx={{ fontWeight: 600 }}>
-                  {feature.ttl.healthScore}%
-                </Typography>
-              </Box>
-              <LinearProgress
-                variant="determinate"
-                value={feature.ttl.healthScore}
-                sx={{
-                  height: 8,
-                  borderRadius: 1,
-                  bgcolor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
-                  '& .MuiLinearProgress-bar': {
-                    bgcolor: getStatusColor(feature.ttl.status),
-                    borderRadius: 1,
-                  }
-                }}
-              />
-            </Box>
-          </Paper>
+          </Box>
         ))}
       </Box>
 
@@ -388,6 +780,150 @@ function FeatureTTL() {
           </Typography>
         </Paper>
       )}
+
+      {/* TTM Breakdown Modal */}
+      <Dialog
+        open={Boolean(selectedFeatureForBreakdown)}
+        onClose={() => setSelectedFeatureForBreakdown(null)}
+        maxWidth="md"
+        fullWidth
+      >
+        {selectedFeatureForBreakdown && (
+          <>
+            <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Box>
+                <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                  Time to Market Breakdown
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                  {selectedFeatureForBreakdown.name}
+                </Typography>
+              </Box>
+              <IconButton onClick={() => setSelectedFeatureForBreakdown(null)} size="small">
+                <CloseIcon />
+              </IconButton>
+            </DialogTitle>
+
+            <DialogContent dividers>
+              {/* Final Result Summary */}
+              <Box sx={{
+                p: 3,
+                mb: 3,
+                bgcolor: 'background.paper',
+                border: 1,
+                borderColor: 'divider',
+                borderRadius: '4px',
+                borderLeft: 4,
+                borderLeftColor: getStatusColor(selectedFeatureForBreakdown.ttl.status)
+              }}>
+                <Box sx={{ textAlign: 'center', mb: 2 }}>
+                  <Typography variant="h3" sx={{ fontWeight: 700, color: getStatusColor(selectedFeatureForBreakdown.ttl.status) }}>
+                    {selectedFeatureForBreakdown.ttl.weeks} weeks
+                  </Typography>
+                  <Typography variant="body1" color="text.secondary">
+                    ~{selectedFeatureForBreakdown.ttl.months} months
+                  </Typography>
+                </Box>
+                <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1 }}>
+                  <Chip
+                    label={getStatusLabel(selectedFeatureForBreakdown.ttl.status)}
+                    sx={{
+                      bgcolor: getStatusColor(selectedFeatureForBreakdown.ttl.status),
+                      color: 'white',
+                      fontWeight: 600
+                    }}
+                  />
+                  {selectedFeatureForBreakdown.workflowStatus && (
+                    <Chip
+                      label={selectedFeatureForBreakdown.workflowStatus}
+                      variant="outlined"
+                      sx={{
+                        fontWeight: 600,
+                        borderColor: selectedFeatureForBreakdown.workflowStatus === 'Done'
+                          ? '#10B981'
+                          : selectedFeatureForBreakdown.workflowStatus === 'In Progress'
+                          ? '#3B82F6'
+                          : 'text.secondary',
+                        color: selectedFeatureForBreakdown.workflowStatus === 'Done'
+                          ? '#10B981'
+                          : selectedFeatureForBreakdown.workflowStatus === 'In Progress'
+                          ? '#3B82F6'
+                          : 'text.secondary'
+                      }}
+                    />
+                  )}
+                </Box>
+              </Box>
+
+              {/* Calculation Steps */}
+              <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
+                Calculation Steps
+              </Typography>
+
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                {selectedFeatureForBreakdown.ttl.breakdown.steps.map((step, index) => (
+                  <Box
+                    key={index}
+                    sx={{
+                      p: 2,
+                      bgcolor: 'background.paper',
+                      border: 1,
+                      borderColor: 'divider',
+                      borderRadius: '4px',
+                      borderLeft: 3,
+                      borderLeftColor: step.impact > 0 ? '#EF4444' : step.impact < 0 ? '#10B981' : '#6B7280'
+                    }}
+                  >
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
+                      <Box sx={{ flex: 1 }}>
+                        <Typography variant="body1" sx={{ fontWeight: 600, mb: 0.5 }}>
+                          {step.title}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          {step.description}
+                        </Typography>
+                      </Box>
+                      <Box sx={{ textAlign: 'right', ml: 2 }}>
+                        <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
+                          Impact
+                        </Typography>
+                        <Typography
+                          variant="h6"
+                          sx={{
+                            fontWeight: 700,
+                            color: step.impact > 0.01 ? '#EF4444' : step.impact < -0.01 ? '#10B981' : '#6B7280'
+                          }}
+                        >
+                          {step.impact > 0 ? '+' : ''}{step.impact.toFixed(2)}w
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </Box>
+                ))}
+              </Box>
+
+              {/* Summary */}
+              <Box sx={{
+                p: 2,
+                mt: 3,
+                bgcolor: 'background.paper',
+                border: 1,
+                borderColor: 'divider',
+                borderRadius: '4px',
+                borderLeft: 3,
+                borderLeftColor: '#10B981'
+              }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <CheckCircleIcon sx={{ color: '#10B981' }} />
+                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                    This calculation uses your team configuration: {teamConfig.workMode === 'parallel' ? `Parallel (${teamConfig.teamSize} tracks)` : 'Sequential'} with team velocity of {teamConfig.teamVelocity} story points/week.
+                  </Typography>
+                </Box>
+              </Box>
+            </DialogContent>
+          </>
+        )}
+      </Dialog>
     </Box>
   );
 }

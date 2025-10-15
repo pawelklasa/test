@@ -25,6 +25,9 @@ import TextField from '@mui/material/TextField';
 import Slider from '@mui/material/Slider';
 import Chip from '@mui/material/Chip';
 import LinearProgress from '@mui/material/LinearProgress';
+import Stepper from '@mui/material/Stepper';
+import Step from '@mui/material/Step';
+import StepLabel from '@mui/material/StepLabel';
 
 const targetQuarters = ['Q1 2026', 'Q2 2026', 'Q3 2026', 'Q4 2026'];
 const moscowOptions = ['Must-Have', 'Should-Have', 'Could-Have', "Won't-Have"];
@@ -36,6 +39,7 @@ const companyGoals = [
   'Other'
 ];
 const tshirtSizes = ['S', 'M', 'L', 'XL'];
+const storyPoints = [1, 2, 3, 5, 8, 13, 21, 34]; // Fibonacci sequence
 const currentStates = ['Missing', 'Partial Endpoints', 'Live in Prod'];
 const gapTypeOptions = ['Documentation/Training', 'Technology/Tech Debt', 'Process', 'Resources'];
 const workflowStatuses = ['Planning', 'In Progress', 'Done', "Won't Do"];
@@ -116,7 +120,8 @@ function DashboardHome() {
   const [openDialog, setOpenDialog] = useState(false);
   const [openDetailsModal, setOpenDetailsModal] = useState(false);
   const [selectedFeature, setSelectedFeature] = useState(null);
-  
+  const [wizardStep, setWizardStep] = useState(1); // 1, 2, or 3 for the wizard
+
   const [newCategoryInput, setNewCategoryInput] = useState('');
   const [form, setForm] = useState({
     name: '',
@@ -135,7 +140,16 @@ function DashboardHome() {
     unknowns: 3,
     businessValue: 3,
     effortRequired: 3,
-    requirementsClarity: 3
+    requirementsClarity: 3,
+    // New TTM Algorithm Fields
+    storyPoints: 5,
+    dependencyCount: 0,
+    frontendImpact: 3,
+    backendImpact: 3,
+    databaseImpact: 3,
+    estimatedBackendHours: 0,
+    estimatedFrontendHours: 0,
+    estimatedQAHours: 0
   });
   const [editingId, setEditingId] = useState(null);
   
@@ -200,10 +214,30 @@ function DashboardHome() {
     }
     setForm({
       name: '', desc: '', targetQuarter: '', moscow: '', goal: '', tshirtSize: '', state: '', gapTypes: [], dependencies: '', category: '', workflowStatus: 'Planning',
-      technicalComplexity: 3, dependencyRisk: 3, unknowns: 3, businessValue: 3, effortRequired: 3, requirementsClarity: 3
+      technicalComplexity: 3, dependencyRisk: 3, unknowns: 3, businessValue: 3, effortRequired: 3, requirementsClarity: 3,
+      storyPoints: 5, dependencyCount: 0, frontendImpact: 3, backendImpact: 3, databaseImpact: 3,
+      estimatedBackendHours: 0, estimatedFrontendHours: 0, estimatedQAHours: 0
     });
     setEditingId(null);
+    setWizardStep(1); // Reset wizard
     setOpenDialog(false);
+  };
+
+  // Wizard navigation
+  const handleWizardNext = () => {
+    setWizardStep(prev => Math.min(prev + 1, 3));
+  };
+
+  const handleWizardBack = () => {
+    setWizardStep(prev => Math.max(prev - 1, 1));
+  };
+
+  const canProceedToStep2 = () => {
+    return form.name.trim() !== '';
+  };
+
+  const canProceedToStep3 = () => {
+    return form.moscow !== '' && form.category !== '';
   };
 
   const handleCardClick = (feature) => {
@@ -230,7 +264,15 @@ function DashboardHome() {
       unknowns: feature.unknowns || 3,
       businessValue: feature.businessValue || 3,
       effortRequired: feature.effortRequired || 3,
-      requirementsClarity: feature.requirementsClarity || 3
+      requirementsClarity: feature.requirementsClarity || 3,
+      storyPoints: feature.storyPoints || 5,
+      dependencyCount: feature.dependencyCount || 0,
+      frontendImpact: feature.frontendImpact || 3,
+      backendImpact: feature.backendImpact || 3,
+      databaseImpact: feature.databaseImpact || 3,
+      estimatedBackendHours: feature.estimatedBackendHours || 0,
+      estimatedFrontendHours: feature.estimatedFrontendHours || 0,
+      estimatedQAHours: feature.estimatedQAHours || 0
     });
     setEditingId(feature.id);
     setOpenDialog(true);
@@ -712,12 +754,21 @@ function DashboardHome() {
                                 gapTypes: Array.isArray(f.gapTypes) ? f.gapTypes : [],
                                 dependencies: f.dependencies || '',
                                 category: f.category || '',
+                                workflowStatus: f.workflowStatus || 'Planning',
                                 technicalComplexity: f.technicalComplexity || 3,
                                 dependencyRisk: f.dependencyRisk || 3,
                                 unknowns: f.unknowns || 3,
                                 businessValue: f.businessValue || 3,
                                 effortRequired: f.effortRequired || 3,
-                                requirementsClarity: f.requirementsClarity || 3
+                                requirementsClarity: f.requirementsClarity || 3,
+                                storyPoints: f.storyPoints || 5,
+                                dependencyCount: f.dependencyCount || 0,
+                                frontendImpact: f.frontendImpact || 3,
+                                backendImpact: f.backendImpact || 3,
+                                databaseImpact: f.databaseImpact || 3,
+                                estimatedBackendHours: f.estimatedBackendHours || 0,
+                                estimatedFrontendHours: f.estimatedFrontendHours || 0,
+                                estimatedQAHours: f.estimatedQAHours || 0
                               });
                               setEditingId(f.id);
                               setOpenDialog(true);
@@ -846,6 +897,12 @@ function DashboardHome() {
                           <Typography variant="caption" sx={{ fontSize: '0.625rem', color: 'text.secondary' }}>Size:</Typography>
                           <Typography variant="caption" sx={{ fontSize: '0.625rem', color: 'text.primary', fontWeight: 600 }}>{f.tshirtSize || '-'}</Typography>
                         </Box>
+                        {f.storyPoints && (
+                          <Box sx={{ display: 'flex', gap: 0.5 }}>
+                            <Typography variant="caption" sx={{ fontSize: '0.625rem', color: 'text.secondary' }}>Story Points:</Typography>
+                            <Typography variant="caption" sx={{ fontSize: '0.625rem', color: 'primary.main', fontWeight: 700 }}>{f.storyPoints}</Typography>
+                          </Box>
+                        )}
                         {f.goal && (
                           <Box sx={{ display: 'flex', gap: 0.5 }}>
                             <Typography variant="caption" sx={{ fontSize: '0.625rem', color: 'text.secondary' }}>Goal:</Typography>
@@ -938,12 +995,21 @@ function DashboardHome() {
                                 gapTypes: Array.isArray(f.gapTypes) ? f.gapTypes : [],
                                 dependencies: f.dependencies || '',
                                 category: f.category || '',
+                                workflowStatus: f.workflowStatus || 'Planning',
                                 technicalComplexity: f.technicalComplexity || 3,
                                 dependencyRisk: f.dependencyRisk || 3,
                                 unknowns: f.unknowns || 3,
                                 businessValue: f.businessValue || 3,
                                 effortRequired: f.effortRequired || 3,
-                                requirementsClarity: f.requirementsClarity || 3
+                                requirementsClarity: f.requirementsClarity || 3,
+                                storyPoints: f.storyPoints || 5,
+                                dependencyCount: f.dependencyCount || 0,
+                                frontendImpact: f.frontendImpact || 3,
+                                backendImpact: f.backendImpact || 3,
+                                databaseImpact: f.databaseImpact || 3,
+                                estimatedBackendHours: f.estimatedBackendHours || 0,
+                                estimatedFrontendHours: f.estimatedFrontendHours || 0,
+                                estimatedQAHours: f.estimatedQAHours || 0
                               });
                               setEditingId(f.id);
                               setOpenDialog(true);
@@ -1072,6 +1138,12 @@ function DashboardHome() {
                           <Typography variant="caption" sx={{ fontSize: '0.625rem', color: 'text.secondary' }}>Size:</Typography>
                           <Typography variant="caption" sx={{ fontSize: '0.625rem', color: 'text.primary', fontWeight: 600 }}>{f.tshirtSize || '-'}</Typography>
                         </Box>
+                        {f.storyPoints && (
+                          <Box sx={{ display: 'flex', gap: 0.5 }}>
+                            <Typography variant="caption" sx={{ fontSize: '0.625rem', color: 'text.secondary' }}>Story Points:</Typography>
+                            <Typography variant="caption" sx={{ fontSize: '0.625rem', color: 'primary.main', fontWeight: 700 }}>{f.storyPoints}</Typography>
+                          </Box>
+                        )}
                         {f.goal && (
                           <Box sx={{ display: 'flex', gap: 0.5 }}>
                             <Typography variant="caption" sx={{ fontSize: '0.625rem', color: 'text.secondary' }}>Goal:</Typography>
@@ -1298,6 +1370,70 @@ function DashboardHome() {
                 </Box>
               </Box>
 
+              {/* Time to Market Details */}
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, fontSize: '1rem' }}>
+                  Time to Market Details
+                </Typography>
+                <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 2 }}>
+                  <Box sx={{ p: 2, bgcolor: isDark ? 'rgba(59, 130, 246, 0.1)' : 'rgba(59, 130, 246, 0.05)', border: 1, borderColor: '#3B82F6', borderRadius: '6px' }}>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem', display: 'block', mb: 0.5 }}>
+                      Story Points
+                    </Typography>
+                    <Typography variant="h5" sx={{ fontWeight: 700, color: '#3B82F6' }}>
+                      {selectedFeature.storyPoints || 5}
+                    </Typography>
+                  </Box>
+
+                  <Box sx={{ p: 2, bgcolor: 'background.paper', border: 1, borderColor: 'divider', borderRadius: '6px' }}>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem', display: 'block', mb: 0.5 }}>
+                      Dependencies
+                    </Typography>
+                    <Typography variant="h5" sx={{ fontWeight: 700 }}>
+                      {selectedFeature.dependencyCount || 0}
+                    </Typography>
+                  </Box>
+
+                  <Box sx={{ p: 2, bgcolor: 'background.paper', border: 1, borderColor: 'divider', borderRadius: '6px' }}>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem', display: 'block', mb: 0.5 }}>
+                      Frontend Impact
+                    </Typography>
+                    <Typography variant="h5" sx={{ fontWeight: 700, color: selectedFeature.frontendImpact >= 4 ? '#F59E0B' : 'text.primary' }}>
+                      {selectedFeature.frontendImpact || 3}/5
+                    </Typography>
+                  </Box>
+
+                  <Box sx={{ p: 2, bgcolor: 'background.paper', border: 1, borderColor: 'divider', borderRadius: '6px' }}>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem', display: 'block', mb: 0.5 }}>
+                      Backend Impact
+                    </Typography>
+                    <Typography variant="h5" sx={{ fontWeight: 700, color: selectedFeature.backendImpact >= 4 ? '#F59E0B' : 'text.primary' }}>
+                      {selectedFeature.backendImpact || 3}/5
+                    </Typography>
+                  </Box>
+
+                  <Box sx={{ p: 2, bgcolor: 'background.paper', border: 1, borderColor: 'divider', borderRadius: '6px' }}>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem', display: 'block', mb: 0.5 }}>
+                      Database Impact
+                    </Typography>
+                    <Typography variant="h5" sx={{ fontWeight: 700, color: selectedFeature.databaseImpact >= 4 ? '#F59E0B' : 'text.primary' }}>
+                      {selectedFeature.databaseImpact || 3}/5
+                    </Typography>
+                  </Box>
+
+                  {(selectedFeature.estimatedBackendHours > 0 || selectedFeature.estimatedFrontendHours > 0 || selectedFeature.estimatedQAHours > 0) && (
+                    <Box sx={{ p: 2, bgcolor: 'background.paper', border: 1, borderColor: 'divider', borderRadius: '6px', gridColumn: 'span 2' }}>
+                      <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem', display: 'block', mb: 0.5 }}>
+                        Estimated Hours
+                      </Typography>
+                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                        Backend: {selectedFeature.estimatedBackendHours || 0}h | Frontend: {selectedFeature.estimatedFrontendHours || 0}h | QA: {selectedFeature.estimatedQAHours || 0}h
+                      </Typography>
+                    </Box>
+                  )}
+                </Box>
+              </Box>
+
               {/* Dependencies */}
               {selectedFeature.dependencies && (
                 <Box>
@@ -1321,8 +1457,26 @@ function DashboardHome() {
 
       {/* Edit/Add Feature Dialog */}
       <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>{editingId ? 'Edit Feature' : 'Add Feature'}</DialogTitle>
+        <DialogTitle>
+          {editingId ? 'Edit Feature' : 'Add New Feature'}
+          {!editingId && (
+            <Stepper activeStep={wizardStep - 1} sx={{ mt: 2 }}>
+              <Step>
+                <StepLabel>Basic Info</StepLabel>
+              </Step>
+              <Step>
+                <StepLabel>Classification</StepLabel>
+              </Step>
+              <Step>
+                <StepLabel>Estimation</StepLabel>
+              </Step>
+            </Stepper>
+          )}
+        </DialogTitle>
         <DialogContent>
+          {/* For Editing: Show all fields in one page */}
+          {editingId && (
+            <>
           <TextField
             label="Feature Name"
             fullWidth
@@ -1477,20 +1631,396 @@ function DashboardHome() {
               <Typography>Requirements Clarity (1=Vague, 5=Crystal Clear)</Typography>
               <Slider min={1} max={5} value={form.requirementsClarity} onChange={(_, v) => setForm(f => ({ ...f, requirementsClarity: v }))} valueLabelDisplay="auto" />
             </FormControl>
+
+            {/* Advanced TTM Estimation Fields */}
+            <Typography variant="h6" sx={{ mt: 3, mb: 1 }}>Time to Market Estimation</Typography>
+
+            <FormControl fullWidth sx={{ mb: 2 }}>
+              <InputLabel>Story Points</InputLabel>
+              <Select
+                value={form.storyPoints}
+                label="Story Points"
+                onChange={e => setForm(f => ({ ...f, storyPoints: e.target.value }))}
+              >
+                {storyPoints.map(sp => <MenuItem key={sp} value={sp}>{sp}</MenuItem>)}
+              </Select>
+            </FormControl>
+
+            <TextField
+              label="Dependency Count"
+              type="number"
+              fullWidth
+              value={form.dependencyCount}
+              onChange={e => setForm(f => ({ ...f, dependencyCount: parseInt(e.target.value) || 0 }))}
+              sx={{ mb: 2 }}
+              helperText="Number of internal/external dependencies or blockers"
+            />
+
+            <FormControl fullWidth sx={{ mb: 2 }}>
+              <Typography>Frontend Impact (1=Minimal, 5=Major Changes)</Typography>
+              <Slider min={1} max={5} value={form.frontendImpact} onChange={(_, v) => setForm(f => ({ ...f, frontendImpact: v }))} valueLabelDisplay="auto" />
+            </FormControl>
+
+            <FormControl fullWidth sx={{ mb: 2 }}>
+              <Typography>Backend Impact (1=Minimal, 5=Major Changes)</Typography>
+              <Slider min={1} max={5} value={form.backendImpact} onChange={(_, v) => setForm(f => ({ ...f, backendImpact: v }))} valueLabelDisplay="auto" />
+            </FormControl>
+
+            <FormControl fullWidth sx={{ mb: 2 }}>
+              <Typography>Database/Infrastructure Impact (1=Minimal, 5=Major Changes)</Typography>
+              <Slider min={1} max={5} value={form.databaseImpact} onChange={(_, v) => setForm(f => ({ ...f, databaseImpact: v }))} valueLabelDisplay="auto" />
+            </FormControl>
+
+            <Typography variant="subtitle2" sx={{ mt: 2, mb: 1 }}>Estimated Hours (Optional)</Typography>
+
+            <TextField
+              label="Backend Hours"
+              type="number"
+              fullWidth
+              value={form.estimatedBackendHours}
+              onChange={e => setForm(f => ({ ...f, estimatedBackendHours: parseInt(e.target.value) || 0 }))}
+              sx={{ mb: 2 }}
+            />
+
+            <TextField
+              label="Frontend Hours"
+              type="number"
+              fullWidth
+              value={form.estimatedFrontendHours}
+              onChange={e => setForm(f => ({ ...f, estimatedFrontendHours: parseInt(e.target.value) || 0 }))}
+              sx={{ mb: 2 }}
+            />
+
+            <TextField
+              label="QA Hours"
+              type="number"
+              fullWidth
+              value={form.estimatedQAHours}
+              onChange={e => setForm(f => ({ ...f, estimatedQAHours: parseInt(e.target.value) || 0 }))}
+              sx={{ mb: 2 }}
+            />
           </Box>
+          </>
+          )}
+
+          {/* For Adding: Show wizard steps */}
+          {!editingId && wizardStep === 1 && (
+            <Box>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                Let's start with the basic information about your feature.
+              </Typography>
+              <TextField
+                label="Feature Name"
+                fullWidth
+                required
+                value={form.name}
+                onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                sx={{ mb: 2 }}
+                helperText="Give your feature a clear, descriptive name"
+              />
+              <TextField
+                label="Description"
+                fullWidth
+                multiline
+                rows={3}
+                value={form.desc}
+                onChange={e => setForm(f => ({ ...f, desc: e.target.value }))}
+                sx={{ mb: 3 }}
+                helperText="What does this feature do?"
+              />
+
+              <Typography variant="h6" sx={{ mb: 2, fontSize: '1rem' }}>Quality Scoring</Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                Help us understand the complexity and value of this feature.
+              </Typography>
+
+              <FormControl fullWidth sx={{ mb: 2 }}>
+                <Typography variant="body2" sx={{ mb: 1 }}>Technical Complexity (1=Simple, 5=Very Complex)</Typography>
+                <Slider min={1} max={5} value={form.technicalComplexity} onChange={(_, v) => setForm(f => ({ ...f, technicalComplexity: v }))} valueLabelDisplay="auto" marks />
+              </FormControl>
+
+              <FormControl fullWidth sx={{ mb: 2 }}>
+                <Typography variant="body2" sx={{ mb: 1 }}>Business Value (1=Low, 5=High)</Typography>
+                <Slider min={1} max={5} value={form.businessValue} onChange={(_, v) => setForm(f => ({ ...f, businessValue: v }))} valueLabelDisplay="auto" marks />
+              </FormControl>
+
+              <FormControl fullWidth sx={{ mb: 2 }}>
+                <Typography variant="body2" sx={{ mb: 1 }}>Requirements Clarity (1=Vague, 5=Crystal Clear)</Typography>
+                <Slider min={1} max={5} value={form.requirementsClarity} onChange={(_, v) => setForm(f => ({ ...f, requirementsClarity: v }))} valueLabelDisplay="auto" marks />
+              </FormControl>
+
+              <FormControl fullWidth sx={{ mb: 2 }}>
+                <Typography variant="body2" sx={{ mb: 1 }}>Dependency Risk (1=None, 5=Many)</Typography>
+                <Slider min={1} max={5} value={form.dependencyRisk} onChange={(_, v) => setForm(f => ({ ...f, dependencyRisk: v }))} valueLabelDisplay="auto" marks />
+              </FormControl>
+
+              <FormControl fullWidth sx={{ mb: 2 }}>
+                <Typography variant="body2" sx={{ mb: 1 }}>Unknowns / Uncertainty (1=Clear, 5=Many Unknowns)</Typography>
+                <Slider min={1} max={5} value={form.unknowns} onChange={(_, v) => setForm(f => ({ ...f, unknowns: v }))} valueLabelDisplay="auto" marks />
+              </FormControl>
+
+              <FormControl fullWidth sx={{ mb: 2 }}>
+                <Typography variant="body2" sx={{ mb: 1 }}>Effort Required (1=Small, 5=Very Large)</Typography>
+                <Slider min={1} max={5} value={form.effortRequired} onChange={(_, v) => setForm(f => ({ ...f, effortRequired: v }))} valueLabelDisplay="auto" marks />
+              </FormControl>
+            </Box>
+          )}
+
+          {!editingId && wizardStep === 2 && (
+            <Box>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                Help us categorize and prioritize this feature.
+              </Typography>
+
+              <FormControl fullWidth sx={{ mb: 2 }}>
+                <InputLabel>Category *</InputLabel>
+                <Select
+                  value={form.category}
+                  label="Category *"
+                  onChange={e => setForm(f => ({ ...f, category: e.target.value }))}
+                >
+                  {categories.map(cat => <MenuItem key={cat} value={cat}>{cat}</MenuItem>)}
+                </Select>
+              </FormControl>
+
+              <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+                <TextField
+                  label="Add New Category"
+                  value={newCategoryInput}
+                  onChange={e => setNewCategoryInput(e.target.value)}
+                  placeholder="Enter category name"
+                  sx={{ flex: 1 }}
+                  size="small"
+                />
+                <Button
+                  variant="outlined"
+                  onClick={handleAddCategory}
+                  disabled={!newCategoryInput.trim() || categories.includes(newCategoryInput.trim())}
+                >
+                  Add
+                </Button>
+              </Box>
+
+              <FormControl fullWidth sx={{ mb: 2 }}>
+                <InputLabel>Priority (MoSCoW) *</InputLabel>
+                <Select
+                  value={form.moscow}
+                  label="Priority (MoSCoW) *"
+                  onChange={e => setForm(f => ({ ...f, moscow: e.target.value }))}
+                >
+                  {moscowOptions.map(opt => <MenuItem key={opt} value={opt}>{opt}</MenuItem>)}
+                </Select>
+              </FormControl>
+
+              <FormControl fullWidth sx={{ mb: 2 }}>
+                <InputLabel>Target Quarter</InputLabel>
+                <Select
+                  value={form.targetQuarter}
+                  label="Target Quarter"
+                  onChange={e => setForm(f => ({ ...f, targetQuarter: e.target.value }))}
+                >
+                  {targetQuarters.map(q => <MenuItem key={q} value={q}>{q}</MenuItem>)}
+                </Select>
+              </FormControl>
+
+              <FormControl fullWidth sx={{ mb: 2 }}>
+                <InputLabel>T-Shirt Sizing</InputLabel>
+                <Select
+                  value={form.tshirtSize}
+                  label="T-Shirt Sizing"
+                  onChange={e => setForm(f => ({ ...f, tshirtSize: e.target.value }))}
+                >
+                  {tshirtSizes.map(size => <MenuItem key={size} value={size}>{size}</MenuItem>)}
+                </Select>
+              </FormControl>
+
+              <FormControl fullWidth sx={{ mb: 2 }}>
+                <InputLabel>Company Goal</InputLabel>
+                <Select
+                  value={form.goal}
+                  label="Company Goal"
+                  onChange={e => setForm(f => ({ ...f, goal: e.target.value }))}
+                >
+                  {companyGoals.map(goal => <MenuItem key={goal} value={goal}>{goal}</MenuItem>)}
+                </Select>
+              </FormControl>
+
+              <FormControl fullWidth sx={{ mb: 2 }}>
+                <InputLabel>Current State</InputLabel>
+                <Select
+                  value={form.state}
+                  label="Current State"
+                  onChange={e => setForm(f => ({ ...f, state: e.target.value }))}
+                >
+                  {currentStates.map(state => <MenuItem key={state} value={state}>{state}</MenuItem>)}
+                </Select>
+              </FormControl>
+
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="caption" sx={{ mb: 1, display: 'block' }}>Gap Type (Root Cause)</Typography>
+                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                  {gapTypeOptions.map(option => (
+                    <Chip
+                      key={option}
+                      label={option}
+                      color={form.gapTypes.includes(option) ? 'primary' : 'default'}
+                      onClick={() => setForm(f => ({
+                        ...f,
+                        gapTypes: f.gapTypes.includes(option)
+                          ? f.gapTypes.filter(g => g !== option)
+                          : [...f.gapTypes, option]
+                      }))}
+                      sx={{ cursor: 'pointer' }}
+                    />
+                  ))}
+                </Box>
+              </Box>
+
+              <TextField
+                label="Dependencies / Notes"
+                fullWidth
+                multiline
+                rows={2}
+                value={form.dependencies}
+                onChange={e => setForm(f => ({ ...f, dependencies: e.target.value }))}
+              />
+            </Box>
+          )}
+
+          {!editingId && wizardStep === 3 && (
+            <Box>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                Finally, help us estimate the time to market for this feature.
+              </Typography>
+
+              <Typography variant="h6" sx={{ mb: 2, fontSize: '1rem' }}>Story Points & Impact</Typography>
+
+              <FormControl fullWidth sx={{ mb: 2 }}>
+                <InputLabel>Story Points</InputLabel>
+                <Select
+                  value={form.storyPoints}
+                  label="Story Points"
+                  onChange={e => setForm(f => ({ ...f, storyPoints: e.target.value }))}
+                >
+                  {storyPoints.map(sp => <MenuItem key={sp} value={sp}>{sp}</MenuItem>)}
+                </Select>
+              </FormControl>
+
+              <TextField
+                label="Dependency Count"
+                type="number"
+                fullWidth
+                value={form.dependencyCount}
+                onChange={e => setForm(f => ({ ...f, dependencyCount: parseInt(e.target.value) || 0 }))}
+                sx={{ mb: 2 }}
+                helperText="Number of blockers or dependencies"
+              />
+
+              <FormControl fullWidth sx={{ mb: 2 }}>
+                <Typography variant="body2" sx={{ mb: 1 }}>Frontend Impact (1=Minimal, 5=Major)</Typography>
+                <Slider min={1} max={5} value={form.frontendImpact} onChange={(_, v) => setForm(f => ({ ...f, frontendImpact: v }))} valueLabelDisplay="auto" marks />
+              </FormControl>
+
+              <FormControl fullWidth sx={{ mb: 2 }}>
+                <Typography variant="body2" sx={{ mb: 1 }}>Backend Impact (1=Minimal, 5=Major)</Typography>
+                <Slider min={1} max={5} value={form.backendImpact} onChange={(_, v) => setForm(f => ({ ...f, backendImpact: v }))} valueLabelDisplay="auto" marks />
+              </FormControl>
+
+              <FormControl fullWidth sx={{ mb: 2 }}>
+                <Typography variant="body2" sx={{ mb: 1 }}>Database Impact (1=Minimal, 5=Major)</Typography>
+                <Slider min={1} max={5} value={form.databaseImpact} onChange={(_, v) => setForm(f => ({ ...f, databaseImpact: v }))} valueLabelDisplay="auto" marks />
+              </FormControl>
+
+              <Typography variant="h6" sx={{ mt: 3, mb: 2, fontSize: '1rem' }}>Detailed Hours (Optional)</Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                If you have detailed hour estimates, add them here for more precise TTM calculation.
+              </Typography>
+
+              <TextField
+                label="Backend Hours"
+                type="number"
+                fullWidth
+                value={form.estimatedBackendHours}
+                onChange={e => setForm(f => ({ ...f, estimatedBackendHours: parseInt(e.target.value) || 0 }))}
+                sx={{ mb: 2 }}
+                size="small"
+              />
+
+              <TextField
+                label="Frontend Hours"
+                type="number"
+                fullWidth
+                value={form.estimatedFrontendHours}
+                onChange={e => setForm(f => ({ ...f, estimatedFrontendHours: parseInt(e.target.value) || 0 }))}
+                sx={{ mb: 2 }}
+                size="small"
+              />
+
+              <TextField
+                label="QA Hours"
+                type="number"
+                fullWidth
+                value={form.estimatedQAHours}
+                onChange={e => setForm(f => ({ ...f, estimatedQAHours: parseInt(e.target.value) || 0 }))}
+                sx={{ mb: 2 }}
+                size="small"
+              />
+            </Box>
+          )}
+
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => {
-            setOpenDialog(false);
-            setEditingId(null);
-            setForm({
-              name: '', desc: '', targetQuarter: '', moscow: '', goal: '', tshirtSize: '', state: '', gapTypes: [], dependencies: '', category: '',
-              technicalComplexity: 3, dependencyRisk: 3, unknowns: 3, businessValue: 3, effortRequired: 3, requirementsClarity: 3
-            });
-          }}>Cancel</Button>
-          <Button variant="contained" onClick={handleAddFeature} disabled={!form.name.trim()}>
-            {editingId ? 'Save' : 'Add'}
-          </Button>
+          {/* Show wizard navigation for new features, simple buttons for editing */}
+          {!editingId ? (
+            <>
+              <Button onClick={() => {
+                setOpenDialog(false);
+                setWizardStep(1);
+                setForm({
+                  name: '', desc: '', targetQuarter: '', moscow: '', goal: '', tshirtSize: '', state: '', gapTypes: [], dependencies: '', category: '', workflowStatus: 'Planning',
+                  technicalComplexity: 3, dependencyRisk: 3, unknowns: 3, businessValue: 3, effortRequired: 3, requirementsClarity: 3,
+                  storyPoints: 5, dependencyCount: 0, frontendImpact: 3, backendImpact: 3, databaseImpact: 3,
+                  estimatedBackendHours: 0, estimatedFrontendHours: 0, estimatedQAHours: 0
+                });
+              }}>
+                Cancel
+              </Button>
+              {wizardStep > 1 && (
+                <Button onClick={handleWizardBack}>
+                  Back
+                </Button>
+              )}
+              {wizardStep < 3 ? (
+                <Button
+                  variant="contained"
+                  onClick={handleWizardNext}
+                  disabled={wizardStep === 1 ? !canProceedToStep2() : !canProceedToStep3()}
+                >
+                  Next
+                </Button>
+              ) : (
+                <Button variant="contained" onClick={handleAddFeature} disabled={!form.name.trim()}>
+                  Add Feature
+                </Button>
+              )}
+            </>
+          ) : (
+            <>
+              <Button onClick={() => {
+                setOpenDialog(false);
+                setEditingId(null);
+                setForm({
+                  name: '', desc: '', targetQuarter: '', moscow: '', goal: '', tshirtSize: '', state: '', gapTypes: [], dependencies: '', category: '', workflowStatus: 'Planning',
+                  technicalComplexity: 3, dependencyRisk: 3, unknowns: 3, businessValue: 3, effortRequired: 3, requirementsClarity: 3,
+                  storyPoints: 5, dependencyCount: 0, frontendImpact: 3, backendImpact: 3, databaseImpact: 3,
+                  estimatedBackendHours: 0, estimatedFrontendHours: 0, estimatedQAHours: 0
+                });
+              }}>Cancel</Button>
+              <Button variant="contained" onClick={handleAddFeature}>
+                Save Changes
+              </Button>
+            </>
+          )}
         </DialogActions>
       </Dialog>
     </Box>

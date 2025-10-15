@@ -26,30 +26,52 @@ export const useCategories = (projectId) => {
       return;
     }
 
-    // Listen to the categories document for this project
+    // Listen to both the projectCategories document AND the individual categories collection
     const categoriesDocRef = doc(db, 'projectCategories', projectId);
+    const categoriesCollectionRef = collection(db, 'categories');
+    const categoriesQuery = query(categoriesCollectionRef, where('projectId', '==', projectId));
     
-    const unsubscribe = onSnapshot(categoriesDocRef, (docSnapshot) => {
-      if (docSnapshot.exists()) {
-        const data = docSnapshot.data();
-        setCategories(data.categories || defaultCategories);
+    // First check for individual categories in the categories collection
+    const unsubscribeCollection = onSnapshot(categoriesQuery, (snapshot) => {
+      if (!snapshot.empty) {
+        // Extract category names from individual category documents
+        const categoryNames = snapshot.docs.map(doc => doc.data().name);
+        const uniqueCategories = [...new Set(categoryNames)]; // Remove duplicates
+        setCategories(uniqueCategories);
+        setLoading(false);
       } else {
-        // If no categories document exists, create one with defaults
-        setDoc(categoriesDocRef, {
-          categories: defaultCategories,
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp()
+        // If no individual categories, fall back to checking projectCategories document
+        const unsubscribeDoc = onSnapshot(categoriesDocRef, (docSnapshot) => {
+          if (docSnapshot.exists()) {
+            const data = docSnapshot.data();
+            setCategories(data.categories || defaultCategories);
+          } else {
+            // If no categories document exists, create one with defaults
+            setDoc(categoriesDocRef, {
+              categories: defaultCategories,
+              createdAt: serverTimestamp(),
+              updatedAt: serverTimestamp()
+            });
+            setCategories(defaultCategories);
+          }
+          setLoading(false);
+        }, (error) => {
+          console.error('Error fetching categories:', error);
+          setCategories(defaultCategories);
+          setLoading(false);
         });
-        setCategories(defaultCategories);
+        
+        return unsubscribeDoc;
       }
-      setLoading(false);
     }, (error) => {
-      console.error('Error fetching categories:', error);
+      console.error('Error fetching categories collection:', error);
       setCategories(defaultCategories);
       setLoading(false);
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribeCollection();
+    };
   }, [projectId]);
 
   const addCategory = async (categoryName) => {
@@ -59,13 +81,23 @@ export const useCategories = (projectId) => {
       const trimmedName = categoryName.trim();
       if (categories.includes(trimmedName)) return;
 
+      // Add to both the projectCategories document and individual categories collection
       const newCategories = [...categories, trimmedName];
       const categoriesDocRef = doc(db, 'projectCategories', projectId);
       
+      // Update the projectCategories document
       await setDoc(categoriesDocRef, {
         categories: newCategories,
         updatedAt: serverTimestamp()
       }, { merge: true });
+
+      // Also add as individual category document for consistency with AutoPopulate
+      const categoriesCollectionRef = collection(db, 'categories');
+      await addDoc(categoriesCollectionRef, {
+        name: trimmedName,
+        projectId: projectId,
+        createdAt: serverTimestamp()
+      });
 
       // Update local state immediately for better UX
       setCategories(newCategories);

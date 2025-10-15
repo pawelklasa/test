@@ -38,11 +38,29 @@ export const trackPageView = (pageName) => {
   });
 };
 
+// Track when users use search functionality
+export const trackSearchUsed = (searchTerm, projectId) => {
+  logEvent(analytics, 'search_used', {
+    search_term: searchTerm,
+    project_id: projectId
+  });
+};
+
+// Track when users manage team members
+export const trackUserManagement = (action, role, projectId) => {
+  logEvent(analytics, 'user_management', {
+    action: action, // 'add_user', 'edit_user', 'remove_user'
+    user_role: role,
+    project_id: projectId
+  });
+};
+
 // Track when users use filters
-export const trackFilterUsed = (filterType, filterValue) => {
+export const trackFilterUsed = (filterType, filterValue, projectId) => {
   logEvent(analytics, 'filter_used', {
     filter_type: filterType,
-    filter_value: filterValue
+    filter_value: filterValue,
+    project_id: projectId
   });
 };
 
@@ -65,12 +83,5 @@ export const trackProjectSwitched = (fromProject, toProject) => {
   logEvent(analytics, 'project_switched', {
     from_project: fromProject,
     to_project: toProject
-  });
-};
-
-// Track search usage
-export const trackSearchUsed = (searchTerm) => {
-  logEvent(analytics, 'search', {
-    search_term: searchTerm
   });
 };

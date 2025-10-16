@@ -1,45 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import {
   Box,
-  Card,
-  CardContent,
   Typography,
-  Grid,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Paper,
   Button,
   Chip,
   TextField,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
   Switch,
   FormControlLabel,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  Alert,
-  Tabs,
-  Tab,
-  IconButton,
-  Tooltip,
   LinearProgress
 } from '@mui/material';
 import {
-  Email,
   Send,
   Schedule,
   History,
   Settings,
   Notifications,
-  MarkunreadMailbox,
   Refresh,
   Add
 } from '@mui/icons-material';
@@ -205,95 +190,130 @@ const EmailManagementDashboard = ({ organizationId, currentUser }) => {
   // ============================================================================
 
   const EmailStatsCards = () => (
-    <Grid container spacing={3} mb={3}>
-      <Grid item xs={12} sm={6} md={3}>
-        <Card>
-          <CardContent>
-            <Box display="flex" alignItems="center" mb={1}>
-              <Email sx={{ mr: 1, color: 'primary.main' }} />
-              <Typography variant="h6">Total Sent</Typography>
-            </Box>
-            <Typography variant="h4">{stats.totalSent}</Typography>
-          </CardContent>
-        </Card>
-      </Grid>
-      
-      <Grid item xs={12} sm={6} md={3}>
-        <Card>
-          <CardContent>
-            <Box display="flex" alignItems="center" mb={1}>
-              <MarkunreadMailbox sx={{ mr: 1, color: 'success.main' }} />
-              <Typography variant="h6">Delivery Rate</Typography>
-            </Box>
-            <Typography variant="h4">{stats.deliveryRate.toFixed(1)}%</Typography>
-          </CardContent>
-        </Card>
-      </Grid>
-      
-      <Grid item xs={12} sm={6} md={3}>
-        <Card>
-          <CardContent>
-            <Box display="flex" alignItems="center" mb={1}>
-              <Notifications sx={{ mr: 1, color: 'warning.main' }} />
-              <Typography variant="h6">Recent Emails</Typography>
-            </Box>
-            <Typography variant="h4">{stats.recentEmails.length}</Typography>
-          </CardContent>
-        </Card>
-      </Grid>
-      
-      <Grid item xs={12} sm={6} md={3}>
-        <Card>
-          <CardContent>
-            <Box display="flex" alignItems="center" mb={1}>
-              <Schedule sx={{ mr: 1, color: 'info.main' }} />
-              <Typography variant="h6">Queue Status</Typography>
-            </Box>
-            <Button
-              variant="outlined"
-              startIcon={<Refresh />}
-              onClick={handleProcessQueue}
-              size="small"
-            >
-              Process Queue
-            </Button>
-          </CardContent>
-        </Card>
-      </Grid>
-    </Grid>
+    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3 }}>
+      <Box sx={{
+        flex: '1 1 auto',
+        minWidth: '150px',
+        p: 2,
+        bgcolor: 'background.paper',
+        border: 1,
+        borderColor: 'divider',
+        borderRadius: '4px'
+      }}>
+        <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.75rem', display: 'block', mb: 0.5 }}>
+          Total Sent
+        </Typography>
+        <Typography variant="h4" sx={{ fontWeight: 700, color: 'text.primary' }}>
+          {stats.totalSent}
+        </Typography>
+      </Box>
+
+      <Box sx={{
+        flex: '1 1 auto',
+        minWidth: '150px',
+        p: 2,
+        bgcolor: 'background.paper',
+        border: 1,
+        borderColor: 'divider',
+        borderRadius: '4px'
+      }}>
+        <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.75rem', display: 'block', mb: 0.5 }}>
+          Delivery Rate
+        </Typography>
+        <Typography variant="h4" sx={{ fontWeight: 700, color: '#10B981' }}>
+          {stats.deliveryRate.toFixed(1)}%
+        </Typography>
+      </Box>
+
+      <Box sx={{
+        flex: '1 1 auto',
+        minWidth: '150px',
+        p: 2,
+        bgcolor: 'background.paper',
+        border: 1,
+        borderColor: 'divider',
+        borderRadius: '4px'
+      }}>
+        <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.75rem', display: 'block', mb: 0.5 }}>
+          Recent Emails
+        </Typography>
+        <Typography variant="h4" sx={{ fontWeight: 700, color: '#3B82F6' }}>
+          {stats.recentEmails.length}
+        </Typography>
+      </Box>
+
+      <Box sx={{
+        flex: '1 1 auto',
+        minWidth: '150px',
+        p: 2,
+        bgcolor: 'background.paper',
+        border: 1,
+        borderColor: 'divider',
+        borderRadius: '4px'
+      }}>
+        <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.75rem', display: 'block', mb: 0.5 }}>
+          Email Queue
+        </Typography>
+        <Button
+          variant="outlined"
+          startIcon={<Refresh />}
+          onClick={handleProcessQueue}
+          size="small"
+          fullWidth
+          sx={{ mt: 1 }}
+        >
+          Process
+        </Button>
+      </Box>
+    </Box>
   );
 
   const EmailHistoryTable = () => (
-    <Card>
-      <CardContent>
-        <Box display="flex" justifyContent="between" alignItems="center" mb={2}>
-          <Typography variant="h6">
-            <History sx={{ mr: 1, verticalAlign: 'middle' }} />
-            Email History
-          </Typography>
-          <Button
-            startIcon={<Refresh />}
-            onClick={loadEmailData}
-            size="small"
-          >
-            Refresh
-          </Button>
-        </Box>
-        
-        <TableContainer>
-          <Table>
-            <TableHead>
+    <Box sx={{
+      p: 2,
+      bgcolor: 'background.paper',
+      border: 1,
+      borderColor: 'divider',
+      borderRadius: '4px'
+    }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+        <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: 1 }}>
+          <History />
+          Email History
+        </Typography>
+        <Button
+          variant="outlined"
+          startIcon={<Refresh />}
+          onClick={loadEmailData}
+          size="small"
+        >
+          Refresh
+        </Button>
+      </Box>
+
+      <TableContainer>
+        <Table size="small">
+          <TableHead>
+            <TableRow>
+              <TableCell sx={{ fontWeight: 600 }}>Type</TableCell>
+              <TableCell sx={{ fontWeight: 600 }}>Recipient</TableCell>
+              <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
+              <TableCell sx={{ fontWeight: 600 }}>Sent At</TableCell>
+              <TableCell sx={{ fontWeight: 600 }}>Template</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {emailHistory.length === 0 ? (
               <TableRow>
-                <TableCell>Type</TableCell>
-                <TableCell>Recipient</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell>Sent At</TableCell>
-                <TableCell>Template</TableCell>
+                <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    No email history available
+                  </Typography>
+                </TableCell>
               </TableRow>
-            </TableHead>
-            <TableBody>
-              {emailHistory.map((email, index) => (
-                <TableRow key={index}>
+            ) : (
+              emailHistory.map((email, index) => (
+                <TableRow key={index} sx={{ '&:hover': { bgcolor: 'action.hover' } }}>
                   <TableCell>
                     <Chip
                       label={email.type || 'unknown'}
@@ -310,297 +330,172 @@ const EmailManagementDashboard = ({ organizationId, currentUser }) => {
                     />
                   </TableCell>
                   <TableCell>
-                    {email.timestamp ? 
+                    {email.timestamp ?
                       new Date(email.timestamp.seconds * 1000).toLocaleString() :
                       'N/A'
                     }
                   </TableCell>
                   <TableCell>
-                    <Typography variant="body2" fontFamily="monospace">
+                    <Typography variant="body2" sx={{ fontFamily: 'monospace', fontSize: '0.85rem' }}>
                       {email.templateId}
                     </Typography>
                   </TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </CardContent>
-    </Card>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </Box>
   );
 
   const EmailPreferencesCard = () => (
-    <Card>
-      <CardContent>
-        <Typography variant="h6" gutterBottom>
-          <Settings sx={{ mr: 1, verticalAlign: 'middle' }} />
-          Email Preferences
-        </Typography>
-        
-        <Grid container spacing={2}>
-          <Grid item xs={12} sm={6}>
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={emailPreferences.billing || false}
-                  onChange={(e) => handleUpdatePreferences({
-                    ...emailPreferences,
-                    billing: e.target.checked
-                  })}
-                />
-              }
-              label="Billing Notifications"
+    <Box sx={{
+      p: 2,
+      bgcolor: 'background.paper',
+      border: 1,
+      borderColor: 'divider',
+      borderRadius: '4px'
+    }}>
+      <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+        <Settings />
+        Email Preferences
+      </Typography>
+
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+        <FormControlLabel
+          control={
+            <Switch
+              checked={emailPreferences.billing || false}
+              onChange={(e) => handleUpdatePreferences({
+                ...emailPreferences,
+                billing: e.target.checked
+              })}
             />
-          </Grid>
-          
-          <Grid item xs={12} sm={6}>
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={emailPreferences.usage_alerts || false}
-                  onChange={(e) => handleUpdatePreferences({
-                    ...emailPreferences,
-                    usage_alerts: e.target.checked
-                  })}
-                />
-              }
-              label="Usage Alerts"
+          }
+          label="Billing Notifications"
+        />
+
+        <FormControlLabel
+          control={
+            <Switch
+              checked={emailPreferences.usage_alerts || false}
+              onChange={(e) => handleUpdatePreferences({
+                ...emailPreferences,
+                usage_alerts: e.target.checked
+              })}
             />
-          </Grid>
-          
-          <Grid item xs={12} sm={6}>
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={emailPreferences.announcements || false}
-                  onChange={(e) => handleUpdatePreferences({
-                    ...emailPreferences,
-                    announcements: e.target.checked
-                  })}
-                />
-              }
-              label="Feature Announcements"
+          }
+          label="Usage Alerts"
+        />
+
+        <FormControlLabel
+          control={
+            <Switch
+              checked={emailPreferences.announcements || false}
+              onChange={(e) => handleUpdatePreferences({
+                ...emailPreferences,
+                announcements: e.target.checked
+              })}
             />
-          </Grid>
-          
-          <Grid item xs={12} sm={6}>
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={emailPreferences.onboarding || false}
-                  onChange={(e) => handleUpdatePreferences({
-                    ...emailPreferences,
-                    onboarding: e.target.checked
-                  })}
-                />
-              }
-              label="Onboarding Emails"
+          }
+          label="Feature Announcements"
+        />
+
+        <FormControlLabel
+          control={
+            <Switch
+              checked={emailPreferences.onboarding || false}
+              onChange={(e) => handleUpdatePreferences({
+                ...emailPreferences,
+                onboarding: e.target.checked
+              })}
             />
-          </Grid>
-          
-          <Grid item xs={12} sm={6}>
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={emailPreferences.marketing || false}
-                  onChange={(e) => handleUpdatePreferences({
-                    ...emailPreferences,
-                    marketing: e.target.checked
-                  })}
-                />
-              }
-              label="Marketing Emails"
+          }
+          label="Onboarding Emails"
+        />
+
+        <FormControlLabel
+          control={
+            <Switch
+              checked={emailPreferences.marketing || false}
+              onChange={(e) => handleUpdatePreferences({
+                ...emailPreferences,
+                marketing: e.target.checked
+              })}
             />
-          </Grid>
-        </Grid>
-      </CardContent>
-    </Card>
+          }
+          label="Marketing Emails"
+        />
+      </Box>
+    </Box>
   );
 
   const QuickActionsCard = () => (
-    <Card>
-      <CardContent>
-        <Typography variant="h6" gutterBottom>
-          Quick Actions
-        </Typography>
-        
-        <Grid container spacing={2}>
-          <Grid item xs={12} sm={6}>
-            <Button
-              fullWidth
-              variant="outlined"
-              startIcon={<Send />}
-              onClick={() => setTestEmailDialog(true)}
-            >
-              Send Test Email
-            </Button>
-          </Grid>
-          
-          <Grid item xs={12} sm={6}>
-            <Button
-              fullWidth
-              variant="outlined"
-              startIcon={<Notifications />}
-              onClick={() => setAnnounceDialog(true)}
-            >
-              Send Announcement
-            </Button>
-          </Grid>
-          
-          <Grid item xs={12} sm={6}>
-            <Button
-              fullWidth
-              variant="outlined"
-              startIcon={<Schedule />}
-              onClick={handleProcessQueue}
-            >
-              Process Email Queue
-            </Button>
-          </Grid>
-          
-          <Grid item xs={12} sm={6}>
-            <Button
-              fullWidth
-              variant="outlined"
-              startIcon={<Add />}
-              onClick={() => scheduleOnboarding(currentUser.email, {
-                organizationName: 'Test Organization'
-              })}
-            >
-              Test Onboarding Sequence
-            </Button>
-          </Grid>
-        </Grid>
-      </CardContent>
-    </Card>
+    <Box sx={{
+      p: 2,
+      bgcolor: 'background.paper',
+      border: 1,
+      borderColor: 'divider',
+      borderRadius: '4px'
+    }}>
+      <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '0.9rem', mb: 2 }}>
+        Quick Actions
+      </Typography>
+
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+        <Button
+          fullWidth
+          variant="outlined"
+          startIcon={<Send />}
+          onClick={() => setTestEmailDialog(true)}
+        >
+          Send Test Email
+        </Button>
+
+        <Button
+          fullWidth
+          variant="outlined"
+          startIcon={<Notifications />}
+          onClick={() => setAnnounceDialog(true)}
+        >
+          Send Announcement
+        </Button>
+
+        <Button
+          fullWidth
+          variant="outlined"
+          startIcon={<Schedule />}
+          onClick={handleProcessQueue}
+        >
+          Process Email Queue
+        </Button>
+
+        <Button
+          fullWidth
+          variant="outlined"
+          startIcon={<Add />}
+          onClick={() => scheduleOnboarding(currentUser.email, {
+            organizationName: 'Test Organization'
+          })}
+        >
+          Test Onboarding
+        </Button>
+      </Box>
+    </Box>
   );
 
   // ============================================================================
   // DIALOGS
-  // ============================================================================
-
-  const TestEmailDialog = () => (
-    <Dialog open={testEmailDialog} onClose={() => setTestEmailDialog(false)}>
-      <DialogTitle>Send Test Email</DialogTitle>
-      <DialogContent>
-        <TextField
-          fullWidth
-          label="Email Address"
-          type="email"
-          value={testEmail}
-          onChange={(e) => setTestEmail(e.target.value)}
-          sx={{ mt: 2 }}
-        />
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={() => setTestEmailDialog(false)}>Cancel</Button>
-        <Button onClick={handleSendTestEmail} variant="contained">
-          Send Test
-        </Button>
-      </DialogActions>
-    </Dialog>
-  );
-
-  const AnnouncementDialog = () => (
-    <Dialog 
-      open={announceDialog} 
-      onClose={() => setAnnounceDialog(false)}
-      maxWidth="md"
-      fullWidth
-    >
-      <DialogTitle>Send Feature Announcement</DialogTitle>
-      <DialogContent>
-        <Grid container spacing={2} sx={{ mt: 1 }}>
-          <Grid item xs={12}>
-            <TextField
-              fullWidth
-              label="Feature Title"
-              value={announcement.title}
-              onChange={(e) => setAnnouncement({
-                ...announcement,
-                title: e.target.value
-              })}
-            />
-          </Grid>
-          
-          <Grid item xs={12}>
-            <TextField
-              fullWidth
-              multiline
-              rows={3}
-              label="Description"
-              value={announcement.description}
-              onChange={(e) => setAnnouncement({
-                ...announcement,
-                description: e.target.value
-              })}
-            />
-          </Grid>
-          
-          <Grid item xs={12}>
-            <Typography variant="subtitle2" gutterBottom>
-              Benefits
-            </Typography>
-            {announcement.benefits.map((benefit, index) => (
-              <TextField
-                key={index}
-                fullWidth
-                label={`Benefit ${index + 1}`}
-                value={benefit}
-                onChange={(e) => {
-                  const newBenefits = [...announcement.benefits];
-                  newBenefits[index] = e.target.value;
-                  setAnnouncement({
-                    ...announcement,
-                    benefits: newBenefits
-                  });
-                }}
-                sx={{ mb: 1 }}
-              />
-            ))}
-            <Button
-              size="small"
-              onClick={() => setAnnouncement({
-                ...announcement,
-                benefits: [...announcement.benefits, '']
-              })}
-            >
-              Add Benefit
-            </Button>
-          </Grid>
-          
-          <Grid item xs={12}>
-            <TextField
-              fullWidth
-              label="Learn More URL"
-              type="url"
-              value={announcement.learnMoreUrl}
-              onChange={(e) => setAnnouncement({
-                ...announcement,
-                learnMoreUrl: e.target.value
-              })}
-            />
-          </Grid>
-        </Grid>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={() => setAnnounceDialog(false)}>Cancel</Button>
-        <Button onClick={handleSendAnnouncement} variant="contained">
-          Send Announcement
-        </Button>
-      </DialogActions>
-    </Dialog>
-  );
-
   // ============================================================================
   // MAIN RENDER
   // ============================================================================
 
   if (loading) {
     return (
-      <Box>
-        <Typography variant="h4" gutterBottom>
-          Email Management
+      <Box sx={{ p: 3 }}>
+        <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
+          Loading email data...
         </Typography>
         <LinearProgress />
       </Box>
@@ -608,32 +503,108 @@ const EmailManagementDashboard = ({ organizationId, currentUser }) => {
   }
 
   return (
-    <Box>
-      <Typography variant="h4" gutterBottom>
-        Email Management Dashboard
-      </Typography>
-
+    <Box sx={{ p: 3 }}>
+      {/* Stats Cards */}
       <EmailStatsCards />
 
-      <Grid container spacing={3}>
-        <Grid item xs={12} md={8}>
-          <EmailHistoryTable />
-        </Grid>
-        
-        <Grid item xs={12} md={4}>
-          <Grid container spacing={3}>
-            <Grid item xs={12}>
-              <QuickActionsCard />
-            </Grid>
-            <Grid item xs={12}>
-              <EmailPreferencesCard />
-            </Grid>
-          </Grid>
-        </Grid>
-      </Grid>
+      {/* Main Content */}
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+        <EmailHistoryTable />
 
-      <TestEmailDialog />
-      <AnnouncementDialog />
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
+          <Box sx={{ flex: '1 1 300px' }}>
+            <QuickActionsCard />
+          </Box>
+          <Box sx={{ flex: '1 1 300px' }}>
+            <EmailPreferencesCard />
+          </Box>
+        </Box>
+      </Box>
+
+      {/* Test Email Dialog */}
+      <Dialog open={testEmailDialog} onClose={() => setTestEmailDialog(false)}>
+        <DialogTitle>Send Test Email</DialogTitle>
+        <DialogContent>
+          <TextField
+            fullWidth
+            label="Email Address"
+            type="email"
+            value={testEmail}
+            onChange={(e) => setTestEmail(e.target.value)}
+            sx={{ mt: 2 }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setTestEmailDialog(false)}>Cancel</Button>
+          <Button onClick={handleSendTestEmail} variant="contained">
+            Send Test
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Announcement Dialog */}
+      <Dialog 
+        open={announceDialog} 
+        onClose={() => setAnnounceDialog(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>Send Feature Announcement</DialogTitle>
+        <DialogContent>
+          <TextField
+            fullWidth
+            label="Feature Title"
+            value={announcement.title}
+            onChange={(e) => setAnnouncement(prev => ({ ...prev, title: e.target.value }))}
+            sx={{ mt: 2, mb: 2 }}
+          />
+          <TextField
+            fullWidth
+            multiline
+            rows={3}
+            label="Description"
+            value={announcement.description}
+            onChange={(e) => setAnnouncement(prev => ({ ...prev, description: e.target.value }))}
+            sx={{ mb: 2 }}
+          />
+          <Typography variant="subtitle2" sx={{ mb: 1 }}>Benefits:</Typography>
+          {announcement.benefits.map((benefit, index) => (
+            <TextField
+              key={index}
+              fullWidth
+              label={`Benefit ${index + 1}`}
+              value={benefit}
+              onChange={(e) => {
+                const newBenefits = [...announcement.benefits];
+                newBenefits[index] = e.target.value;
+                setAnnouncement(prev => ({ ...prev, benefits: newBenefits }));
+              }}
+              sx={{ mb: 1 }}
+            />
+          ))}
+          <Button 
+            onClick={() => setAnnouncement(prev => ({ 
+              ...prev, 
+              benefits: [...prev.benefits, ''] 
+            }))}
+            sx={{ mb: 2 }}
+          >
+            Add Benefit
+          </Button>
+          <TextField
+            fullWidth
+            label="Learn More URL (optional)"
+            value={announcement.learnMoreUrl}
+            onChange={(e) => setAnnouncement(prev => ({ ...prev, learnMoreUrl: e.target.value }))}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setAnnounceDialog(false)}>Cancel</Button>
+          <Button onClick={handleSendAnnouncement} variant="contained">
+            Send Announcement
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

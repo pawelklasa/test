@@ -3,7 +3,6 @@ import { useProject } from '../ProjectContext';
 import { useFeatures } from '../hooks/useFeatures';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
-import Paper from '@mui/material/Paper';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import Chip from '@mui/material/Chip';
@@ -17,7 +16,6 @@ import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import LinearProgress from '@mui/material/LinearProgress';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
-import TimelineIcon from '@mui/icons-material/Timeline';
 import ViewTimelineIcon from '@mui/icons-material/ViewTimeline';
 import { useTheme } from '@mui/material/styles';
 
@@ -188,21 +186,8 @@ function PortfolioRoadmap() {
 
   return (
     <Box sx={{ p: 3 }}>
-      {/* Header */}
-      <Box sx={{ mb: 4 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-          <TimelineIcon sx={{ fontSize: 32, color: 'primary.main' }} />
-          <Typography variant="h4" sx={{ fontWeight: 600 }}>
-            Portfolio Roadmap
-          </Typography>
-        </Box>
-        <Typography variant="body1" color="text.secondary">
-          Visualize your feature delivery timeline across quarters and track progress
-        </Typography>
-      </Box>
-
       {/* Controls */}
-      <Paper sx={{ p: 3, mb: 4 }}>
+      <Box sx={{ p: 2, bgcolor: 'background.paper', border: 1, borderColor: 'divider', borderRadius: '4px', mb: 3 }}>
         <Grid container spacing={3} alignItems="center">
           <Grid item xs={12} md={4}>
             <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
@@ -245,10 +230,10 @@ function PortfolioRoadmap() {
             </Box>
           </Grid>
         </Grid>
-      </Paper>
+      </Box>
 
       {/* Roadmap Timeline */}
-      <Paper sx={{ p: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'background.paper', border: 1, borderColor: 'divider', borderRadius: '4px' }}>
         {/* Timeline Header */}
         <Box sx={{ 
           display: 'flex', 
@@ -440,10 +425,10 @@ function PortfolioRoadmap() {
             ));
           })()
         )}
-      </Paper>
+      </Box>
 
       {/* Legend */}
-      <Paper sx={{ p: 2, mt: 3 }}>
+      <Box sx={{ p: 2, bgcolor: 'background.paper', border: 1, borderColor: 'divider', borderRadius: '4px', mt: 3 }}>
         <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
           Legend
         </Typography>
@@ -485,7 +470,7 @@ function PortfolioRoadmap() {
             </Box>
           </Grid>
         </Grid>
-      </Paper>
+      </Box>
     </Box>
   );
 }

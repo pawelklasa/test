@@ -1,10 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   Box,
-  Card,
-  CardContent,
   Typography,
-  Grid,
   LinearProgress,
   Alert,
   Button,
@@ -14,7 +11,6 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Paper,
   Chip,
   IconButton,
   Tooltip
@@ -24,11 +20,7 @@ import {
   Error,
   CheckCircle,
   Upgrade,
-  Refresh,
-  TrendingUp,
-  Storage,
-  People,
-  Visibility
+  Refresh
 } from '@mui/icons-material';
 import { usageLimitsService } from '../utils/usageLimitsService';
 
@@ -95,17 +87,6 @@ const UsageLimitsDashboard = ({ organizationId }) => {
     return names[metric] || metric;
   };
 
-  const getMetricIcon = (metric) => {
-    const icons = {
-      projects: <TrendingUp />,
-      features: <CheckCircle />,
-      teamMembers: <People />,
-      storageGB: <Storage />,
-      monthlyViews: <Visibility />
-    };
-    return icons[metric] || <CheckCircle />;
-  };
-
   // ============================================================================
   // COMPONENTS
   // ============================================================================
@@ -115,41 +96,58 @@ const UsageLimitsDashboard = ({ organizationId }) => {
     const color = getUsageColor(percentage);
     const isUnlimited = limit === -1;
 
+    const getColorValue = () => {
+      if (color === 'error') return '#EF4444';
+      if (color === 'warning') return '#F59E0B';
+      return '#10B981';
+    };
+
     return (
-      <Card>
-        <CardContent>
-          <Box display="flex" alignItems="center" mb={2}>
-            <Box sx={{ mr: 2, color: `${color}.main` }}>
-              {getMetricIcon(metric)}
-            </Box>
-            <Box flex={1}>
-              <Typography variant="h6">
-                {formatMetricName(metric)}
-              </Typography>
-              <Typography variant="body2" color="textSecondary">
-                {isUnlimited 
-                  ? `${current.toLocaleString()} (Unlimited)`
-                  : `${current.toLocaleString()} / ${limit.toLocaleString()}`
+      <Box sx={{
+        flex: '1 1 auto',
+        minWidth: '200px',
+        p: 2,
+        bgcolor: 'background.paper',
+        border: 1,
+        borderColor: 'divider',
+        borderRadius: '4px'
+      }}>
+        <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.75rem', display: 'block', mb: 0.5 }}>
+          {formatMetricName(metric)}
+        </Typography>
+        <Typography variant="h4" sx={{ fontWeight: 700, color: getColorValue(), mb: 1 }}>
+          {isUnlimited
+            ? current.toLocaleString()
+            : `${current.toLocaleString()} / ${limit.toLocaleString()}`
+          }
+        </Typography>
+
+        {!isUnlimited && (
+          <Box>
+            <LinearProgress
+              variant="determinate"
+              value={percentage}
+              sx={{
+                height: 8,
+                borderRadius: 4,
+                bgcolor: 'rgba(0, 0, 0, 0.1)',
+                '& .MuiLinearProgress-bar': {
+                  bgcolor: getColorValue(),
+                  borderRadius: 4
                 }
-              </Typography>
-            </Box>
+              }}
+            />
+            <Typography variant="caption" sx={{ fontSize: '0.7rem', color: 'text.secondary' }}>
+              {percentage.toFixed(1)}% used
+            </Typography>
           </Box>
-          
-          {!isUnlimited && (
-            <Box>
-              <LinearProgress
-                variant="determinate"
-                value={percentage}
-                color={color}
-                sx={{ mb: 1 }}
-              />
-              <Typography variant="body2" align="right">
-                {percentage.toFixed(1)}%
-              </Typography>
-            </Box>
-          )}
-        </CardContent>
-      </Card>
+        )}
+        {isUnlimited && (
+          <Typography variant="caption" sx={{ fontSize: '0.7rem', color: 'text.secondary' }}>
+            Unlimited
+          </Typography>
+        )}
+      </Box>
     );
   };
 
@@ -208,32 +206,36 @@ const UsageLimitsDashboard = ({ organizationId }) => {
     const { subscription } = usageReport;
 
     return (
-      <Card>
-        <CardContent>
-          <Typography variant="h6" gutterBottom>
-            Current Subscription
-          </Typography>
-          
-          <Box display="flex" alignItems="center" mb={2}>
-            <Chip 
-              label={subscription.tier?.toUpperCase() || 'FREE'} 
-              color={subscription.tier === 'enterprise' ? 'success' : 'primary'}
-              variant="outlined"
-            />
-            <Box ml={2}>
-              <Typography variant="body2" color="textSecondary">
-                Status: {subscription.status || 'Active'}
-              </Typography>
-            </Box>
-          </Box>
+      <Box sx={{
+        p: 2,
+        bgcolor: 'background.paper',
+        border: 1,
+        borderColor: 'divider',
+        borderRadius: '4px'
+      }}>
+        <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '0.9rem', mb: 2 }}>
+          Current Subscription
+        </Typography>
 
-          {subscription.nextBillingDate && (
-            <Typography variant="body2" color="textSecondary">
-              Next billing: {new Date(subscription.nextBillingDate).toLocaleDateString()}
+        <Box display="flex" alignItems="center" mb={2}>
+          <Chip
+            label={subscription.tier?.toUpperCase() || 'FREE'}
+            color={subscription.tier === 'enterprise' ? 'success' : 'primary'}
+            size="small"
+          />
+          <Box ml={2}>
+            <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.85rem' }}>
+              Status: {subscription.status || 'Active'}
             </Typography>
-          )}
-        </CardContent>
-      </Card>
+          </Box>
+        </Box>
+
+        {subscription.nextBillingDate && (
+          <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.85rem' }}>
+            Next billing: {new Date(subscription.nextBillingDate).toLocaleDateString()}
+          </Typography>
+        )}
+      </Box>
     );
   };
 
@@ -243,31 +245,35 @@ const UsageLimitsDashboard = ({ organizationId }) => {
     }
 
     return (
-      <Card>
-        <CardContent>
-          <Typography variant="h6" gutterBottom>
-            Upgrade Recommendations
-          </Typography>
-          
-          {upgradeRecommendations.map((rec, index) => (
-            <Alert 
-              key={index}
-              severity="info" 
-              icon={<Upgrade />}
-              sx={{ mb: 1 }}
-              action={
-                <Button color="inherit" size="small">
-                  Upgrade to {rec.suggestedTier}
-                </Button>
-              }
-            >
-              <Typography variant="body2">
-                {rec.reason}
-              </Typography>
-            </Alert>
-          ))}
-        </CardContent>
-      </Card>
+      <Box sx={{
+        p: 2,
+        bgcolor: 'background.paper',
+        border: 1,
+        borderColor: 'divider',
+        borderRadius: '4px'
+      }}>
+        <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '0.9rem', mb: 2 }}>
+          Upgrade Recommendations
+        </Typography>
+
+        {upgradeRecommendations.map((rec, index) => (
+          <Alert
+            key={index}
+            severity="info"
+            icon={<Upgrade />}
+            sx={{ mb: 1 }}
+            action={
+              <Button color="inherit" size="small">
+                Upgrade to {rec.suggestedTier}
+              </Button>
+            }
+          >
+            <Typography variant="body2">
+              {rec.reason}
+            </Typography>
+          </Alert>
+        ))}
+      </Box>
     );
   };
 
@@ -277,9 +283,9 @@ const UsageLimitsDashboard = ({ organizationId }) => {
 
   if (loading) {
     return (
-      <Box>
-        <Typography variant="h4" gutterBottom>
-          Usage & Billing
+      <Box sx={{ p: 3 }}>
+        <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
+          Loading usage data...
         </Typography>
         <LinearProgress />
       </Box>
@@ -288,10 +294,7 @@ const UsageLimitsDashboard = ({ organizationId }) => {
 
   if (!usageReport) {
     return (
-      <Box>
-        <Typography variant="h4" gutterBottom>
-          Usage & Billing
-        </Typography>
+      <Box sx={{ p: 3 }}>
         <Alert severity="error">
           Unable to load usage data. Please try again.
         </Alert>
@@ -300,109 +303,99 @@ const UsageLimitsDashboard = ({ organizationId }) => {
   }
 
   return (
-    <Box>
-      {/* Header */}
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h4">
-          Usage & Billing Dashboard
-        </Typography>
-        
+    <Box sx={{ p: 3 }}>
+      {/* Refresh Button */}
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
         <Tooltip title="Refresh Usage Data">
-          <IconButton onClick={loadUsageData}>
+          <IconButton onClick={loadUsageData} size="small">
             <Refresh />
           </IconButton>
         </Tooltip>
       </Box>
 
       {/* Alerts Section */}
-      <Box mb={3}>
+      <Box sx={{ mb: 3 }}>
         <AlertsSection />
       </Box>
 
-      <Grid container spacing={3}>
-        {/* Usage Metrics */}
-        <Grid item xs={12} lg={8}>
-          <Typography variant="h6" gutterBottom>
-            Current Usage
-          </Typography>
-          
-          <Grid container spacing={2} mb={3}>
-            {Object.entries(usageReport.usage).map(([metric, current]) => (
-              <Grid item xs={12} sm={6} md={4} key={metric}>
-                <UsageCard
-                  metric={metric}
-                  current={current}
-                  limit={usageReport.limits[metric]}
-                />
-              </Grid>
-            ))}
-          </Grid>
+      {/* Usage Metrics - Full Width */}
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3 }}>
+        {Object.entries(usageReport.usage).map(([metric, current]) => (
+          <UsageCard
+            key={metric}
+            metric={metric}
+            current={current}
+            limit={usageReport.limits[metric]}
+          />
+        ))}
+      </Box>
 
-          {/* Usage History Table */}
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Usage Details
-              </Typography>
-              
-              <TableContainer component={Paper}>
-                <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Metric</TableCell>
-                      <TableCell align="right">Current</TableCell>
-                      <TableCell align="right">Limit</TableCell>
-                      <TableCell align="right">Usage %</TableCell>
-                      <TableCell align="center">Status</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {Object.entries(usageReport.usage).map(([metric, current]) => {
-                      const limit = usageReport.limits[metric];
-                      const percentage = getUsagePercentage(current, limit);
-                      const color = getUsageColor(percentage);
-                      
-                      return (
-                        <TableRow key={metric}>
-                          <TableCell>{formatMetricName(metric)}</TableCell>
-                          <TableCell align="right">{current.toLocaleString()}</TableCell>
-                          <TableCell align="right">
-                            {limit === -1 ? 'Unlimited' : limit.toLocaleString()}
-                          </TableCell>
-                          <TableCell align="right">
-                            {limit === -1 ? 'N/A' : `${percentage.toFixed(1)}%`}
-                          </TableCell>
-                          <TableCell align="center">
-                            <Chip
-                              size="small"
-                              label={percentage >= 95 ? 'Critical' : percentage >= 80 ? 'Warning' : 'Good'}
-                              color={color}
-                              variant="outlined"
-                            />
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </CardContent>
-          </Card>
-        </Grid>
+      {/* Usage Details Table */}
+      <Box sx={{
+        p: 2,
+        bgcolor: 'background.paper',
+        border: 1,
+        borderColor: 'divider',
+        borderRadius: '4px',
+        mb: 3
+      }}>
+        <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '0.9rem', mb: 2 }}>
+          Usage Details
+        </Typography>
 
-        {/* Sidebar */}
-        <Grid item xs={12} lg={4}>
-          <Grid container spacing={3}>
-            <Grid item xs={12}>
-              <SubscriptionInfoCard />
-            </Grid>
-            
-            <Grid item xs={12}>
-              <UpgradeRecommendationsCard />
-            </Grid>
-          </Grid>
-        </Grid>
-      </Grid>
+        <TableContainer>
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell sx={{ fontWeight: 600 }}>Metric</TableCell>
+                <TableCell align="right" sx={{ fontWeight: 600 }}>Current</TableCell>
+                <TableCell align="right" sx={{ fontWeight: 600 }}>Limit</TableCell>
+                <TableCell align="right" sx={{ fontWeight: 600 }}>Usage %</TableCell>
+                <TableCell align="center" sx={{ fontWeight: 600 }}>Status</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {Object.entries(usageReport.usage).map(([metric, current]) => {
+                const limit = usageReport.limits[metric];
+                const percentage = getUsagePercentage(current, limit);
+                const color = getUsageColor(percentage);
+
+                return (
+                  <TableRow key={metric} sx={{ '&:hover': { bgcolor: 'action.hover' } }}>
+                    <TableCell>{formatMetricName(metric)}</TableCell>
+                    <TableCell align="right">{current.toLocaleString()}</TableCell>
+                    <TableCell align="right">
+                      {limit === -1 ? 'Unlimited' : limit.toLocaleString()}
+                    </TableCell>
+                    <TableCell align="right">
+                      {limit === -1 ? 'N/A' : `${percentage.toFixed(1)}%`}
+                    </TableCell>
+                    <TableCell align="center">
+                      <Chip
+                        size="small"
+                        label={percentage >= 95 ? 'Critical' : percentage >= 80 ? 'Warning' : 'Good'}
+                        color={color}
+                        variant="outlined"
+                      />
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Box>
+
+      {/* Sidebar Cards - Full Width Responsive */}
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
+        <Box sx={{ flex: '1 1 300px' }}>
+          <SubscriptionInfoCard />
+        </Box>
+
+        <Box sx={{ flex: '1 1 300px' }}>
+          <UpgradeRecommendationsCard />
+        </Box>
+      </Box>
     </Box>
   );
 };

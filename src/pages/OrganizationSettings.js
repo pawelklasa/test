@@ -1,31 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import {
   Box,
-  Card,
-  CardContent,
   Typography,
   TextField,
   Button,
-  Grid,
-  Divider,
   Alert,
   CircularProgress,
   Dialog,
   DialogTitle,
   DialogContent,
-  DialogActions,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemSecondaryAction,
-  Chip,
-  Paper
+  DialogActions
 } from '@mui/material';
 import {
   Business as BusinessIcon,
-  People as PeopleIcon,
-  Storage as StorageIcon,
-  Timeline as TimelineIcon,
   Warning as WarningIcon
 } from '@mui/icons-material';
 import { useOrganization } from '../OrganizationContext';
@@ -155,15 +142,7 @@ const OrganizationSettings = () => {
   }
 
   return (
-    <Box>
-      <Typography variant="h4" component="h1" gutterBottom>
-        Organization Settings
-      </Typography>
-
-      <Typography variant="body1" color="text.secondary" paragraph>
-        Manage settings and information for <strong>{currentOrganization.name}</strong>
-      </Typography>
-
+    <Box sx={{ p: 3 }}>
       {error && (
         <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError('')}>
           {error}
@@ -176,164 +155,184 @@ const OrganizationSettings = () => {
         </Alert>
       )}
 
-      <Grid container spacing={3}>
-        {/* Organization Information */}
-        <Grid item xs={12} md={8}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                <BusinessIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
-                Organization Information
-              </Typography>
-              
-              <Box component="form" noValidate>
-                <Grid container spacing={2}>
-                  <Grid item xs={12}>
-                    <TextField
-                      fullWidth
-                      label="Organization Name"
-                      value={organizationName}
-                      onChange={(e) => setOrganizationName(e.target.value)}
-                      disabled={!hasPermission('manageOrganization')}
-                      required
-                    />
-                  </Grid>
-                  <Grid item xs={12}>
-                    <TextField
-                      fullWidth
-                      label="Description"
-                      value={organizationDescription}
-                      onChange={(e) => setOrganizationDescription(e.target.value)}
-                      disabled={!hasPermission('manageOrganization')}
-                      multiline
-                      rows={3}
-                      placeholder="Describe your organization..."
-                    />
-                  </Grid>
-                  <Grid item xs={12}>
-                    <Typography variant="body2" color="text.secondary">
-                      <strong>Organization ID:</strong> {currentOrganization.id}
-                    </Typography>
-                  </Grid>
-                  <Grid item xs={12}>
-                    <Typography variant="body2" color="text.secondary">
-                      <strong>Created:</strong> {currentOrganization.createdAt?.toDate?.()?.toLocaleDateString() || 'Unknown'}
-                    </Typography>
-                  </Grid>
-                </Grid>
+      {/* Stats Cards */}
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3 }}>
+        <Box sx={{
+          flex: '1 1 auto',
+          minWidth: '150px',
+          p: 2,
+          bgcolor: 'background.paper',
+          border: 1,
+          borderColor: 'divider',
+          borderRadius: '4px'
+        }}>
+          <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.75rem', display: 'block', mb: 0.5 }}>
+            Team Members
+          </Typography>
+          <Typography variant="h4" sx={{ fontWeight: 700, color: 'primary.main' }}>
+            {stats.totalMembers}
+          </Typography>
+        </Box>
 
-                {hasPermission('manageOrganization') && (
-                  <Box mt={3}>
-                    <Button
-                      variant="contained"
-                      onClick={handleUpdateOrganization}
-                      disabled={loading}
-                      startIcon={loading ? <CircularProgress size={20} /> : null}
-                    >
-                      {loading ? 'Updating...' : 'Update Organization'}
-                    </Button>
-                  </Box>
-                )}
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
+        <Box sx={{
+          flex: '1 1 auto',
+          minWidth: '150px',
+          p: 2,
+          bgcolor: 'background.paper',
+          border: 1,
+          borderColor: 'divider',
+          borderRadius: '4px'
+        }}>
+          <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.75rem', display: 'block', mb: 0.5 }}>
+            Projects
+          </Typography>
+          <Typography variant="h4" sx={{ fontWeight: 700, color: '#10B981' }}>
+            {stats.totalProjects}
+          </Typography>
+        </Box>
 
-        {/* Organization Statistics */}
-        <Grid item xs={12} md={4}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                <TimelineIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
-                Usage Statistics
-              </Typography>
-              
-              <List>
-                <ListItem>
-                  <ListItemText 
-                    primary="Team Members" 
-                    secondary={`${stats.totalMembers} active members`}
-                  />
-                  <ListItemSecondaryAction>
-                    <Chip icon={<PeopleIcon />} label={stats.totalMembers} color="primary" />
-                  </ListItemSecondaryAction>
-                </ListItem>
-                <ListItem>
-                  <ListItemText 
-                    primary="Projects" 
-                    secondary={`${stats.totalProjects} total projects`}
-                  />
-                  <ListItemSecondaryAction>
-                    <Chip label={stats.totalProjects} color="secondary" />
-                  </ListItemSecondaryAction>
-                </ListItem>
-                <ListItem>
-                  <ListItemText 
-                    primary="Features" 
-                    secondary={`${stats.totalFeatures} features across all projects`}
-                  />
-                  <ListItemSecondaryAction>
-                    <Chip label={stats.totalFeatures} color="success" />
-                  </ListItemSecondaryAction>
-                </ListItem>
-                <ListItem>
-                  <ListItemText 
-                    primary="Storage Used" 
-                    secondary={`~${stats.storageUsed} MB estimated`}
-                  />
-                  <ListItemSecondaryAction>
-                    <Chip icon={<StorageIcon />} label={`${stats.storageUsed} MB`} />
-                  </ListItemSecondaryAction>
-                </ListItem>
-              </List>
-            </CardContent>
-          </Card>
+        <Box sx={{
+          flex: '1 1 auto',
+          minWidth: '150px',
+          p: 2,
+          bgcolor: 'background.paper',
+          border: 1,
+          borderColor: 'divider',
+          borderRadius: '4px'
+        }}>
+          <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.75rem', display: 'block', mb: 0.5 }}>
+            Features
+          </Typography>
+          <Typography variant="h4" sx={{ fontWeight: 700, color: '#3B82F6' }}>
+            {stats.totalFeatures}
+          </Typography>
+        </Box>
 
-          {/* Billing Information Placeholder */}
-          <Card sx={{ mt: 2 }}>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Billing & Subscription
-              </Typography>
-              
-              <Paper sx={{ p: 2, bgcolor: 'info.light', color: 'info.contrastText' }}>
-                <Typography variant="body2">
-                  <strong>Current Plan:</strong> Free Trial
-                </Typography>
-                <Typography variant="body2" sx={{ mt: 1 }}>
-                  Billing integration coming soon! You'll be able to manage subscriptions, view usage, and upgrade plans.
-                </Typography>
-              </Paper>
-            </CardContent>
-          </Card>
-        </Grid>
+        <Box sx={{
+          flex: '1 1 auto',
+          minWidth: '150px',
+          p: 2,
+          bgcolor: 'background.paper',
+          border: 1,
+          borderColor: 'divider',
+          borderRadius: '4px'
+        }}>
+          <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.75rem', display: 'block', mb: 0.5 }}>
+            Storage Used
+          </Typography>
+          <Typography variant="h4" sx={{ fontWeight: 700, color: '#F59E0B' }}>
+            {stats.storageUsed} MB
+          </Typography>
+        </Box>
+      </Box>
 
-        {/* Danger Zone */}
-        {hasPermission('manageOrganization') && currentOrganization.ownerId === user.uid && (
-          <Grid item xs={12}>
-            <Card sx={{ border: 1, borderColor: 'error.main' }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom color="error">
-                  <WarningIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
-                  Danger Zone
-                </Typography>
-                
-                <Typography variant="body2" color="text.secondary" paragraph>
-                  These actions are irreversible. Please proceed with caution.
-                </Typography>
+      {/* Organization Information */}
+      <Box sx={{
+        p: 2,
+        bgcolor: 'background.paper',
+        border: 1,
+        borderColor: 'divider',
+        borderRadius: '4px',
+        mb: 3
+      }}>
+        <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+          <BusinessIcon />
+          Organization Information
+        </Typography>
 
-                <Button
-                  variant="outlined"
-                  color="error"
-                  onClick={() => setDeleteDialogOpen(true)}
-                >
-                  Delete Organization
-                </Button>
-              </CardContent>
-            </Card>
-          </Grid>
-        )}
-      </Grid>
+        <Box component="form" noValidate sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <TextField
+            fullWidth
+            label="Organization Name"
+            value={organizationName}
+            onChange={(e) => setOrganizationName(e.target.value)}
+            disabled={!hasPermission('manageOrganization')}
+            required
+          />
+
+          <TextField
+            fullWidth
+            label="Description"
+            value={organizationDescription}
+            onChange={(e) => setOrganizationDescription(e.target.value)}
+            disabled={!hasPermission('manageOrganization')}
+            multiline
+            rows={3}
+            placeholder="Describe your organization..."
+          />
+
+          <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.85rem' }}>
+            <strong>Organization ID:</strong> {currentOrganization.id}
+          </Typography>
+
+          <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.85rem' }}>
+            <strong>Created:</strong> {currentOrganization.createdAt?.toDate?.()?.toLocaleDateString() || 'Unknown'}
+          </Typography>
+
+          {hasPermission('manageOrganization') && (
+            <Box mt={1}>
+              <Button
+                variant="contained"
+                onClick={handleUpdateOrganization}
+                disabled={loading}
+                startIcon={loading ? <CircularProgress size={20} /> : null}
+              >
+                {loading ? 'Updating...' : 'Update Organization'}
+              </Button>
+            </Box>
+          )}
+        </Box>
+      </Box>
+
+      {/* Billing Information */}
+      <Box sx={{
+        p: 2,
+        bgcolor: 'background.paper',
+        border: 1,
+        borderColor: 'divider',
+        borderRadius: '4px',
+        mb: 3
+      }}>
+        <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '0.9rem', mb: 2 }}>
+          Billing & Subscription
+        </Typography>
+
+        <Typography variant="body2" sx={{ fontSize: '0.85rem' }}>
+          <strong>Current Plan:</strong> Free Trial
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 1, fontSize: '0.85rem' }}>
+          Billing integration coming soon! You'll be able to manage subscriptions, view usage, and upgrade plans.
+        </Typography>
+      </Box>
+
+      {/* Danger Zone */}
+      {hasPermission('manageOrganization') && currentOrganization.ownerId === user.uid && (
+        <Box sx={{
+          p: 2,
+          bgcolor: 'background.paper',
+          border: 2,
+          borderColor: 'error.main',
+          borderRadius: '4px'
+        }}>
+          <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '0.9rem', color: 'error.main', display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+            <WarningIcon />
+            Danger Zone
+          </Typography>
+
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2, fontSize: '0.85rem' }}>
+            These actions are irreversible. Please proceed with caution.
+          </Typography>
+
+          <Button
+            variant="outlined"
+            color="error"
+            onClick={() => setDeleteDialogOpen(true)}
+            size="small"
+          >
+            Delete Organization
+          </Button>
+        </Box>
+      )}
 
       {/* Delete Organization Dialog */}
       <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)} maxWidth="sm" fullWidth>

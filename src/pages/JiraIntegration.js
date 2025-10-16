@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useProject } from '../ProjectContext';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import Paper from '@mui/material/Paper';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import FormControl from '@mui/material/FormControl';
@@ -11,14 +10,11 @@ import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import Alert from '@mui/material/Alert';
 import CircularProgress from '@mui/material/CircularProgress';
-import Card from '@mui/material/Card';
-import CardContent from '@mui/material/CardContent';
 import Divider from '@mui/material/Divider';
 import IconButton from '@mui/material/IconButton';
 import InputAdornment from '@mui/material/InputAdornment';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
-import IntegrationInstructionsIcon from '@mui/icons-material/IntegrationInstructions';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ErrorIcon from '@mui/icons-material/Error';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
@@ -125,29 +121,15 @@ function JiraIntegration() {
   if (!selectedProject) {
     return (
       <Box sx={{ p: 3 }}>
-        <Typography variant="h5" sx={{ fontWeight: 600, mb: 2 }}>
-          Jira Integration
-        </Typography>
-        <Typography color="text.secondary">
+        <Alert severity="warning">
           Please select a project to configure Jira integration.
-        </Typography>
+        </Alert>
       </Box>
     );
   }
 
   return (
     <Box sx={{ p: 3 }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-        <IntegrationInstructionsIcon sx={{ fontSize: 32, color: 'primary.main' }} />
-        <Box>
-          <Typography variant="h5" sx={{ fontWeight: 600 }}>
-            Jira Integration
-          </Typography>
-          <Typography color="text.secondary">
-            Export features to Jira as issues for development tracking
-          </Typography>
-        </Box>
-      </Box>
 
       {statusMessage && (
         <Alert 
@@ -159,11 +141,10 @@ function JiraIntegration() {
         </Alert>
       )}
 
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-            Connection Settings
-          </Typography>
+      <Box sx={{ p: 2, bgcolor: 'background.paper', border: 1, borderColor: 'divider', borderRadius: '4px', mb: 3 }}>
+        <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, fontSize: '0.9rem' }}>
+          Connection Settings
+        </Typography>
           
           <Box sx={{ display: 'grid', gap: 3 }}>
             <TextField
@@ -251,14 +232,12 @@ function JiraIntegration() {
               {isLoading ? 'Saving...' : 'Save Configuration'}
             </Button>
           </Box>
-        </CardContent>
-      </Card>
+      </Box>
 
-      <Card>
-        <CardContent>
-          <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-            How to Set Up API Token
-          </Typography>
+      <Box sx={{ p: 2, bgcolor: 'background.paper', border: 1, borderColor: 'divider', borderRadius: '4px' }}>
+        <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, fontSize: '0.9rem' }}>
+          How to Set Up API Token
+        </Typography>
           
           <Box component="ol" sx={{ pl: 2 }}>
             <Box component="li" sx={{ mb: 1 }}>
@@ -277,8 +256,7 @@ function JiraIntegration() {
               <strong>Note:</strong> Keep this token secure - it gives full access to your Jira account
             </Box>
           </Box>
-        </CardContent>
-      </Card>
+      </Box>
     </Box>
   );
 }

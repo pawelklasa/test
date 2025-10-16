@@ -1,17 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import {
   Box,
-  Card,
-  CardContent,
   Typography,
-  Grid,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Paper,
   Chip,
   Avatar,
   List,
@@ -31,9 +27,6 @@ import {
 import {
   TrendingUp as TrendingUpIcon,
   Group as GroupIcon,
-  Business as BusinessIcon,
-  AttachMoney as MoneyIcon,
-  Storage as StorageIcon,
   Speed as SpeedIcon,
   Warning as WarningIcon,
   CheckCircle as CheckCircleIcon,
@@ -246,38 +239,33 @@ const AdminDashboard = () => {
   }
 
   return (
-    <Box>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h4" component="h1">
-          Admin Dashboard
-        </Typography>
-        
-        <Box display="flex" gap={2}>
-          <FormControl size="small" sx={{ minWidth: 120 }}>
-            <InputLabel>Timeframe</InputLabel>
-            <Select
-              value={timeframe}
-              label="Timeframe"
-              onChange={(e) => setTimeframe(e.target.value)}
-            >
-              <MenuItem value="7d">Last 7 days</MenuItem>
-              <MenuItem value="30d">Last 30 days</MenuItem>
-              <MenuItem value="90d">Last 90 days</MenuItem>
-            </Select>
-          </FormControl>
-          
-          <Tooltip title="Refresh Data">
-            <IconButton onClick={loadAdminData} disabled={loading}>
-              <RefreshIcon />
-            </IconButton>
-          </Tooltip>
-          
-          <Tooltip title="Export Report">
-            <IconButton>
-              <DownloadIcon />
-            </IconButton>
-          </Tooltip>
-        </Box>
+    <Box sx={{ p: 3 }}>
+      {/* Controls */}
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mb: 2 }}>
+        <FormControl size="small" sx={{ minWidth: 120 }}>
+          <InputLabel>Timeframe</InputLabel>
+          <Select
+            value={timeframe}
+            label="Timeframe"
+            onChange={(e) => setTimeframe(e.target.value)}
+          >
+            <MenuItem value="7d">Last 7 days</MenuItem>
+            <MenuItem value="30d">Last 30 days</MenuItem>
+            <MenuItem value="90d">Last 90 days</MenuItem>
+          </Select>
+        </FormControl>
+
+        <Tooltip title="Refresh Data">
+          <IconButton onClick={loadAdminData} disabled={loading} size="small">
+            <RefreshIcon />
+          </IconButton>
+        </Tooltip>
+
+        <Tooltip title="Export Report">
+          <IconButton size="small">
+            <DownloadIcon />
+          </IconButton>
+        </Tooltip>
       </Box>
 
       {error && (
@@ -289,238 +277,253 @@ const AdminDashboard = () => {
       {loading && <LinearProgress sx={{ mb: 2 }} />}
 
       {/* Key Metrics */}
-      <Grid container spacing={3} mb={3}>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Box display="flex" alignItems="center" justifyContent="space-between">
-                <Box>
-                  <Typography color="text.secondary" variant="body2">
-                    Total Users
-                  </Typography>
-                  <Typography variant="h4">
-                    {metrics.totalUsers.toLocaleString()}
-                  </Typography>
-                </Box>
-                <Avatar sx={{ bgcolor: 'primary.main' }}>
-                  <GroupIcon />
-                </Avatar>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3 }}>
+        <Box sx={{
+          flex: '1 1 auto',
+          minWidth: '200px',
+          p: 2,
+          bgcolor: 'background.paper',
+          border: 1,
+          borderColor: 'divider',
+          borderRadius: '4px'
+        }}>
+          <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.75rem', display: 'block', mb: 0.5 }}>
+            Total Users
+          </Typography>
+          <Typography variant="h4" sx={{ fontWeight: 700, color: 'primary.main' }}>
+            {metrics.totalUsers.toLocaleString()}
+          </Typography>
+        </Box>
 
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Box display="flex" alignItems="center" justifyContent="space-between">
-                <Box>
-                  <Typography color="text.secondary" variant="body2">
-                    Organizations
-                  </Typography>
-                  <Typography variant="h4">
-                    {metrics.totalOrganizations}
-                  </Typography>
-                </Box>
-                <Avatar sx={{ bgcolor: 'secondary.main' }}>
-                  <BusinessIcon />
-                </Avatar>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
+        <Box sx={{
+          flex: '1 1 auto',
+          minWidth: '200px',
+          p: 2,
+          bgcolor: 'background.paper',
+          border: 1,
+          borderColor: 'divider',
+          borderRadius: '4px'
+        }}>
+          <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.75rem', display: 'block', mb: 0.5 }}>
+            Organizations
+          </Typography>
+          <Typography variant="h4" sx={{ fontWeight: 700, color: '#10B981' }}>
+            {metrics.totalOrganizations}
+          </Typography>
+        </Box>
 
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Box display="flex" alignItems="center" justifyContent="space-between">
-                <Box>
-                  <Typography color="text.secondary" variant="body2">
-                    Monthly Revenue
-                  </Typography>
-                  <Typography variant="h4">
-                    ${metrics.monthlyRevenue.toLocaleString()}
-                  </Typography>
-                </Box>
-                <Avatar sx={{ bgcolor: 'success.main' }}>
-                  <MoneyIcon />
-                </Avatar>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
+        <Box sx={{
+          flex: '1 1 auto',
+          minWidth: '200px',
+          p: 2,
+          bgcolor: 'background.paper',
+          border: 1,
+          borderColor: 'divider',
+          borderRadius: '4px'
+        }}>
+          <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.75rem', display: 'block', mb: 0.5 }}>
+            Monthly Revenue
+          </Typography>
+          <Typography variant="h4" sx={{ fontWeight: 700, color: '#10B981' }}>
+            ${metrics.monthlyRevenue.toLocaleString()}
+          </Typography>
+        </Box>
 
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Box display="flex" alignItems="center" justifyContent="space-between">
-                <Box>
-                  <Typography color="text.secondary" variant="body2">
-                    Storage Used
-                  </Typography>
-                  <Typography variant="h4">
-                    {metrics.storageUsed} GB
-                  </Typography>
-                </Box>
-                <Avatar sx={{ bgcolor: 'warning.main' }}>
-                  <StorageIcon />
-                </Avatar>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+        <Box sx={{
+          flex: '1 1 auto',
+          minWidth: '200px',
+          p: 2,
+          bgcolor: 'background.paper',
+          border: 1,
+          borderColor: 'divider',
+          borderRadius: '4px'
+        }}>
+          <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.75rem', display: 'block', mb: 0.5 }}>
+            Storage Used
+          </Typography>
+          <Typography variant="h4" sx={{ fontWeight: 700, color: '#F59E0B' }}>
+            {metrics.storageUsed} GB
+          </Typography>
+        </Box>
+      </Box>
 
-      <Grid container spacing={3}>
+      {/* Content Sections */}
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3, mb: 3 }}>
         {/* Subscription Breakdown */}
-        <Grid item xs={12} md={4}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Subscription Plans
-              </Typography>
-              
-              <Box mt={2}>
-                {Object.entries(subscriptionBreakdown).map(([plan, count]) => (
-                  <Box key={plan} mb={2}>
-                    <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
-                      <Typography variant="body2" textTransform="capitalize">
-                        {plan}
-                      </Typography>
-                      <Typography variant="body2" fontWeight="bold">
-                        {count}
-                      </Typography>
-                    </Box>
-                    <LinearProgress 
-                      variant="determinate" 
-                      value={(count / Object.values(subscriptionBreakdown).reduce((a, b) => a + b, 0)) * 100}
-                      color={getPlanColor(plan)}
-                    />
-                  </Box>
-                ))}
+        <Box sx={{
+          flex: '1 1 300px',
+          p: 2,
+          bgcolor: 'background.paper',
+          border: 1,
+          borderColor: 'divider',
+          borderRadius: '4px'
+        }}>
+          <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '0.9rem', mb: 2 }}>
+            Subscription Plans
+          </Typography>
+
+          <Box>
+            {Object.entries(subscriptionBreakdown).map(([plan, count]) => (
+              <Box key={plan} sx={{ mb: 2 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                  <Typography variant="body2" sx={{ textTransform: 'capitalize', fontSize: '0.85rem' }}>
+                    {plan}
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.85rem' }}>
+                    {count}
+                  </Typography>
+                </Box>
+                <LinearProgress
+                  variant="determinate"
+                  value={(count / Object.values(subscriptionBreakdown).reduce((a, b) => a + b, 0)) * 100}
+                  sx={{
+                    height: 8,
+                    borderRadius: 4,
+                    bgcolor: 'rgba(0, 0, 0, 0.1)',
+                    '& .MuiLinearProgress-bar': {
+                      borderRadius: 4
+                    }
+                  }}
+                />
               </Box>
-            </CardContent>
-          </Card>
-        </Grid>
+            ))}
+          </Box>
+        </Box>
 
         {/* Recent Activity */}
-        <Grid item xs={12} md={8}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Recent Activity
-              </Typography>
-              
-              <List>
-                {recentActivity.map((activity, index) => (
-                  <React.Fragment key={activity.id}>
-                    <ListItem>
-                      <ListItemAvatar>
-                        <Avatar sx={{ bgcolor: `${getActivityColor(activity.severity)}.main` }}>
-                          {getActivityIcon(activity.type)}
-                        </Avatar>
-                      </ListItemAvatar>
-                      <ListItemText
-                        primary={activity.description}
-                        secondary={activity.timestamp.toLocaleString()}
-                      />
-                    </ListItem>
-                    {index < recentActivity.length - 1 && <Divider variant="inset" component="li" />}
-                  </React.Fragment>
-                ))}
-              </List>
-            </CardContent>
-          </Card>
-        </Grid>
+        <Box sx={{
+          flex: '2 1 500px',
+          p: 2,
+          bgcolor: 'background.paper',
+          border: 1,
+          borderColor: 'divider',
+          borderRadius: '4px'
+        }}>
+          <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '0.9rem', mb: 2 }}>
+            Recent Activity
+          </Typography>
 
-        {/* Organization Stats */}
-        <Grid item xs={12}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Organization Overview
-              </Typography>
-              
-              <TableContainer>
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Organization</TableCell>
-                      <TableCell>Plan</TableCell>
-                      <TableCell align="center">Members</TableCell>
-                      <TableCell align="center">Projects</TableCell>
-                      <TableCell align="center">Features</TableCell>
-                      <TableCell align="center">Storage</TableCell>
-                      <TableCell align="center">Last Active</TableCell>
-                      <TableCell align="center">Health</TableCell>
-                      <TableCell align="center">Actions</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {organizationStats.map((org) => (
-                      <TableRow key={org.id} hover>
-                        <TableCell>
-                          <Typography variant="body2" fontWeight="medium">
-                            {org.name}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Chip 
-                            label={org.plan} 
-                            color={getPlanColor(org.plan)}
-                            size="small"
-                            variant="outlined"
-                          />
-                        </TableCell>
-                        <TableCell align="center">{org.members}</TableCell>
-                        <TableCell align="center">{org.projects}</TableCell>
-                        <TableCell align="center">{org.features}</TableCell>
-                        <TableCell align="center">{org.storageUsed} GB</TableCell>
-                        <TableCell align="center">
-                          <Typography variant="body2" color="text.secondary">
-                            {org.lastActive.toLocaleString()}
-                          </Typography>
-                        </TableCell>
-                        <TableCell align="center">
-                          <Chip 
-                            label={org.health} 
-                            color={getHealthColor(org.health)}
-                            size="small"
-                          />
-                        </TableCell>
-                        <TableCell align="center">
-                          <Tooltip title="View Details">
-                            <IconButton size="small">
-                              <VisibilityIcon />
-                            </IconButton>
-                          </Tooltip>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+          <List sx={{ p: 0 }}>
+            {recentActivity.map((activity, index) => (
+              <React.Fragment key={activity.id}>
+                <ListItem sx={{ px: 0 }}>
+                  <ListItemAvatar>
+                    <Avatar sx={{ bgcolor: `${getActivityColor(activity.severity)}.main`, width: 32, height: 32 }}>
+                      {getActivityIcon(activity.type)}
+                    </Avatar>
+                  </ListItemAvatar>
+                  <ListItemText
+                    primary={activity.description}
+                    secondary={activity.timestamp.toLocaleString()}
+                    slotProps={{
+                      primary: { style: { fontSize: '0.85rem' } },
+                      secondary: { style: { fontSize: '0.75rem' } }
+                    }}
+                  />
+                </ListItem>
+                {index < recentActivity.length - 1 && <Divider variant="inset" component="li" />}
+              </React.Fragment>
+            ))}
+          </List>
+        </Box>
+      </Box>
+
+      {/* Organization Stats */}
+      <Box sx={{
+        p: 2,
+        bgcolor: 'background.paper',
+        border: 1,
+        borderColor: 'divider',
+        borderRadius: '4px',
+        mb: 3
+      }}>
+        <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '0.9rem', mb: 2 }}>
+          Organization Overview
+        </Typography>
+
+        <TableContainer>
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell sx={{ fontWeight: 600 }}>Organization</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>Plan</TableCell>
+                <TableCell align="center" sx={{ fontWeight: 600 }}>Members</TableCell>
+                <TableCell align="center" sx={{ fontWeight: 600 }}>Projects</TableCell>
+                <TableCell align="center" sx={{ fontWeight: 600 }}>Features</TableCell>
+                <TableCell align="center" sx={{ fontWeight: 600 }}>Storage</TableCell>
+                <TableCell align="center" sx={{ fontWeight: 600 }}>Last Active</TableCell>
+                <TableCell align="center" sx={{ fontWeight: 600 }}>Health</TableCell>
+                <TableCell align="center" sx={{ fontWeight: 600 }}>Actions</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {organizationStats.map((org) => (
+                <TableRow key={org.id} sx={{ '&:hover': { bgcolor: 'action.hover' } }}>
+                  <TableCell>
+                    <Typography variant="body2" sx={{ fontWeight: 500, fontSize: '0.85rem' }}>
+                      {org.name}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Chip
+                      label={org.plan}
+                      color={getPlanColor(org.plan)}
+                      size="small"
+                      variant="outlined"
+                    />
+                  </TableCell>
+                  <TableCell align="center">{org.members}</TableCell>
+                  <TableCell align="center">{org.projects}</TableCell>
+                  <TableCell align="center">{org.features}</TableCell>
+                  <TableCell align="center">{org.storageUsed} GB</TableCell>
+                  <TableCell align="center">
+                    <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
+                      {org.lastActive.toLocaleString()}
+                    </Typography>
+                  </TableCell>
+                  <TableCell align="center">
+                    <Chip
+                      label={org.health}
+                      color={getHealthColor(org.health)}
+                      size="small"
+                    />
+                  </TableCell>
+                  <TableCell align="center">
+                    <Tooltip title="View Details">
+                      <IconButton size="small">
+                        <VisibilityIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Box>
 
       {/* Integration Notice */}
-      <Paper sx={{ p: 3, mt: 3, bgcolor: 'info.light', color: 'info.contrastText' }}>
-        <Typography variant="h6" gutterBottom>
+      <Box sx={{
+        p: 2,
+        bgcolor: 'background.paper',
+        border: 1,
+        borderColor: 'divider',
+        borderRadius: '4px'
+      }}>
+        <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '0.9rem', mb: 1 }}>
           Admin Dashboard Preview
         </Typography>
-        <Typography variant="body2">
+        <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.85rem', mb: 1 }}>
           This admin dashboard shows simulated data for demonstration purposes. In production, this would connect to:
         </Typography>
-        <ul style={{ margin: '8px 0', paddingLeft: '20px' }}>
+        <Box component="ul" sx={{ m: 0, pl: 2.5, '& li': { fontSize: '0.85rem', color: 'text.secondary', mb: 0.5 } }}>
           <li>Real-time analytics from Firebase Analytics</li>
           <li>Stripe webhook data for subscription metrics</li>
           <li>User activity tracking and engagement metrics</li>
           <li>System health monitoring and alerts</li>
           <li>Revenue reporting and financial analytics</li>
-        </ul>
-      </Paper>
+        </Box>
+      </Box>
     </Box>
   );
 };

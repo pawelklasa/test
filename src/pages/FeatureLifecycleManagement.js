@@ -3,9 +3,6 @@ import { useProject } from '../ProjectContext';
 import { useFeatures } from '../hooks/useFeatures';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
-import Paper from '@mui/material/Paper';
-import Card from '@mui/material/Card';
-import CardContent from '@mui/material/CardContent';
 import Grid from '@mui/material/Grid';
 import Chip from '@mui/material/Chip';
 import Button from '@mui/material/Button';
@@ -31,7 +28,6 @@ import ListItemSecondaryAction from '@mui/material/ListItemSecondaryAction';
 import Divider from '@mui/material/Divider';
 
 // Icons
-import AutorenewIcon from '@mui/icons-material/Autorenew';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import TrendingDownIcon from '@mui/icons-material/TrendingDown';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
@@ -177,15 +173,19 @@ function FeatureLifecycleManagement() {
   const FeatureCard = ({ feature, data }) => {
     const healthScore = calculateHealthScore(feature);
     const stage = lifecycleStages.find(s => s.id === data.currentStage);
-    
+
     return (
-      <Card sx={{ 
-        mb: 2, 
-        borderLeft: 4, 
+      <Box sx={{
+        p: 2,
+        mb: 2,
+        bgcolor: 'background.paper',
+        border: 1,
+        borderColor: 'divider',
+        borderRadius: '4px',
+        borderLeft: 4,
         borderLeftColor: getStageColor(data.currentStage),
         '&:hover': { boxShadow: 3 }
       }}>
-        <CardContent>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
             <Box sx={{ flex: 1 }}>
               <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
@@ -269,8 +269,7 @@ function FeatureLifecycleManagement() {
               </Box>
             ))}
           </Box>
-        </CardContent>
-      </Card>
+      </Box>
     );
   };
 
@@ -284,62 +283,59 @@ function FeatureLifecycleManagement() {
 
   return (
     <Box sx={{ p: 3 }}>
-      {/* Header */}
-      <Box sx={{ mb: 4 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-          <AutorenewIcon sx={{ fontSize: 32, color: 'primary.main' }} />
-          <Typography variant="h4" sx={{ fontWeight: 600 }}>
-            Feature Lifecycle Management
-          </Typography>
-        </Box>
-        <Typography variant="body1" color="text.secondary">
-          Track your features from conception to retirement with success metrics and health monitoring
-        </Typography>
-      </Box>
-
       {/* Overview Stats */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3 }}>
         {lifecycleStages.slice(0, 4).map((stage) => {
           const stageFeatures = getFeaturesByStage(stage.id);
           return (
-            <Grid item xs={12} sm={6} md={3} key={stage.id}>
-              <Paper sx={{ p: 2, textAlign: 'center' }}>
-                <Box sx={{ 
-                  width: 40, 
-                  height: 40, 
-                  borderRadius: '50%', 
-                  bgcolor: stage.color, 
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  mx: 'auto',
-                  mb: 1
-                }}>
-                  <Typography variant="h6" sx={{ color: 'white', fontWeight: 600 }}>
-                    {stageFeatures.length}
-                  </Typography>
-                </Box>
-                <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                  {stage.label}
+            <Box
+              key={stage.id}
+              sx={{
+                flex: '1 1 auto',
+                minWidth: '200px',
+                p: 2,
+                bgcolor: 'background.paper',
+                border: 1,
+                borderColor: 'divider',
+                borderRadius: '4px',
+                textAlign: 'center'
+              }}
+            >
+              <Box sx={{
+                width: 48,
+                height: 48,
+                borderRadius: '50%',
+                bgcolor: stage.color,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                mx: 'auto',
+                mb: 2
+              }}>
+                <Typography variant="h5" sx={{ color: 'white', fontWeight: 700 }}>
+                  {stageFeatures.length}
                 </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  {stage.description}
-                </Typography>
-              </Paper>
-            </Grid>
+              </Box>
+              <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 0.5 }}>
+                {stage.label}
+              </Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+                {stage.description}
+              </Typography>
+            </Box>
           );
         })}
-      </Grid>
+      </Box>
 
       {/* Navigation Tabs */}
-      <Paper sx={{ mb: 3 }}>
+      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
         <Tabs value={activeTab} onChange={(e, newValue) => setActiveTab(newValue)}>
           <Tab label="All Features" />
           <Tab label="Active Features" />
           <Tab label="Performance Analytics" />
           <Tab label="Retirement Planning" />
         </Tabs>
-      </Paper>
+      </Box>
 
       {/* Tab Content */}
       <TabPanel value={activeTab} index={0}>
@@ -388,7 +384,7 @@ function FeatureLifecycleManagement() {
             const healthScore = calculateHealthScore(feature);
             
             return (
-              <Paper key={feature.id} sx={{ p: 3, mb: 3 }}>
+              <Box key={feature.id} sx={{ p: 2, bgcolor: 'background.paper', border: 1, borderColor: 'divider', borderRadius: '4px', mb: 3 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                   <Typography variant="h6" sx={{ fontWeight: 600 }}>
                     {feature.name}
@@ -460,7 +456,7 @@ function FeatureLifecycleManagement() {
                     ))}
                   </Grid>
                 </Grid>
-              </Paper>
+              </Box>
             );
           })
         }
@@ -474,7 +470,7 @@ function FeatureLifecycleManagement() {
         
         <Grid container spacing={3}>
           <Grid item xs={12} md={6}>
-            <Paper sx={{ p: 3 }}>
+            <Box sx={{ p: 2, bgcolor: 'background.paper', border: 1, borderColor: 'divider', borderRadius: '4px' }}>
               <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
                 Feature Health Distribution
               </Typography>
@@ -501,11 +497,11 @@ function FeatureLifecycleManagement() {
                   </Box>
                 );
               })}
-            </Paper>
+            </Box>
           </Grid>
           
           <Grid item xs={12} md={6}>
-            <Paper sx={{ p: 3 }}>
+            <Box sx={{ p: 2, bgcolor: 'background.paper', border: 1, borderColor: 'divider', borderRadius: '4px' }}>
               <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
                 Lifecycle Stage Distribution
               </Typography>
@@ -534,7 +530,7 @@ function FeatureLifecycleManagement() {
                   </Box>
                 );
               })}
-            </Paper>
+            </Box>
           </Grid>
         </Grid>
       </TabPanel>
@@ -560,7 +556,7 @@ function FeatureLifecycleManagement() {
             const healthScore = calculateHealthScore(feature);
             
             return (
-              <Paper key={feature.id} sx={{ p: 3, mb: 3 }}>
+              <Box key={feature.id} sx={{ p: 2, bgcolor: 'background.paper', border: 1, borderColor: 'divider', borderRadius: '4px', mb: 3 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                   <Box>
                     <Typography variant="h6" sx={{ fontWeight: 600 }}>
@@ -591,7 +587,7 @@ function FeatureLifecycleManagement() {
                     or plan gradual deprecation with user migration strategy.
                   </Typography>
                 </Box>
-              </Paper>
+              </Box>
             );
           })
         }
@@ -601,7 +597,7 @@ function FeatureLifecycleManagement() {
           const data = generateLifecycleData(feature);
           return healthScore < 60 || data.currentStage === 'declining';
         }).length === 0 && (
-          <Paper sx={{ p: 4, textAlign: 'center' }}>
+          <Box sx={{ p: 4, bgcolor: 'background.paper', border: 1, borderColor: 'divider', borderRadius: '4px', textAlign: 'center' }}>
             <CheckCircleIcon sx={{ fontSize: 48, color: 'success.main', mb: 2 }} />
             <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
               All Features Healthy
@@ -609,7 +605,7 @@ function FeatureLifecycleManagement() {
             <Typography variant="body2" color="text.secondary">
               No features currently require retirement consideration
             </Typography>
-          </Paper>
+          </Box>
         )}
       </TabPanel>
 

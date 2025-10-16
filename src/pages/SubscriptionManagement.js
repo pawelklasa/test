@@ -1,11 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import {
   Box,
-  Card,
-  CardContent,
   Typography,
   Button,
-  Grid,
   List,
   ListItem,
   ListItemIcon,
@@ -16,9 +13,7 @@ import {
   DialogContent,
   DialogActions,
   Alert,
-  CircularProgress,
-  Paper,
-  Divider
+  CircularProgress
 } from '@mui/material';
 import {
   Check as CheckIcon,
@@ -215,170 +210,232 @@ const SubscriptionManagement = () => {
   }
 
   return (
-    <Box>
-      <Typography variant="h4" component="h1" gutterBottom>
-        Subscription & Billing
-      </Typography>
-
-      <Typography variant="body1" color="text.secondary" paragraph>
-        Manage your subscription and billing for <strong>{currentOrganization.name}</strong>
-      </Typography>
-
+    <Box sx={{ p: 3 }}>
       {error && (
         <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError('')}>
           {error}
         </Alert>
       )}
 
-      {/* Current Subscription Status */}
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-            <Typography variant="h6">Current Subscription</Typography>
-            <Chip 
-              label={currentSubscription.status === 'trial' ? 'Free Trial' : currentPlan?.name || 'Free'} 
-              color={currentSubscription.status === 'active' ? 'success' : 'warning'}
-            />
-          </Box>
+      {/* Current Subscription Status - Stats Cards Style */}
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3 }}>
+        <Box sx={{
+          flex: '1 1 auto',
+          minWidth: '200px',
+          p: 2,
+          bgcolor: 'background.paper',
+          border: 1,
+          borderColor: 'divider',
+          borderRadius: '4px'
+        }}>
+          <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.75rem', display: 'block', mb: 0.5 }}>
+            Current Plan
+          </Typography>
+          <Typography variant="h4" sx={{ fontWeight: 700, color: 'text.primary' }}>
+            {currentPlan?.name || 'Free Trial'}
+          </Typography>
+          <Chip
+            label={currentSubscription.status === 'trial' ? 'Free Trial' : currentSubscription.status}
+            color={currentSubscription.status === 'active' ? 'success' : 'warning'}
+            size="small"
+            sx={{ mt: 1 }}
+          />
+        </Box>
 
-          <Grid container spacing={3}>
-            <Grid item xs={12} md={6}>
-              <Typography variant="body2" color="text.secondary">
-                <strong>Plan:</strong> {currentPlan?.name || 'Free Trial'}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                <strong>Price:</strong> ${currentPlan?.price || 0}/month
-              </Typography>
-              {currentSubscription.trialEndsAt && (
-                <Typography variant="body2" color="warning.main">
-                  <strong>Trial ends:</strong> {currentSubscription.trialEndsAt.toLocaleDateString()}
-                </Typography>
-              )}
-              {currentSubscription.renewsAt && (
-                <Typography variant="body2" color="text.secondary">
-                  <strong>Renews:</strong> {currentSubscription.renewsAt.toLocaleDateString()}
-                </Typography>
-              )}
-            </Grid>
+        <Box sx={{
+          flex: '1 1 auto',
+          minWidth: '150px',
+          p: 2,
+          bgcolor: 'background.paper',
+          border: 1,
+          borderColor: 'divider',
+          borderRadius: '4px'
+        }}>
+          <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.75rem', display: 'block', mb: 0.5 }}>
+            Monthly Price
+          </Typography>
+          <Typography variant="h4" sx={{ fontWeight: 700, color: '#10B981' }}>
+            ${currentPlan?.price || 0}
+          </Typography>
+        </Box>
 
-            <Grid item xs={12} md={6}>
-              <Typography variant="body2" gutterBottom><strong>Current Usage:</strong></Typography>
-              <Box sx={{ pl: 2 }}>
-                <Typography variant="body2" color={isUsageNearLimit(currentSubscription.usage.members, currentPlan?.limits?.members) ? 'warning.main' : 'text.secondary'}>
-                  Members: {currentSubscription.usage.members} / {currentPlan?.limits?.members === -1 ? '∞' : currentPlan?.limits?.members}
-                </Typography>
-                <Typography variant="body2" color={isUsageNearLimit(currentSubscription.usage.projects, currentPlan?.limits?.projects) ? 'warning.main' : 'text.secondary'}>
-                  Projects: {currentSubscription.usage.projects} / {currentPlan?.limits?.projects === -1 ? '∞' : currentPlan?.limits?.projects}
-                </Typography>
-                <Typography variant="body2" color={isUsageNearLimit(currentSubscription.usage.features, currentPlan?.limits?.featuresPerProject * currentSubscription.usage.projects) ? 'warning.main' : 'text.secondary'}>
-                  Features: {currentSubscription.usage.features}
-                </Typography>
-                <Typography variant="body2" color={isUsageNearLimit(currentSubscription.usage.storage, currentPlan?.limits?.storage) ? 'warning.main' : 'text.secondary'}>
-                  Storage: {currentSubscription.usage.storage} MB / {currentPlan?.limits?.storage === -1 ? '∞' : currentPlan?.limits?.storage} MB
-                </Typography>
-              </Box>
-            </Grid>
-          </Grid>
-        </CardContent>
-      </Card>
+        <Box sx={{
+          flex: '1 1 auto',
+          minWidth: '150px',
+          p: 2,
+          bgcolor: 'background.paper',
+          border: 1,
+          borderColor: 'divider',
+          borderRadius: '4px'
+        }}>
+          <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.75rem', display: 'block', mb: 0.5 }}>
+            Members
+          </Typography>
+          <Typography variant="h4" sx={{ fontWeight: 700, color: isUsageNearLimit(currentSubscription.usage.members, currentPlan?.limits?.members) ? '#F59E0B' : 'text.primary' }}>
+            {currentSubscription.usage.members} / {currentPlan?.limits?.members === -1 ? '∞' : currentPlan?.limits?.members}
+          </Typography>
+        </Box>
+
+        <Box sx={{
+          flex: '1 1 auto',
+          minWidth: '150px',
+          p: 2,
+          bgcolor: 'background.paper',
+          border: 1,
+          borderColor: 'divider',
+          borderRadius: '4px'
+        }}>
+          <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.75rem', display: 'block', mb: 0.5 }}>
+            Projects
+          </Typography>
+          <Typography variant="h4" sx={{ fontWeight: 700, color: isUsageNearLimit(currentSubscription.usage.projects, currentPlan?.limits?.projects) ? '#F59E0B' : 'text.primary' }}>
+            {currentSubscription.usage.projects} / {currentPlan?.limits?.projects === -1 ? '∞' : currentPlan?.limits?.projects}
+          </Typography>
+        </Box>
+
+        <Box sx={{
+          flex: '1 1 auto',
+          minWidth: '150px',
+          p: 2,
+          bgcolor: 'background.paper',
+          border: 1,
+          borderColor: 'divider',
+          borderRadius: '4px'
+        }}>
+          <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.75rem', display: 'block', mb: 0.5 }}>
+            Storage
+          </Typography>
+          <Typography variant="h4" sx={{ fontWeight: 700, color: isUsageNearLimit(currentSubscription.usage.storage, currentPlan?.limits?.storage) ? '#F59E0B' : '#3B82F6' }}>
+            {currentSubscription.usage.storage} MB
+          </Typography>
+        </Box>
+      </Box>
+
+      {/* Trial/Renewal Info */}
+      {(currentSubscription.trialEndsAt || currentSubscription.renewsAt) && (
+        <Box sx={{
+          p: 2,
+          bgcolor: 'background.paper',
+          border: 1,
+          borderColor: 'divider',
+          borderRadius: '4px',
+          mb: 3
+        }}>
+          {currentSubscription.trialEndsAt && (
+            <Typography variant="body2" sx={{ color: 'warning.main', fontWeight: 600 }}>
+              Trial ends: {currentSubscription.trialEndsAt.toLocaleDateString()}
+            </Typography>
+          )}
+          {currentSubscription.renewsAt && (
+            <Typography variant="body2" color="text.secondary">
+              Renews: {currentSubscription.renewsAt.toLocaleDateString()}
+            </Typography>
+          )}
+        </Box>
+      )}
 
       {/* Pricing Plans */}
-      <Typography variant="h5" gutterBottom>
+      <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '0.9rem', mb: 2 }}>
         Available Plans
       </Typography>
 
-      <Grid container spacing={3}>
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3, mb: 3 }}>
         {pricingPlans.map((plan) => (
-          <Grid item xs={12} md={4} key={plan.id}>
-            <Card 
-              sx={{ 
-                height: '100%',
-                border: plan.popular ? 2 : 1,
-                borderColor: plan.popular ? 'secondary.main' : 'divider',
-                position: 'relative'
-              }}
+          <Box
+            key={plan.id}
+            sx={{
+              flex: '1 1 300px',
+              p: 2,
+              bgcolor: 'background.paper',
+              border: plan.popular ? 2 : 1,
+              borderColor: plan.popular ? 'secondary.main' : 'divider',
+              borderRadius: '4px',
+              position: 'relative'
+            }}
+          >
+            {plan.popular && (
+              <Box
+                sx={{
+                  position: 'absolute',
+                  top: -10,
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  bgcolor: 'secondary.main',
+                  color: 'secondary.contrastText',
+                  px: 2,
+                  py: 0.5,
+                  borderRadius: 1,
+                  fontSize: '0.7rem',
+                  fontWeight: 'bold'
+                }}
+              >
+                MOST POPULAR
+              </Box>
+            )}
+
+            <Box textAlign="center" mb={2}>
+              <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                {plan.name}
+              </Typography>
+              <Box display="flex" alignItems="baseline" justifyContent="center" mt={1}>
+                <Typography variant="h3" sx={{ fontWeight: 700, color: plan.popular ? 'secondary.main' : 'primary.main' }}>
+                  ${plan.price}
+                </Typography>
+                <Typography variant="caption" color="text.secondary" sx={{ ml: 1 }}>
+                  {plan.period}
+                </Typography>
+              </Box>
+              <Typography variant="caption" color="text.secondary" mt={1}>
+                {plan.description}
+              </Typography>
+            </Box>
+
+            <List dense sx={{ mb: 2 }}>
+              {plan.features.map((feature, index) => (
+                <ListItem key={index} sx={{ px: 0, py: 0.5 }}>
+                  <ListItemIcon sx={{ minWidth: 28 }}>
+                    <CheckIcon color="success" sx={{ fontSize: 16 }} />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={feature}
+                    primaryTypographyProps={{ variant: 'body2', fontSize: '0.85rem' }}
+                  />
+                </ListItem>
+              ))}
+            </List>
+
+            <Button
+              fullWidth
+              variant={plan.popular ? 'contained' : 'outlined'}
+              color={plan.color}
+              onClick={() => handleUpgradeClick(plan)}
+              disabled={currentSubscription.plan === plan.id}
+              size="small"
             >
-              {plan.popular && (
-                <Box
-                  sx={{
-                    position: 'absolute',
-                    top: -10,
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    bgcolor: 'secondary.main',
-                    color: 'secondary.contrastText',
-                    px: 2,
-                    py: 0.5,
-                    borderRadius: 1,
-                    fontSize: '0.75rem',
-                    fontWeight: 'bold'
-                  }}
-                >
-                  MOST POPULAR
-                </Box>
-              )}
-              
-              <CardContent>
-                <Box textAlign="center" mb={2}>
-                  <Typography variant="h5" component="h3">
-                    {plan.name}
-                  </Typography>
-                  <Box display="flex" alignItems="baseline" justifyContent="center" mt={1}>
-                    <Typography variant="h3" component="span" color={plan.color}>
-                      ${plan.price}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
-                      {plan.period}
-                    </Typography>
-                  </Box>
-                  <Typography variant="body2" color="text.secondary" mt={1}>
-                    {plan.description}
-                  </Typography>
-                </Box>
-
-                <List dense>
-                  {plan.features.map((feature, index) => (
-                    <ListItem key={index} sx={{ px: 0 }}>
-                      <ListItemIcon sx={{ minWidth: 32 }}>
-                        <CheckIcon color="success" fontSize="small" />
-                      </ListItemIcon>
-                      <ListItemText 
-                        primary={feature} 
-                        primaryTypographyProps={{ variant: 'body2' }}
-                      />
-                    </ListItem>
-                  ))}
-                </List>
-
-                <Box mt={2}>
-                  <Button
-                    fullWidth
-                    variant={plan.popular ? 'contained' : 'outlined'}
-                    color={plan.color}
-                    onClick={() => handleUpgradeClick(plan)}
-                    disabled={currentSubscription.plan === plan.id}
-                  >
-                    {currentSubscription.plan === plan.id ? 'Current Plan' : 'Upgrade'}
-                  </Button>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
+              {currentSubscription.plan === plan.id ? 'Current Plan' : 'Upgrade'}
+            </Button>
+          </Box>
         ))}
-      </Grid>
+      </Box>
 
       {/* Integration Notice */}
-      <Paper sx={{ p: 3, mt: 3, bgcolor: 'info.light', color: 'info.contrastText' }}>
-        <Typography variant="h6" gutterBottom>
-          <SecurityIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
+      <Box sx={{
+        p: 2,
+        bgcolor: 'background.paper',
+        border: 1,
+        borderColor: 'divider',
+        borderRadius: '4px'
+      }}>
+        <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+          <SecurityIcon />
           Secure Billing Integration
         </Typography>
-        <Typography variant="body2">
-          This is a preview of the billing system. In production, this will integrate with Stripe for secure payment processing. 
-          All transactions will be encrypted and PCI compliant. You'll be able to manage payment methods, view invoices, 
+        <Typography variant="body2" color="text.secondary">
+          This is a preview of the billing system. In production, this will integrate with Stripe for secure payment processing.
+          All transactions will be encrypted and PCI compliant. You'll be able to manage payment methods, view invoices,
           and track usage in real-time.
         </Typography>
-      </Paper>
+      </Box>
 
       {/* Upgrade Confirmation Dialog */}
       <Dialog open={upgradeDialogOpen} onClose={() => setUpgradeDialogOpen(false)} maxWidth="sm" fullWidth>

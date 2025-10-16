@@ -1,10 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   Box,
-  Card,
-  CardContent,
   Typography,
-  Grid,
   LinearProgress,
   Tabs,
   Tab,
@@ -16,12 +13,7 @@ import {
   Tooltip
 } from '@mui/material';
 import {
-  TrendingUp,
-  AttachMoney,
-  People,
-  Assessment,
-  Refresh,
-  Download
+  Refresh
 } from '@mui/icons-material';
 import { stripeAnalytics } from '../utils/stripeAnalytics';
 
@@ -52,46 +44,41 @@ const AnalyticsDashboard = ({ organizationId }) => {
 
   if (loading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
-        <Box textAlign="center">
-          <LinearProgress sx={{ mb: 2, width: 200 }} />
-          <Typography variant="body2" color="text.secondary">
-            Loading analytics...
-          </Typography>
-        </Box>
+      <Box sx={{ p: 3 }}>
+        <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
+          Loading analytics...
+        </Typography>
+        <LinearProgress />
       </Box>
     );
   }
 
   return (
-    <Box>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h4" component="h1">
-          Analytics Dashboard
-        </Typography>
-        <Box display="flex" gap={2}>
-          <FormControl size="small" sx={{ minWidth: 120 }}>
-            <InputLabel>Time Range</InputLabel>
-            <Select
-              value={timeRange}
-              label="Time Range"
-              onChange={(e) => setTimeRange(e.target.value)}
-            >
-              <MenuItem value={7}>Last 7 days</MenuItem>
-              <MenuItem value={30}>Last 30 days</MenuItem>
-              <MenuItem value={90}>Last 90 days</MenuItem>
-              <MenuItem value={365}>Last year</MenuItem>
-            </Select>
-          </FormControl>
-          <Tooltip title="Refresh data">
-            <IconButton onClick={loadAnalytics}>
-              <Refresh />
-            </IconButton>
-          </Tooltip>
-        </Box>
+    <Box sx={{ p: 3 }}>
+      {/* Controls */}
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mb: 2 }}>
+        <FormControl size="small" sx={{ minWidth: 120 }}>
+          <InputLabel>Time Range</InputLabel>
+          <Select
+            value={timeRange}
+            label="Time Range"
+            onChange={(e) => setTimeRange(e.target.value)}
+          >
+            <MenuItem value={7}>Last 7 days</MenuItem>
+            <MenuItem value={30}>Last 30 days</MenuItem>
+            <MenuItem value={90}>Last 90 days</MenuItem>
+            <MenuItem value={365}>Last year</MenuItem>
+          </Select>
+        </FormControl>
+        <Tooltip title="Refresh data">
+          <IconButton onClick={loadAnalytics} size="small">
+            <Refresh />
+          </IconButton>
+        </Tooltip>
       </Box>
 
-      <Box borderBottom={1} borderColor="divider" mb={3}>
+      {/* Tabs */}
+      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
         <Tabs value={activeTab} onChange={(e, newValue) => setActiveTab(newValue)}>
           <Tab label="Revenue" />
           <Tab label="Usage" />
@@ -99,58 +86,57 @@ const AnalyticsDashboard = ({ organizationId }) => {
         </Tabs>
       </Box>
 
-      <Box>
-        {activeTab === 0 && (
-          <Grid container spacing={3}>
-            <Grid item xs={12}>
-              <Card>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    Revenue Analytics
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Revenue data will be displayed here.
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-          </Grid>
-        )}
+      {/* Tab Content */}
+      {activeTab === 0 && (
+        <Box sx={{
+          p: 2,
+          bgcolor: 'background.paper',
+          border: 1,
+          borderColor: 'divider',
+          borderRadius: '4px'
+        }}>
+          <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '0.9rem', mb: 2 }}>
+            Revenue Analytics
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.85rem' }}>
+            Revenue data will be displayed here. Integration with Stripe analytics coming soon.
+          </Typography>
+        </Box>
+      )}
 
-        {activeTab === 1 && (
-          <Grid container spacing={3}>
-            <Grid item xs={12}>
-              <Card>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    Usage Analytics
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Usage data will be displayed here.
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-          </Grid>
-        )}
+      {activeTab === 1 && (
+        <Box sx={{
+          p: 2,
+          bgcolor: 'background.paper',
+          border: 1,
+          borderColor: 'divider',
+          borderRadius: '4px'
+        }}>
+          <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '0.9rem', mb: 2 }}>
+            Usage Analytics
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.85rem' }}>
+            Usage metrics and feature adoption data will be displayed here.
+          </Typography>
+        </Box>
+      )}
 
-        {activeTab === 2 && (
-          <Grid container spacing={3}>
-            <Grid item xs={12}>
-              <Card>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    Customer Analytics
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Customer data will be displayed here.
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-          </Grid>
-        )}
-      </Box>
+      {activeTab === 2 && (
+        <Box sx={{
+          p: 2,
+          bgcolor: 'background.paper',
+          border: 1,
+          borderColor: 'divider',
+          borderRadius: '4px'
+        }}>
+          <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '0.9rem', mb: 2 }}>
+            Customer Analytics
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.85rem' }}>
+            Customer engagement and retention metrics will be displayed here.
+          </Typography>
+        </Box>
+      )}
     </Box>
   );
 };

@@ -1,34 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import {
   Box,
-  Card,
-  CardContent,
   Typography,
-  Grid,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Paper,
   Chip,
-  IconButton,
-  Tooltip,
   Switch,
   FormControlLabel,
   Alert,
-  Divider,
   LinearProgress
 } from '@mui/material';
 import {
   Visibility,
-  Timeline,
   Mouse,
-  AccessTime,
-  DeviceHub,
-  LocationOn,
-  Settings
+  AccessTime
 } from '@mui/icons-material';
 import { collection, query, where, orderBy, limit, getDocs, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
@@ -269,170 +258,188 @@ const UserTrackingDashboard = ({ organizationId, currentUser }) => {
   // ============================================================================
 
   const TrackingControls = () => (
-    <Card sx={{ mb: 3 }}>
-      <CardContent>
-        <Typography variant="h6" gutterBottom>
-          Tracking Controls
-        </Typography>
-        <Grid container spacing={2} alignItems="center">
-          <Grid item>
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={trackingEnabled}
-                  onChange={(e) => setTrackingEnabled(e.target.checked)}
-                />
-              }
-              label="Enable User Tracking"
+    <Box sx={{
+      p: 2,
+      bgcolor: 'background.paper',
+      border: 1,
+      borderColor: 'divider',
+      borderRadius: '4px',
+      mb: 3
+    }}>
+      <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '0.9rem', mb: 2 }}>
+        Tracking Controls
+      </Typography>
+      <Box sx={{ display: 'flex', gap: 3, alignItems: 'center' }}>
+        <FormControlLabel
+          control={
+            <Switch
+              checked={trackingEnabled}
+              onChange={(e) => setTrackingEnabled(e.target.checked)}
             />
-          </Grid>
-          <Grid item>
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={realTimeEnabled}
-                  onChange={(e) => setRealTimeEnabled(e.target.checked)}
-                />
-              }
-              label="Real-time Updates"
+          }
+          label="Enable User Tracking"
+        />
+        <FormControlLabel
+          control={
+            <Switch
+              checked={realTimeEnabled}
+              onChange={(e) => setRealTimeEnabled(e.target.checked)}
             />
-          </Grid>
-        </Grid>
-        {!trackingEnabled && (
-          <Alert severity="warning" sx={{ mt: 2 }}>
-            User tracking is disabled. Enable it to see analytics data.
-          </Alert>
-        )}
-      </CardContent>
-    </Card>
+          }
+          label="Real-time Updates"
+        />
+      </Box>
+      {!trackingEnabled && (
+        <Alert severity="warning" sx={{ mt: 2 }}>
+          User tracking is disabled. Enable it to see analytics data.
+        </Alert>
+      )}
+    </Box>
   );
 
   const ActiveUsersCard = () => (
-    <Card>
-      <CardContent>
-        <Box display="flex" alignItems="center" mb={2}>
-          <DeviceHub sx={{ mr: 1, color: 'success.main' }} />
-          <Typography variant="h6">Active Users (24h)</Typography>
-        </Box>
-        <Typography variant="h3" color="success.main">
-          {trackingData.activeUsers}
-        </Typography>
-        <Typography variant="body2" color="textSecondary">
-          Unique users in the last 24 hours
-        </Typography>
-      </CardContent>
-    </Card>
+    <Box sx={{
+      flex: '1 1 auto',
+      minWidth: '200px',
+      p: 2,
+      bgcolor: 'background.paper',
+      border: 1,
+      borderColor: 'divider',
+      borderRadius: '4px'
+    }}>
+      <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.75rem', display: 'block', mb: 0.5 }}>
+        Active Users (24h)
+      </Typography>
+      <Typography variant="h4" sx={{ fontWeight: 700, color: '#10B981' }}>
+        {trackingData.activeUsers}
+      </Typography>
+      <Typography variant="caption" sx={{ fontSize: '0.7rem', color: 'text.secondary' }}>
+        Unique users in the last 24 hours
+      </Typography>
+    </Box>
   );
 
   const PageViewsTable = () => (
-    <Card>
-      <CardContent>
-        <Typography variant="h6" gutterBottom>
-          <Visibility sx={{ mr: 1, verticalAlign: 'middle' }} />
-          Page Views (Last 7 days)
-        </Typography>
-        <TableContainer>
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>Page</TableCell>
-                <TableCell align="right">Views</TableCell>
-                <TableCell align="right">Date</TableCell>
+    <Box sx={{
+      p: 2,
+      bgcolor: 'background.paper',
+      border: 1,
+      borderColor: 'divider',
+      borderRadius: '4px'
+    }}>
+      <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+        <Visibility />
+        Page Views (Last 7 days)
+      </Typography>
+      <TableContainer>
+        <Table size="small">
+          <TableHead>
+            <TableRow>
+              <TableCell sx={{ fontWeight: 600 }}>Page</TableCell>
+              <TableCell align="right" sx={{ fontWeight: 600 }}>Views</TableCell>
+              <TableCell align="right" sx={{ fontWeight: 600 }}>Date</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {trackingData.pageViews.map((page, index) => (
+              <TableRow key={index} sx={{ '&:hover': { bgcolor: 'action.hover' } }}>
+                <TableCell sx={{ fontSize: '0.85rem' }}>{page.page}</TableCell>
+                <TableCell align="right" sx={{ fontSize: '0.85rem' }}>{page.views}</TableCell>
+                <TableCell align="right" sx={{ fontSize: '0.85rem' }}>{page.date}</TableCell>
               </TableRow>
-            </TableHead>
-            <TableBody>
-              {trackingData.pageViews.map((page, index) => (
-                <TableRow key={index}>
-                  <TableCell>{page.page}</TableCell>
-                  <TableCell align="right">{page.views}</TableCell>
-                  <TableCell align="right">{page.date}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </CardContent>
-    </Card>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </Box>
   );
 
   const FeatureUsageTable = () => (
-    <Card>
-      <CardContent>
-        <Typography variant="h6" gutterBottom>
-          <Mouse sx={{ mr: 1, verticalAlign: 'middle' }} />
-          Feature Usage
-        </Typography>
-        <TableContainer>
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>Feature</TableCell>
-                <TableCell align="right">Usage Count</TableCell>
-                <TableCell align="right">Date</TableCell>
+    <Box sx={{
+      p: 2,
+      bgcolor: 'background.paper',
+      border: 1,
+      borderColor: 'divider',
+      borderRadius: '4px'
+    }}>
+      <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+        <Mouse />
+        Feature Usage
+      </Typography>
+      <TableContainer>
+        <Table size="small">
+          <TableHead>
+            <TableRow>
+              <TableCell sx={{ fontWeight: 600 }}>Feature</TableCell>
+              <TableCell align="right" sx={{ fontWeight: 600 }}>Usage Count</TableCell>
+              <TableCell align="right" sx={{ fontWeight: 600 }}>Date</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {trackingData.featureUsage.map((feature, index) => (
+              <TableRow key={index} sx={{ '&:hover': { bgcolor: 'action.hover' } }}>
+                <TableCell sx={{ fontSize: '0.85rem' }}>{feature.feature}</TableCell>
+                <TableCell align="right" sx={{ fontSize: '0.85rem' }}>{feature.usage}</TableCell>
+                <TableCell align="right" sx={{ fontSize: '0.85rem' }}>{feature.date}</TableCell>
               </TableRow>
-            </TableHead>
-            <TableBody>
-              {trackingData.featureUsage.map((feature, index) => (
-                <TableRow key={index}>
-                  <TableCell>{feature.feature}</TableCell>
-                  <TableCell align="right">{feature.usage}</TableCell>
-                  <TableCell align="right">{feature.date}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </CardContent>
-    </Card>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </Box>
   );
 
   const SessionsTable = () => (
-    <Card>
-      <CardContent>
-        <Typography variant="h6" gutterBottom>
-          <AccessTime sx={{ mr: 1, verticalAlign: 'middle' }} />
-          Recent Sessions
-        </Typography>
-        <TableContainer>
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>Session ID</TableCell>
-                <TableCell>User</TableCell>
-                <TableCell>Start Time</TableCell>
-                <TableCell>Duration</TableCell>
-                <TableCell>Actions</TableCell>
+    <Box sx={{
+      p: 2,
+      bgcolor: 'background.paper',
+      border: 1,
+      borderColor: 'divider',
+      borderRadius: '4px'
+    }}>
+      <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+        <AccessTime />
+        Recent Sessions
+      </Typography>
+      <TableContainer>
+        <Table size="small">
+          <TableHead>
+            <TableRow>
+              <TableCell sx={{ fontWeight: 600 }}>Session ID</TableCell>
+              <TableCell sx={{ fontWeight: 600 }}>User</TableCell>
+              <TableCell sx={{ fontWeight: 600 }}>Start Time</TableCell>
+              <TableCell sx={{ fontWeight: 600 }}>Duration</TableCell>
+              <TableCell sx={{ fontWeight: 600 }}>Actions</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {trackingData.sessions.slice(0, 10).map((session, index) => (
+              <TableRow key={index} sx={{ '&:hover': { bgcolor: 'action.hover' } }}>
+                <TableCell>
+                  <Typography variant="body2" sx={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>
+                    {session.sessionId?.substring(0, 12)}...
+                  </Typography>
+                </TableCell>
+                <TableCell sx={{ fontSize: '0.85rem' }}>{session.userId?.substring(0, 8)}...</TableCell>
+                <TableCell sx={{ fontSize: '0.85rem' }}>
+                  {session.startTime ? new Date(session.startTime).toLocaleString() : 'N/A'}
+                </TableCell>
+                <TableCell sx={{ fontSize: '0.85rem' }}>
+                  {session.duration ? `${Math.round(session.duration / 1000)}s` : 'Active'}
+                </TableCell>
+                <TableCell>
+                  <Chip
+                    size="small"
+                    label={session.actions?.length || 0}
+                    variant="outlined"
+                  />
+                </TableCell>
               </TableRow>
-            </TableHead>
-            <TableBody>
-              {trackingData.sessions.slice(0, 10).map((session, index) => (
-                <TableRow key={index}>
-                  <TableCell>
-                    <Typography variant="body2" fontFamily="monospace">
-                      {session.sessionId?.substring(0, 12)}...
-                    </Typography>
-                  </TableCell>
-                  <TableCell>{session.userId?.substring(0, 8)}...</TableCell>
-                  <TableCell>
-                    {session.startTime ? new Date(session.startTime).toLocaleString() : 'N/A'}
-                  </TableCell>
-                  <TableCell>
-                    {session.duration ? `${Math.round(session.duration / 1000)}s` : 'Active'}
-                  </TableCell>
-                  <TableCell>
-                    <Chip 
-                      size="small" 
-                      label={session.actions?.length || 0} 
-                      variant="outlined" 
-                    />
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </CardContent>
-    </Card>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </Box>
   );
 
   // ============================================================================
@@ -441,9 +448,9 @@ const UserTrackingDashboard = ({ organizationId, currentUser }) => {
 
   if (loading) {
     return (
-      <Box>
-        <Typography variant="h4" gutterBottom>
-          User Tracking Dashboard
+      <Box sx={{ p: 3 }}>
+        <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
+          Loading tracking data...
         </Typography>
         <LinearProgress />
       </Box>
@@ -451,30 +458,79 @@ const UserTrackingDashboard = ({ organizationId, currentUser }) => {
   }
 
   return (
-    <Box>
-      <Typography variant="h4" gutterBottom>
-        User Tracking Dashboard
-      </Typography>
-      
+    <Box sx={{ p: 3 }}>
       <TrackingControls />
-      
-      <Grid container spacing={3}>
-        <Grid item xs={12} md={4}>
-          <ActiveUsersCard />
-        </Grid>
-        
-        <Grid item xs={12} md={8}>
-          <PageViewsTable />
-        </Grid>
-        
-        <Grid item xs={12} md={6}>
-          <FeatureUsageTable />
-        </Grid>
-        
-        <Grid item xs={12} md={6}>
-          <SessionsTable />
-        </Grid>
-      </Grid>
+
+      {/* Stats Cards */}
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3 }}>
+        <ActiveUsersCard />
+
+        <Box sx={{
+          flex: '1 1 auto',
+          minWidth: '150px',
+          p: 2,
+          bgcolor: 'background.paper',
+          border: 1,
+          borderColor: 'divider',
+          borderRadius: '4px'
+        }}>
+          <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.75rem', display: 'block', mb: 0.5 }}>
+            Total Sessions
+          </Typography>
+          <Typography variant="h4" sx={{ fontWeight: 700, color: 'primary.main' }}>
+            {trackingData.sessions.length}
+          </Typography>
+        </Box>
+
+        <Box sx={{
+          flex: '1 1 auto',
+          minWidth: '150px',
+          p: 2,
+          bgcolor: 'background.paper',
+          border: 1,
+          borderColor: 'divider',
+          borderRadius: '4px'
+        }}>
+          <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.75rem', display: 'block', mb: 0.5 }}>
+            Page Views
+          </Typography>
+          <Typography variant="h4" sx={{ fontWeight: 700, color: '#3B82F6' }}>
+            {trackingData.pageViews.reduce((sum, p) => sum + p.views, 0)}
+          </Typography>
+        </Box>
+
+        <Box sx={{
+          flex: '1 1 auto',
+          minWidth: '150px',
+          p: 2,
+          bgcolor: 'background.paper',
+          border: 1,
+          borderColor: 'divider',
+          borderRadius: '4px'
+        }}>
+          <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.75rem', display: 'block', mb: 0.5 }}>
+            Feature Interactions
+          </Typography>
+          <Typography variant="h4" sx={{ fontWeight: 700, color: '#F59E0B' }}>
+            {trackingData.featureUsage.reduce((sum, f) => sum + f.usage, 0)}
+          </Typography>
+        </Box>
+      </Box>
+
+      {/* Tables */}
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+        <PageViewsTable />
+
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
+          <Box sx={{ flex: '1 1 400px' }}>
+            <FeatureUsageTable />
+          </Box>
+
+          <Box sx={{ flex: '1 1 400px' }}>
+            <SessionsTable />
+          </Box>
+        </Box>
+      </Box>
     </Box>
   );
 };

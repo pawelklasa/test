@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
   Box,
-  Card,
-  CardContent,
   Typography,
   Button,
   Table,
@@ -11,7 +9,6 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Paper,
   Chip,
   IconButton,
   Dialog,
@@ -273,11 +270,9 @@ const OrganizationUserManagement = () => {
   }
 
   return (
-    <Box>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h4" component="h1">
-          Organization Users
-        </Typography>
+    <Box sx={{ p: 3 }}>
+      {/* Controls */}
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
         {hasPermission('manageUsers') && (
           <Button
             variant="contained"
@@ -288,10 +283,6 @@ const OrganizationUserManagement = () => {
           </Button>
         )}
       </Box>
-
-      <Typography variant="body1" color="text.secondary" paragraph>
-        Manage users and their roles in <strong>{currentOrganization.name}</strong>
-      </Typography>
 
       {error && (
         <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError('')}>
@@ -305,97 +296,175 @@ const OrganizationUserManagement = () => {
         </Alert>
       )}
 
-      <Card>
-        <CardContent>
-          {loading ? (
-            <Box display="flex" justifyContent="center" p={3}>
-              <CircularProgress />
-            </Box>
-          ) : (
-            <TableContainer>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>User</TableCell>
-                    <TableCell>Role</TableCell>
-                    <TableCell>Status</TableCell>
-                    <TableCell>Joined</TableCell>
-                    {hasPermission('manageUsers') && <TableCell align="right">Actions</TableCell>}
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {members.map((member) => (
-                    <TableRow key={member.id}>
-                      <TableCell>
-                        <Box display="flex" alignItems="center" gap={1}>
-                          <EmailIcon color="action" />
-                          <Typography>{member.userEmail}</Typography>
-                          {member.userId === user.uid && (
-                            <Chip label="You" size="small" color="primary" />
-                          )}
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          icon={getRoleInfo(member.role).icon}
-                          label={getRoleInfo(member.role).label}
-                          color={getRoleColor(member.role)}
-                          size="small"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          label={member.status === 'active' ? 'Active' : 'Invited'}
-                          color={member.status === 'active' ? 'success' : 'warning'}
-                          size="small"
-                        />
-                      </TableCell>
-                      <TableCell>
+      {/* Stats Cards */}
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3 }}>
+        <Box sx={{
+          flex: '1 1 auto',
+          minWidth: '150px',
+          p: 2,
+          bgcolor: 'background.paper',
+          border: 1,
+          borderColor: 'divider',
+          borderRadius: '4px'
+        }}>
+          <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.75rem', display: 'block', mb: 0.5 }}>
+            Total Members
+          </Typography>
+          <Typography variant="h4" sx={{ fontWeight: 700, color: 'primary.main' }}>
+            {members.length}
+          </Typography>
+        </Box>
+
+        <Box sx={{
+          flex: '1 1 auto',
+          minWidth: '150px',
+          p: 2,
+          bgcolor: 'background.paper',
+          border: 1,
+          borderColor: 'divider',
+          borderRadius: '4px'
+        }}>
+          <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.75rem', display: 'block', mb: 0.5 }}>
+            Active
+          </Typography>
+          <Typography variant="h4" sx={{ fontWeight: 700, color: '#10B981' }}>
+            {members.filter(m => m.status === 'active').length}
+          </Typography>
+        </Box>
+
+        <Box sx={{
+          flex: '1 1 auto',
+          minWidth: '150px',
+          p: 2,
+          bgcolor: 'background.paper',
+          border: 1,
+          borderColor: 'divider',
+          borderRadius: '4px'
+        }}>
+          <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.75rem', display: 'block', mb: 0.5 }}>
+            Invited
+          </Typography>
+          <Typography variant="h4" sx={{ fontWeight: 700, color: '#F59E0B' }}>
+            {members.filter(m => m.status === 'invited').length}
+          </Typography>
+        </Box>
+
+        <Box sx={{
+          flex: '1 1 auto',
+          minWidth: '150px',
+          p: 2,
+          bgcolor: 'background.paper',
+          border: 1,
+          borderColor: 'divider',
+          borderRadius: '4px'
+        }}>
+          <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.75rem', display: 'block', mb: 0.5 }}>
+            Admins
+          </Typography>
+          <Typography variant="h4" sx={{ fontWeight: 700, color: '#3B82F6' }}>
+            {members.filter(m => m.role === 'admin' || m.role === 'owner').length}
+          </Typography>
+        </Box>
+      </Box>
+
+      {/* Members Table */}
+      <Box sx={{
+        p: 2,
+        bgcolor: 'background.paper',
+        border: 1,
+        borderColor: 'divider',
+        borderRadius: '4px'
+      }}>
+        {loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+            <CircularProgress />
+          </Box>
+        ) : (
+          <TableContainer>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 600 }}>User</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Role</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Joined</TableCell>
+                  {hasPermission('manageUsers') && <TableCell align="right" sx={{ fontWeight: 600 }}>Actions</TableCell>}
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {members.map((member) => (
+                  <TableRow key={member.id} sx={{ '&:hover': { bgcolor: 'action.hover' } }}>
+                    <TableCell>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <EmailIcon color="action" sx={{ fontSize: 18 }} />
+                        <Typography sx={{ fontSize: '0.85rem' }}>{member.userEmail}</Typography>
+                        {member.userId === user.uid && (
+                          <Chip label="You" size="small" color="primary" />
+                        )}
+                      </Box>
+                    </TableCell>
+                    <TableCell>
+                      <Chip
+                        icon={getRoleInfo(member.role).icon}
+                        label={getRoleInfo(member.role).label}
+                        color={getRoleColor(member.role)}
+                        size="small"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Chip
+                        label={member.status === 'active' ? 'Active' : 'Invited'}
+                        color={member.status === 'active' ? 'success' : 'warning'}
+                        size="small"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Typography sx={{ fontSize: '0.85rem' }}>
                         {member.joinedAt ? member.joinedAt.toLocaleDateString() : 'Pending'}
-                      </TableCell>
-                      {hasPermission('manageUsers') && (
-                        <TableCell align="right">
-                          {member.role !== 'owner' && (
-                            <IconButton
-                              onClick={(e) => setMenuAnchor(e.currentTarget)}
-                              size="small"
-                            >
-                              <MoreVertIcon />
-                            </IconButton>
-                          )}
-                          <Menu
-                            anchorEl={menuAnchor}
-                            open={Boolean(menuAnchor)}
-                            onClose={() => setMenuAnchor(null)}
+                      </Typography>
+                    </TableCell>
+                    {hasPermission('manageUsers') && (
+                      <TableCell align="right">
+                        {member.role !== 'owner' && (
+                          <IconButton
+                            onClick={(e) => setMenuAnchor(e.currentTarget)}
+                            size="small"
                           >
-                            <MenuItem onClick={() => openEditDialog(member)}>
-                              <ListItemIcon><EditIcon /></ListItemIcon>
-                              <ListItemText>Change Role</ListItemText>
-                            </MenuItem>
-                            <MenuItem onClick={() => handleRemoveUser(member)}>
-                              <ListItemIcon><DeleteIcon /></ListItemIcon>
-                              <ListItemText>Remove User</ListItemText>
-                            </MenuItem>
-                          </Menu>
-                        </TableCell>
-                      )}
-                    </TableRow>
-                  ))}
-                  {members.length === 0 && (
-                    <TableRow>
-                      <TableCell colSpan={5} align="center">
-                        <Typography color="text.secondary">
-                          No users found in this organization
-                        </Typography>
+                            <MoreVertIcon />
+                          </IconButton>
+                        )}
+                        <Menu
+                          anchorEl={menuAnchor}
+                          open={Boolean(menuAnchor)}
+                          onClose={() => setMenuAnchor(null)}
+                        >
+                          <MenuItem onClick={() => openEditDialog(member)}>
+                            <ListItemIcon><EditIcon /></ListItemIcon>
+                            <ListItemText>Change Role</ListItemText>
+                          </MenuItem>
+                          <MenuItem onClick={() => handleRemoveUser(member)}>
+                            <ListItemIcon><DeleteIcon /></ListItemIcon>
+                            <ListItemText>Remove User</ListItemText>
+                          </MenuItem>
+                        </Menu>
                       </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          )}
-        </CardContent>
-      </Card>
+                    )}
+                  </TableRow>
+                ))}
+                {members.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
+                      <Typography color="text.secondary" sx={{ fontSize: '0.85rem' }}>
+                        No users found in this organization
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
+      </Box>
 
       {/* Invite User Dialog */}
       <Dialog open={inviteDialogOpen} onClose={() => setInviteDialogOpen(false)} maxWidth="sm" fullWidth>

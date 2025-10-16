@@ -45,19 +45,35 @@ const SubtaskAnalysisDialog = ({ open, onClose, feature, onSubtasksCreated }) =>
       const complexityAnalysis = analyzeFeatureComplexity(feature);
       setAnalysis(complexityAnalysis);
       
-      // Pre-select high-priority subtasks
+      // Pre-select high-priority subtasks (get the actual indices, not filtered indices)
       const highPrioritySubtasks = complexityAnalysis.suggestedSubtasks
-        .filter(st => st.priority === 'Must-Have')
-        .map((_, index) => index);
+        .map((st, index) => ({ subtask: st, originalIndex: index }))
+        .filter(({ subtask }) => subtask.priority === 'Must-Have')
+        .map(({ originalIndex }) => originalIndex);
       setSelectedSubtasks(highPrioritySubtasks);
+    } else if (!open) {
+      // Reset state when dialog closes
+      setAnalysis(null);
+      setSelectedSubtasks([]);
+      setShowFullAnalysis(false);
+      setIsCreating(false);
     }
   }, [feature, open, analyzeFeatureComplexity]);
 
   const handleSubtaskSelection = (index, checked) => {
+    console.log('Subtask selection:', { index, checked, currentSelected: selectedSubtasks });
     if (checked) {
-      setSelectedSubtasks([...selectedSubtasks, index]);
+      setSelectedSubtasks(prev => {
+        const newSelection = [...prev, index];
+        console.log('Adding subtask, new selection:', newSelection);
+        return newSelection;
+      });
     } else {
-      setSelectedSubtasks(selectedSubtasks.filter(i => i !== index));
+      setSelectedSubtasks(prev => {
+        const newSelection = prev.filter(i => i !== index);
+        console.log('Removing subtask, new selection:', newSelection);
+        return newSelection;
+      });
     }
   };
 

@@ -1,11 +1,11 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useFeatures } from '../hooks/useFeatures';
 import { useProject } from '../ProjectContext';
 
 // AI-powered subtask extraction from feature descriptions
 export const useSubtaskExtraction = () => {
-  const { addFeature } = useFeatures();
   const { selectedProject } = useProject();
+  const { addFeature } = useFeatures(selectedProject);
 
   // Keywords that indicate multiple tasks/requirements
   const taskIndicators = [
@@ -177,7 +177,7 @@ export const useSubtaskExtraction = () => {
   };
 
   // Analyze if feature needs breakdown
-  const analyzeFeatureComplexity = (feature) => {
+  const analyzeFeatureComplexity = useCallback((feature) => {
     const description = feature.desc || '';
     const name = feature.name || '';
     
@@ -249,19 +249,32 @@ export const useSubtaskExtraction = () => {
     }
 
     return complexity;
-  };
+  }, []); // useCallback with empty dependencies since it only uses the passed feature parameter
 
   // Create subtasks in database
   const createSubtasks = async (parentFeature, subtasks) => {
-    console.log('createSubtasks called with:', { parentFeature: parentFeature.name, subtasks });
+    console.log('=== CREATE SUBTASKS CALLED ===');
+    console.log('Parent feature:', parentFeature.name);
+    console.log('Subtasks to create:', subtasks);
+    console.log('Selected project ID:', selectedProject);
+    
     const createdSubtasks = [];
     
     if (!selectedProject) {
-      console.error('No project selected');
+      console.error('ERROR: No project selected');
       return createdSubtasks;
     }
     
-    for (const subtask of subtasks) {
+    if (!addFeature) {
+      console.error('ERROR: addFeature function not available');
+      return createdSubtasks;
+    }
+    
+    for (let i = 0; i < subtasks.length; i++) {
+      const subtask = subtasks[i];
+      console.log(`\n--- Creating subtask ${i + 1}/${subtasks.length} ---`);
+      console.log('Subtask data:', subtask);
+      
       try {
         const subtaskData = {
           name: subtask.name,
@@ -274,7 +287,6 @@ export const useSubtaskExtraction = () => {
           goal: parentFeature.goal,
           workflowStatus: 'Planning',
           gapTypes: parentFeature.gapTypes || [],
-          projectId: selectedProject,
           
           // Subtask-specific fields
           parentFeatureId: parentFeature.id,
@@ -291,19 +303,25 @@ export const useSubtaskExtraction = () => {
           estimatedQAHours: 2
         };
 
-        console.log('Creating subtask:', subtaskData);
+        console.log('Calling addFeature with data:', subtaskData);
         const result = await addFeature(subtaskData);
-        console.log('Subtask creation result:', result);
+        console.log('addFeature result:', result);
         
         if (result && result.success !== false) {
-          createdSubtasks.push({ ...subtaskData, id: result.id });
+          const createdSubtask = { ...subtaskData, id: result.id };
+          createdSubtasks.push(createdSubtask);
+          console.log('✅ Successfully created subtask:', createdSubtask.name);
+        } else {
+          console.error('❌ Failed to create subtask:', result);
         }
       } catch (error) {
-        console.error('Error creating subtask:', error);
+        console.error('❌ Exception creating subtask:', error);
       }
     }
     
-    console.log('All subtasks created:', createdSubtasks);
+    console.log('=== SUBTASK CREATION COMPLETE ===');
+    console.log('Total created:', createdSubtasks.length);
+    console.log('Created subtasks:', createdSubtasks);
     return createdSubtasks;
   };
 

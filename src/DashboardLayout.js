@@ -64,7 +64,6 @@ const menuItems = [
   { text: 'Analytics Dashboard', icon: <BarChartIcon />, path: '/dashboard/analytics', adminOnly: true },
   { text: 'User Tracking', icon: <TrackChangesIcon />, path: '/dashboard/user-tracking', adminOnly: true },
   { text: 'Email Management', icon: <EmailIcon />, path: '/dashboard/email-management', adminOnly: true },
-  { text: 'Email Setup', icon: <SettingsIcon />, path: '/dashboard/email-setup', adminOnly: true },
   { text: 'Usage & Billing', icon: <PaymentIcon />, path: '/dashboard/usage-limits', adminOnly: true },
   { text: 'Billing & Subscription', icon: <PaymentIcon />, path: '/dashboard/billing', adminOnly: true },
   { text: 'Organization Settings', icon: <SettingsIcon />, path: '/dashboard/organization/settings', adminOnly: true },

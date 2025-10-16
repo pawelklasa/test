@@ -30,7 +30,6 @@ import ProjectGuard from "./ProjectGuard";
 import AdminGuard from "./components/AdminGuard";
 import DataRecoveryComponent from "./components/DataRecoveryComponent";
 import DataIntegrityCheck from "./components/DataIntegrityCheck";
-import EmailSetupGuide from "./components/EmailSetupGuide";
 import ManagementCenterRestore from "./components/ManagementCenterRestore";
 import { 
   AnalyticsDashboardWrapper,
@@ -137,7 +136,6 @@ function AppContent({ user, setUser, showAuth, setShowAuth, isLogin, setIsLogin 
           <Route path="analytics" element={<AdminGuard><AnalyticsDashboardWrapper /></AdminGuard>} />
           <Route path="user-tracking" element={<AdminGuard><UserTrackingDashboardWrapper /></AdminGuard>} />
           <Route path="email-management" element={<AdminGuard><EmailManagementDashboardWrapper /></AdminGuard>} />
-          <Route path="email-setup" element={<AdminGuard><EmailSetupGuide /></AdminGuard>} />
           <Route path="usage-limits" element={<AdminGuard><UsageLimitsDashboardWrapper /></AdminGuard>} />
           <Route path="projects" element={<ProjectsPage />} />
           <Route path="project/:projectId" element={<ProjectGuard><DashboardHome /></ProjectGuard>} />

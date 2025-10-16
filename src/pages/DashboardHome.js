@@ -13,6 +13,9 @@ import Grid from '@mui/material/Grid';
 import CardContent from '@mui/material/CardContent';
 import IconButton from '@mui/material/IconButton';
 import DeleteIcon from '@mui/icons-material/Delete';
+import LaunchIcon from '@mui/icons-material/Launch';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import CircularProgress from '@mui/material/CircularProgress';
 import { useFeatures } from '../hooks/useFeatures';
 import { useCategories } from '../hooks/useCategories';
 import { trackFeatureAdded, trackFeatureDeleted, trackFilterUsed, trackCategoryCreated, trackPageView } from '../services/analytics';
@@ -33,6 +36,7 @@ import StepLabel from '@mui/material/StepLabel';
 import Psychology from '@mui/icons-material/Psychology';
 import SubtaskAnalysisDialog from '../components/SubtaskAnalysisDialog';
 import { useSubtaskExtraction } from '../hooks/useSubtaskExtraction';
+import jiraService from '../services/jiraService';
 
 const targetQuarters = ['Q1 2026', 'Q2 2026', 'Q3 2026', 'Q4 2026'];
 const moscowOptions = ['Must-Have', 'Should-Have', 'Could-Have', "Won't-Have"];
@@ -118,6 +122,47 @@ function DashboardHome() {
     }
   };
 
+  // Handle Jira export
+  const handleExportToJira = async (feature) => {
+    if (!selectedProject) return;
+    
+    setExportingToJira(prev => ({ ...prev, [feature.id]: true }));
+    
+    try {
+      // Load Jira config if not already loaded
+      if (!jiraConfig) {
+        const config = await jiraService.loadConfig(selectedProject);
+        if (!config) {
+          alert('Jira integration not configured. Please go to Jira Integration page to set it up.');
+          return;
+        }
+        setJiraConfig(config);
+      }
+      
+      const result = await jiraService.exportFeatureToJira(feature, selectedProject);
+      
+      if (result.success) {
+        alert(`Feature exported successfully!\nJira Issue: ${result.issueKey}\nURL: ${result.issueUrl}`);
+      }
+    } catch (error) {
+      console.error('Error exporting to Jira:', error);
+      alert(`Failed to export to Jira: ${error.message}`);
+    } finally {
+      setExportingToJira(prev => ({ ...prev, [feature.id]: false }));
+    }
+  };
+
+  // Check if feature is already exported to Jira
+  const isFeatureExported = (feature) => {
+    return !!(feature.jiraKey && feature.jiraUrl);
+  };
+
+  // Get Jira URL for feature
+  const getJiraUrl = (feature) => {
+    if (!feature.jiraKey || !jiraConfig) return null;
+    return `${jiraConfig.jiraUrl}/browse/${feature.jiraKey}`;
+  };
+
   // Replace local state with Firestore features
   // Use selectedProject from ProjectContext (top nav dropdown)
   const { selectedProject } = useProject();
@@ -146,6 +191,21 @@ function DashboardHome() {
       }
     }
   }, [searchParams, features, setSearchParams]);
+
+  // Load Jira configuration
+  useEffect(() => {
+    const loadJiraConfig = async () => {
+      if (selectedProject) {
+        try {
+          const config = await jiraService.loadConfig(selectedProject);
+          setJiraConfig(config);
+        } catch (error) {
+          console.error('Error loading Jira config:', error);
+        }
+      }
+    };
+    loadJiraConfig();
+  }, [selectedProject]);
 
   const [openDialog, setOpenDialog] = useState(false);
   const [openDetailsModal, setOpenDetailsModal] = useState(false);
@@ -189,6 +249,10 @@ function DashboardHome() {
   const [subtaskAnalysisOpen, setSubtaskAnalysisOpen] = useState(false);
   const [selectedFeatureForAnalysis, setSelectedFeatureForAnalysis] = useState(null);
   const { analyzeFeatureComplexity } = useSubtaskExtraction();
+  
+  // Jira export state
+  const [exportingToJira, setExportingToJira] = useState({});
+  const [jiraConfig, setJiraConfig] = useState(null);
   
   // Filter state
   const [filters, setFilters] = useState({
@@ -954,6 +1018,54 @@ function DashboardHome() {
                               <Psychology sx={{ fontSize: 16 }} />
                             </IconButton>
                           )}
+                          
+                          {/* Jira Export Button */}
+                          {isFeatureExported(f) ? (
+                            <IconButton
+                              size="small"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const url = getJiraUrl(f);
+                                if (url) window.open(url, '_blank');
+                              }}
+                              sx={{
+                                color: 'text.secondary',
+                                p: 0.25,
+                                '&:hover': {
+                                  bgcolor: isDark ? 'rgba(59, 130, 246, 0.15)' : 'rgba(219, 234, 254, 1)',
+                                  color: '#1D4ED8'
+                                }
+                              }}
+                              title={`Open in Jira: ${f.jiraKey}`}
+                            >
+                              <LaunchIcon sx={{ fontSize: 16 }} />
+                            </IconButton>
+                          ) : (
+                            <IconButton
+                              size="small"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleExportToJira(f);
+                              }}
+                              disabled={exportingToJira[f.id]}
+                              sx={{
+                                color: 'text.secondary',
+                                p: 0.25,
+                                '&:hover': {
+                                  bgcolor: isDark ? 'rgba(16, 185, 129, 0.15)' : 'rgba(209, 250, 229, 1)',
+                                  color: '#059669'
+                                }
+                              }}
+                              title="Export to Jira"
+                            >
+                              {exportingToJira[f.id] ? (
+                                <CircularProgress size={16} />
+                              ) : (
+                                <CloudUploadIcon sx={{ fontSize: 16 }} />
+                              )}
+                            </IconButton>
+                          )}
+                          
                           <IconButton
                             size="small"
                             onClick={(e) => {
@@ -1214,6 +1326,54 @@ function DashboardHome() {
                               <Psychology sx={{ fontSize: 16 }} />
                             </IconButton>
                           )}
+                          
+                          {/* Jira Export Button */}
+                          {isFeatureExported(f) ? (
+                            <IconButton
+                              size="small"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const url = getJiraUrl(f);
+                                if (url) window.open(url, '_blank');
+                              }}
+                              sx={{
+                                color: 'text.secondary',
+                                p: 0.25,
+                                '&:hover': {
+                                  bgcolor: isDark ? 'rgba(59, 130, 246, 0.15)' : 'rgba(219, 234, 254, 1)',
+                                  color: '#1D4ED8'
+                                }
+                              }}
+                              title={`Open in Jira: ${f.jiraKey}`}
+                            >
+                              <LaunchIcon sx={{ fontSize: 16 }} />
+                            </IconButton>
+                          ) : (
+                            <IconButton
+                              size="small"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleExportToJira(f);
+                              }}
+                              disabled={exportingToJira[f.id]}
+                              sx={{
+                                color: 'text.secondary',
+                                p: 0.25,
+                                '&:hover': {
+                                  bgcolor: isDark ? 'rgba(16, 185, 129, 0.15)' : 'rgba(209, 250, 229, 1)',
+                                  color: '#059669'
+                                }
+                              }}
+                              title="Export to Jira"
+                            >
+                              {exportingToJira[f.id] ? (
+                                <CircularProgress size={16} />
+                              ) : (
+                                <CloudUploadIcon sx={{ fontSize: 16 }} />
+                              )}
+                            </IconButton>
+                          )}
+                          
                           <IconButton
                             size="small"
                             onClick={(e) => {

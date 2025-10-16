@@ -29,6 +29,7 @@ import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import TimelineIcon from '@mui/icons-material/Timeline';
 import AutorenewIcon from '@mui/icons-material/Autorenew';
 import PeopleIcon from '@mui/icons-material/People';
+import IntegrationInstructionsIcon from '@mui/icons-material/IntegrationInstructions';
 import { getAuth } from 'firebase/auth';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from './firebase';
@@ -44,6 +45,7 @@ const menuItems = [
   { text: 'Time to Market', icon: <AccessTimeIcon />, path: '/dashboard/ttl' },
   { text: 'Portfolio Roadmap', icon: <TimelineIcon />, path: '/dashboard/roadmap' },
   { text: 'Feature Lifecycle', icon: <AutorenewIcon />, path: '/dashboard/lifecycle' },
+  { text: 'Jira Integration', icon: <IntegrationInstructionsIcon />, path: '/dashboard/jira' },
   { text: 'User Management', icon: <PeopleIcon />, path: '/dashboard/users' }
 ];
 

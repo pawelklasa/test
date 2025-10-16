@@ -30,6 +30,9 @@ import LinearProgress from '@mui/material/LinearProgress';
 import Stepper from '@mui/material/Stepper';
 import Step from '@mui/material/Step';
 import StepLabel from '@mui/material/StepLabel';
+import Psychology from '@mui/icons-material/Psychology';
+import SubtaskAnalysisDialog from '../components/SubtaskAnalysisDialog';
+import { useSubtaskExtraction } from '../hooks/useSubtaskExtraction';
 
 const targetQuarters = ['Q1 2026', 'Q2 2026', 'Q3 2026', 'Q4 2026'];
 const moscowOptions = ['Must-Have', 'Should-Have', 'Could-Have', "Won't-Have"];
@@ -181,6 +184,11 @@ function DashboardHome() {
     estimatedQAHours: 0
   });
   const [editingId, setEditingId] = useState(null);
+  
+  // Subtask analysis state
+  const [subtaskAnalysisOpen, setSubtaskAnalysisOpen] = useState(false);
+  const [selectedFeatureForAnalysis, setSelectedFeatureForAnalysis] = useState(null);
+  const { analyzeFeatureComplexity } = useSubtaskExtraction();
   
   // Filter state
   const [filters, setFilters] = useState({
@@ -385,6 +393,30 @@ function DashboardHome() {
     });
     setEditingId(feature.id);
     setOpenDialog(true);
+  };
+
+  // Subtask analysis handlers
+  const handleAnalyzeForSubtasks = (feature) => {
+    setSelectedFeatureForAnalysis(feature);
+    setSubtaskAnalysisOpen(true);
+  };
+
+  const handleSubtasksCreated = (createdSubtasks) => {
+    // Refresh features list to show new subtasks
+    // The useFeatures hook should automatically update
+    console.log('Created subtasks:', createdSubtasks);
+  };
+
+  // Check if feature needs subtask analysis
+  const shouldShowSubtaskButton = (feature) => {
+    if (!feature.desc || feature.isSubtask) return false;
+    
+    const description = feature.desc;
+    // Show button for long descriptions or those with structure indicators
+    return description.length > 150 || 
+           /[-•*]\s/.test(description) || 
+           /\d+\.\s/.test(description) ||
+           (description.split(/[.!?]+/).filter(s => s.trim().length > 10).length > 4);
   };
 
   // Filter features based on active filters
@@ -903,6 +935,25 @@ function DashboardHome() {
                           >
                             <EditIcon sx={{ fontSize: 16 }} />
                           </IconButton>
+                          {shouldShowSubtaskButton(f) && (
+                            <IconButton
+                              size="small"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleAnalyzeForSubtasks(f);
+                              }}
+                              sx={{
+                                color: 'text.secondary',
+                                p: 0.25,
+                                '&:hover': {
+                                  bgcolor: isDark ? 'rgba(156, 39, 176, 0.15)' : 'rgba(243, 229, 245, 1)',
+                                  color: '#7B1FA2'
+                                }
+                              }}
+                            >
+                              <Psychology sx={{ fontSize: 16 }} />
+                            </IconButton>
+                          )}
                           <IconButton
                             size="small"
                             onClick={(e) => {
@@ -1144,6 +1195,25 @@ function DashboardHome() {
                           >
                             <EditIcon sx={{ fontSize: 16 }} />
                           </IconButton>
+                          {shouldShowSubtaskButton(f) && (
+                            <IconButton
+                              size="small"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleAnalyzeForSubtasks(f);
+                              }}
+                              sx={{
+                                color: 'text.secondary',
+                                p: 0.25,
+                                '&:hover': {
+                                  bgcolor: isDark ? 'rgba(156, 39, 176, 0.15)' : 'rgba(243, 229, 245, 1)',
+                                  color: '#7B1FA2'
+                                }
+                              }}
+                            >
+                              <Psychology sx={{ fontSize: 16 }} />
+                            </IconButton>
+                          )}
                           <IconButton
                             size="small"
                             onClick={(e) => {
@@ -2223,6 +2293,17 @@ function DashboardHome() {
           )}
         </DialogActions>
       </Dialog>
+
+      {/* Subtask Analysis Dialog */}
+      <SubtaskAnalysisDialog
+        open={subtaskAnalysisOpen}
+        onClose={() => {
+          setSubtaskAnalysisOpen(false);
+          setSelectedFeatureForAnalysis(null);
+        }}
+        feature={selectedFeatureForAnalysis}
+        onSubtasksCreated={handleSubtasksCreated}
+      />
     </Box>
   );
 }

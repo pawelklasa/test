@@ -170,7 +170,7 @@ function LandingPage({ onGetStarted, onLogin }) {
       <HeroSection>
         <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
           <Grid container spacing={4} alignItems="center" justifyContent="center">
-            <Grid item xs={12}>
+            <Grid size={12}>
               <Box sx={{ textAlign: 'center' }}>
                 <AnimatedBox delay={0}>
                   <Typography
@@ -305,19 +305,19 @@ function LandingPage({ onGetStarted, onLogin }) {
       <Box sx={{ py: 10, bgcolor: 'background.paper' }}>
         <Container maxWidth="lg">
           <Grid container spacing={4} justifyContent="center">
-            <Grid item xs={12} sm={4} md={4}>
+            <Grid size={{ xs: 12, sm: 4, md: 4 }}>
               <StatBox>
                 <Typography className="stat-number">10x</Typography>
                 <Typography variant="h6" color="text.secondary">Faster Analysis</Typography>
               </StatBox>
             </Grid>
-            <Grid item xs={12} sm={4} md={4}>
+            <Grid size={{ xs: 12, sm: 4, md: 4 }}>
               <StatBox>
                 <Typography className="stat-number">95%</Typography>
                 <Typography variant="h6" color="text.secondary">User Satisfaction</Typography>
               </StatBox>
             </Grid>
-            <Grid item xs={12} sm={4} md={4}>
+            <Grid size={{ xs: 12, sm: 4, md: 4 }}>
               <StatBox>
                 <Typography className="stat-number">500+</Typography>
                 <Typography variant="h6" color="text.secondary">Product Teams</Typography>

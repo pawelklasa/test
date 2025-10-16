@@ -20,9 +20,27 @@ import DataVisualization from "./pages/DataVisualization";
 import AutomatedWorkflows from "./pages/AutomatedWorkflows";
 import IntegrationHub from "./pages/IntegrationHub";
 import UserManagement from "./pages/UserManagement";
+import OrganizationUserManagement from "./pages/OrganizationUserManagement";
+import OrganizationSettings from "./pages/OrganizationSettings";
+import SubscriptionManagement from "./pages/SubscriptionManagement";
+import AdminDashboard from "./pages/AdminDashboard";
+import AcceptInvitation from "./pages/AcceptInvitation";
+import LoginPage from "./pages/LoginPage";
 import ProjectGuard from "./ProjectGuard";
+import AdminGuard from "./components/AdminGuard";
+import DataRecoveryComponent from "./components/DataRecoveryComponent";
+import DataIntegrityCheck from "./components/DataIntegrityCheck";
+import EmailSetupGuide from "./components/EmailSetupGuide";
+import ManagementCenterRestore from "./components/ManagementCenterRestore";
+import { 
+  AnalyticsDashboardWrapper,
+  UserTrackingDashboardWrapper,
+  EmailManagementDashboardWrapper,
+  UsageLimitsDashboardWrapper
+} from "./components/DashboardWrappers";
 import { ThemeProvider } from "./ThemeContext";
 import { ProjectProvider } from "./ProjectContext";
+import { OrganizationProvider } from "./OrganizationContext";
 import AutoPopulate from "./components/AutoPopulate";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { useEffect, useState } from "react";
@@ -39,19 +57,21 @@ function App() {
 
   return (
     <ThemeProvider>
-      <ProjectProvider>
-        <AutoPopulate />
-        <Router>
-          <AppContent
-            user={user}
-            setUser={setUser}
-            showAuth={showAuth}
-            setShowAuth={setShowAuth}
-            isLogin={isLogin}
-            setIsLogin={setIsLogin}
-          />
-        </Router>
-      </ProjectProvider>
+      <OrganizationProvider>
+        <ProjectProvider>
+          <AutoPopulate />
+          <Router>
+            <AppContent
+              user={user}
+              setUser={setUser}
+              showAuth={showAuth}
+              setShowAuth={setShowAuth}
+              isLogin={isLogin}
+              setIsLogin={setIsLogin}
+            />
+          </Router>
+        </ProjectProvider>
+      </OrganizationProvider>
     </ThemeProvider>
   );
 }
@@ -93,6 +113,8 @@ function AppContent({ user, setUser, showAuth, setShowAuth, isLogin, setIsLogin 
       <Routes>
         <Route path="/about" element={<AboutPage />} />
         <Route path="/pricing" element={<PricingPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/accept-invitation" element={<AcceptInvitation />} />
         <Route path="/" element={
           <>
             {user ? (
@@ -109,12 +131,24 @@ function AppContent({ user, setUser, showAuth, setShowAuth, isLogin, setIsLogin 
         {/* Dashboard Routes - Always available but protected by authentication */}
         <Route path="/dashboard" element={<DashboardLayout />}>
           <Route index element={<Navigate to="/dashboard/projects" replace />} />
+          <Route path="recovery" element={<DataRecoveryComponent />} />
+          <Route path="integrity" element={<DataIntegrityCheck />} />
+          <Route path="management-center-restore" element={<ManagementCenterRestore />} />
+          <Route path="analytics" element={<AdminGuard><AnalyticsDashboardWrapper /></AdminGuard>} />
+          <Route path="user-tracking" element={<AdminGuard><UserTrackingDashboardWrapper /></AdminGuard>} />
+          <Route path="email-management" element={<AdminGuard><EmailManagementDashboardWrapper /></AdminGuard>} />
+          <Route path="email-setup" element={<AdminGuard><EmailSetupGuide /></AdminGuard>} />
+          <Route path="usage-limits" element={<AdminGuard><UsageLimitsDashboardWrapper /></AdminGuard>} />
           <Route path="projects" element={<ProjectsPage />} />
           <Route path="project/:projectId" element={<ProjectGuard><DashboardHome /></ProjectGuard>} />
           <Route path="ttl" element={<ProjectGuard><FeatureTTL /></ProjectGuard>} />
           <Route path="roadmap" element={<ProjectGuard><PortfolioRoadmap /></ProjectGuard>} />
           <Route path="lifecycle" element={<ProjectGuard><FeatureLifecycleManagement /></ProjectGuard>} />
-          <Route path="jira" element={<ProjectGuard><JiraIntegration /></ProjectGuard>} />
+          <Route path="jira" element={<AdminGuard><ProjectGuard><JiraIntegration /></ProjectGuard></AdminGuard>} />
+          <Route path="team" element={<AdminGuard><OrganizationUserManagement /></AdminGuard>} />
+          <Route path="organization/settings" element={<AdminGuard><OrganizationSettings /></AdminGuard>} />
+          <Route path="billing" element={<AdminGuard><SubscriptionManagement /></AdminGuard>} />
+          <Route path="admin" element={<AdminGuard><AdminDashboard /></AdminGuard>} />
           <Route path="users" element={<ProjectGuard><UserManagement /></ProjectGuard>} />
           <Route path="visual-gap-analysis" element={<ProjectGuard><VisualGapAnalysis /></ProjectGuard>} />
           <Route path="actionable-insights" element={<ProjectGuard><ActionableInsights /></ProjectGuard>} />

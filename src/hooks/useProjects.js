@@ -1,207 +1,140 @@
 import { useState, useEffect } from 'react';
 import {
   collection,
-  query,
-  where,
-  onSnapshot,
   addDoc,
   deleteDoc,
   doc,
   updateDoc,
   serverTimestamp,
-  getDocs,
-  getDoc
+  getDocs
 } from 'firebase/firestore';
 import { db } from '../firebase';
+import { useOrganization } from '../OrganizationContext';
 
 export function useProjects(user) {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const { currentOrganization } = useOrganization();
 
   useEffect(() => {
-    if (!user) {
-      console.log('❌ No user found, setting empty projects');
+    if (!user || !currentOrganization) {
+      console.log('❌ No user or organization found, setting empty projects');
       setProjects([]);
       setLoading(false);
       return;
     }
 
-    console.log('🔍 useProjects: Starting project load for user:', {
-      uid: user.uid,
-      email: user.email,
-      displayName: user.displayName,
+    console.log('🔍 useProjects: Starting project load for organization:', {
+      organizationId: currentOrganization.id,
+      organizationName: currentOrganization.name,
+      userRole: currentOrganization.role,
       refreshTrigger: refreshTrigger
     });
 
-    const loadAllUserProjects = async () => {
+    const loadOrganizationProjects = async () => {
       try {
         setLoading(true);
-        console.log('🔍 Loading projects for user:', user);
-        const allProjects = new Map(); // Use Map to avoid duplicates
+        console.log('🔍 Loading projects for organization:', currentOrganization.id);
 
-        // 1. Load projects owned by the user
-        console.log('📋 Step 1: Loading owned projects...');
-        console.log(`📋 Searching for userId: "${user.uid}"`);
-        const ownedProjectsRef = collection(db, 'projects');
-        const ownedQuery = query(ownedProjectsRef, where('userId', '==', user.uid));
-        const ownedSnapshot = await getDocs(ownedQuery);
+        // Load projects from organization subcollection
+        const orgProjectsRef = collection(db, 'organizations', currentOrganization.id, 'projects');
+        const projectsSnapshot = await getDocs(orgProjectsRef);
         
-        console.log(`📋 Found ${ownedSnapshot.docs.length} owned projects`);
-        ownedSnapshot.docs.forEach((doc, index) => {
-          const projectData = {
+        console.log('📋 Found', projectsSnapshot.size, 'organization projects');
+        
+        const projectsList = [];
+        projectsSnapshot.forEach((doc) => {
+          const projectData = doc.data();
+          console.log('📋 Project found:', { id: doc.id, name: projectData.name });
+          
+          projectsList.push({
             id: doc.id,
-            ...doc.data(),
-            userRole: 'Owner' // Mark as owner
-          };
-          console.log(`📋 Owned project ${index + 1}:`, {
-            id: projectData.id,
-            name: projectData.name,
-            userId: projectData.userId
-          });
-          allProjects.set(doc.id, projectData);
-        });
-
-        // 2. Load projects where user is invited as team member
-        console.log('👥 Step 2: Loading invited projects...');
-        console.log(`👥 Searching for email: "${user.email}"`);
-        const projectUsersRef = collection(db, 'projectUsers');
-        const invitedQuery = query(projectUsersRef, where('email', '==', user.email));
-        const invitedSnapshot = await getDocs(invitedQuery);
-        
-        console.log(`👥 Found ${invitedSnapshot.docs.length} project invitations for ${user.email}`);
-        
-        // Log all invitations found
-        invitedSnapshot.docs.forEach((doc, index) => {
-          const data = doc.data();
-          console.log(`👥 Invitation ${index + 1}:`, {
-            id: doc.id,
-            email: data.email,
-            projectId: data.projectId,
-            role: data.role,
-            status: data.status,
-            invitedAt: data.invitedAt
+            ...projectData,
+            // Convert timestamps to dates for display
+            createdAt: projectData.createdAt?.toDate ? projectData.createdAt.toDate() : projectData.createdAt,
+            updatedAt: projectData.updatedAt?.toDate ? projectData.updatedAt.toDate() : projectData.updatedAt
           });
         });
 
-        // 3. Load the actual project data for invited projects
-        for (const inviteDoc of invitedSnapshot.docs) {
-          const inviteData = inviteDoc.data();
-          const { projectId, role, status } = inviteData;
-          
-          console.log(`Processing invite: Project ${projectId}, Role ${role}, Status ${status}`);
-          
-          if (!allProjects.has(projectId) && status === 'Active') {
-            try {
-              // Load the project document by ID
-              const projectDocRef = doc(db, 'projects', projectId);
-              const projectSnapshot = await getDoc(projectDocRef);
-              
-              if (projectSnapshot.exists()) {
-                allProjects.set(projectId, {
-                  id: projectSnapshot.id,
-                  ...projectSnapshot.data(),
-                  userRole: role // Mark with invited role
-                });
-                console.log(`✅ Added invited project: ${projectSnapshot.data().name}`);
-              } else {
-                console.log(`❌ Project ${projectId} not found`);
-              }
-            } catch (err) {
-              console.error(`Error loading project ${projectId}:`, err);
-            }
-          }
-        }
-
-        console.log(`📊 Total projects loaded: ${allProjects.size}`);
-        const projectsArray = Array.from(allProjects.values());
-        console.log('📊 Final projects array:', projectsArray);
-        setProjects(projectsArray);
-        setLoading(false);
+        console.log('✅ Final projects list:', projectsList.map(p => ({ id: p.id, name: p.name })));
+        setProjects(projectsList);
+        setError(null);
       } catch (err) {
-        console.error('❌ Error loading projects:', err);
+        console.error('❌ Error loading organization projects:', err);
         setError(err.message);
+        setProjects([]);
+      } finally {
         setLoading(false);
       }
     };
 
-    loadAllUserProjects();
-  }, [user, refreshTrigger]);
-
-  const triggerRefresh = () => {
-    console.log('🔄 triggerRefresh called, current refreshTrigger:', refreshTrigger);
-    setRefreshTrigger(prev => {
-      const newValue = prev + 1;
-      console.log('🔄 Setting refreshTrigger to:', newValue);
-      return newValue;
-    });
-  };
+    loadOrganizationProjects();
+  }, [user, currentOrganization, refreshTrigger]);
 
   const addProject = async (projectData) => {
+    if (!currentOrganization) {
+      throw new Error('No organization selected');
+    }
+
     try {
-      console.log('Adding project with user:', user);
-      console.log('Project data:', projectData);
-
-      if (!user) {
-        throw new Error('User is not authenticated');
-      }
-
-      const docRef = await addDoc(collection(db, 'projects'), {
+      console.log('➕ Adding project to organization:', currentOrganization.id);
+      const orgProjectsRef = collection(db, 'organizations', currentOrganization.id, 'projects');
+      const docRef = await addDoc(orgProjectsRef, {
         ...projectData,
-        userId: user.uid,
         createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        createdBy: user.uid,
+        organizationId: currentOrganization.id
+      });
+      
+      console.log('✅ Project added with ID:', docRef.id);
+      setRefreshTrigger(prev => prev + 1);
+      return docRef.id;
+    } catch (error) {
+      console.error('❌ Error adding project:', error);
+      throw error;
+    }
+  };
+
+  const updateProject = async (projectId, updates) => {
+    if (!currentOrganization) {
+      throw new Error('No organization selected');
+    }
+
+    try {
+      console.log('🔄 Updating project:', projectId);
+      const projectRef = doc(db, 'organizations', currentOrganization.id, 'projects', projectId);
+      await updateDoc(projectRef, {
+        ...updates,
         updatedAt: serverTimestamp()
       });
-
-      console.log('Project created with ID:', docRef.id);
-      triggerRefresh(); // Refresh the projects list
-      return { id: docRef.id, success: true };
-    } catch (err) {
-      console.error('Error adding project:', err);
-      console.error('Error code:', err.code);
-      console.error('Error message:', err.message);
-      return { success: false, error: err.message };
+      
+      console.log('✅ Project updated');
+      setRefreshTrigger(prev => prev + 1);
+    } catch (error) {
+      console.error('❌ Error updating project:', error);
+      throw error;
     }
   };
 
   const deleteProject = async (projectId) => {
-    try {
-      await deleteDoc(doc(db, 'projects', projectId));
-      triggerRefresh(); // Refresh the projects list
-      return { success: true };
-    } catch (err) {
-      console.error('Error deleting project:', err);
-      return { success: false, error: err.message };
+    if (!currentOrganization) {
+      throw new Error('No organization selected');
     }
-  };
 
-  const updateProject = async (projectId, updateData) => {
     try {
-      console.log('🔄 updateProject called with:', { projectId, updateData });
-      const projectRef = doc(db, 'projects', projectId);
-      console.log('📋 Project reference created:', projectRef.path);
+      console.log('🗑️ Deleting project:', projectId);
+      const projectRef = doc(db, 'organizations', currentOrganization.id, 'projects', projectId);
+      await deleteDoc(projectRef);
       
-      await updateDoc(projectRef, {
-        ...updateData,
-        updatedAt: serverTimestamp()
-      });
-      
-      console.log('✅ Project updated successfully in Firestore:', projectId);
-      console.log('🔄 Triggering refresh...');
-      triggerRefresh(); // Refresh the projects list
-      console.log('✅ Refresh triggered');
-      return { success: true };
-    } catch (err) {
-      console.error('❌ Error updating project:', err);
-      console.error('❌ Error code:', err.code);
-      console.error('❌ Error message:', err.message);
-      return { success: false, error: err.message };
+      console.log('✅ Project deleted');
+      setRefreshTrigger(prev => prev + 1);
+    } catch (error) {
+      console.error('❌ Error deleting project:', error);
+      throw error;
     }
-  };
-
-  const refreshProjects = () => {
-    triggerRefresh();
   };
 
   return {
@@ -209,8 +142,8 @@ export function useProjects(user) {
     loading,
     error,
     addProject,
-    deleteProject,
     updateProject,
-    refreshProjects
+    deleteProject,
+    refreshProjects: () => setRefreshTrigger(prev => prev + 1)
   };
 }

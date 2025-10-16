@@ -11,10 +11,11 @@ import {
   updateDoc
 } from 'firebase/firestore';
 import { db } from '../firebase';
+import { useOrganization } from '../OrganizationContext';
 
-const updateFeature = async (featureId, featureData) => {
+const updateFeature = async (organizationId, projectId, featureId, featureData) => {
     try {
-      await updateDoc(doc(db, 'features', featureId), {
+      await updateDoc(doc(db, 'organizations', organizationId, 'projects', projectId, 'features', featureId), {
         ...featureData,
         updatedAt: serverTimestamp()
       });
@@ -28,17 +29,18 @@ export function useFeatures(projectId) {
   const [features, setFeatures] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { currentOrganization } = useOrganization();
 
   useEffect(() => {
-    if (!projectId) {
+    if (!projectId || !currentOrganization?.id) {
       setFeatures([]);
       setLoading(false);
       return;
     }
 
-  const featuresRef = collection(db, 'features');
-  const q = query(featuresRef, where('projectId', '==', projectId));
-  const unsubscribe = onSnapshot(q,
+    // Features are stored in organizations/{orgId}/projects/{projectId}/features/
+    const featuresRef = collection(db, 'organizations', currentOrganization.id, 'projects', projectId, 'features');
+    const unsubscribe = onSnapshot(featuresRef,
       (snapshot) => {
         const featuresData = snapshot.docs.map(doc => ({
           id: doc.id,
@@ -54,14 +56,14 @@ export function useFeatures(projectId) {
     );
 
     return () => unsubscribe();
-  }, [projectId]);
+  }, [projectId, currentOrganization?.id]);
 
   const addFeature = async (featureData) => {
     try {
-      if (!projectId) {
-        throw new Error('No project selected');
+      if (!projectId || !currentOrganization?.id) {
+        throw new Error('No project or organization selected');
       }
-      const docRef = await addDoc(collection(db, 'features'), {
+      const docRef = await addDoc(collection(db, 'organizations', currentOrganization.id, 'projects', projectId, 'features'), {
         ...featureData,
         projectId,
         createdAt: serverTimestamp(),
@@ -75,7 +77,10 @@ export function useFeatures(projectId) {
 
   const deleteFeature = async (featureId) => {
     try {
-      await deleteDoc(doc(db, 'features', featureId));
+      if (!currentOrganization?.id || !projectId) {
+        throw new Error('No organization or project selected');
+      }
+      await deleteDoc(doc(db, 'organizations', currentOrganization.id, 'projects', projectId, 'features', featureId));
       return { success: true };
     } catch (err) {
       return { success: false, error: err.message };
@@ -88,6 +93,6 @@ export function useFeatures(projectId) {
   error,
   addFeature,
   deleteFeature,
-  updateFeature
+  updateFeature: (featureId, featureData) => updateFeature(currentOrganization?.id, projectId, featureId, featureData)
   };
 }

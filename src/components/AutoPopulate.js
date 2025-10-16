@@ -2,14 +2,21 @@ import { useEffect } from 'react';
 import { useProject } from '../ProjectContext';
 import { collection, addDoc, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../firebase';
+import { useOrganization } from '../OrganizationContext';
 
 // Component that auto-populates ALL 92 features
 const AutoPopulate = () => {
   const { projects } = useProject();
+  const { currentOrganization } = useOrganization();
 
   useEffect(() => {
     const populateAllFeatures = async () => {
       console.log('🚀 Checking if features need to be populated...');
+
+      if (!currentOrganization?.id) {
+        console.log('No organization selected');
+        return;
+      }
 
       // Find target project
       let targetProject = projects.find(p => p.name === 'Test Project' || p.name === 'Test');
@@ -27,9 +34,8 @@ const AutoPopulate = () => {
 
       try {
         // First, check if features already exist for this project
-        const featuresRef = collection(db, 'features');
-        const existingFeaturesQuery = query(featuresRef, where('projectId', '==', targetProject.id));
-        const existingSnapshot = await getDocs(existingFeaturesQuery);
+        const featuresRef = collection(db, 'organizations', currentOrganization.id, 'projects', targetProject.id, 'features');
+        const existingSnapshot = await getDocs(featuresRef);
         
         if (existingSnapshot.size > 0) {
           console.log(`✅ Project already has ${existingSnapshot.size} features. Skipping population.`);
@@ -184,7 +190,7 @@ const AutoPopulate = () => {
         
         // Create all categories
         for (const categoryName of categories) {
-          const categoriesRef = collection(db, 'categories');
+          const categoriesRef = collection(db, 'organizations', currentOrganization.id, 'categories');
           const categoryQuery = query(categoriesRef, 
             where('projectId', '==', targetProject.id), 
             where('name', '==', categoryName)
@@ -204,7 +210,7 @@ const AutoPopulate = () => {
         // Add all features
         let addedCount = 0;
         for (const feature of allFeatures) {
-          const featuresRef = collection(db, 'features');
+          const featuresRef = collection(db, 'organizations', currentOrganization.id, 'projects', targetProject.id, 'features');
           await addDoc(featuresRef, {
             ...feature,
             projectId: targetProject.id,
@@ -234,10 +240,10 @@ const AutoPopulate = () => {
       }
     };
 
-    if (projects.length > 0) {
+    if (projects.length > 0 && currentOrganization?.id) {
       populateAllFeatures();
     }
-  }, [projects]);
+  }, [projects, currentOrganization?.id]);
 
   return null;
 };

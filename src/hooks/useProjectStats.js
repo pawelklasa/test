@@ -6,13 +6,15 @@ import {
   getDocs
 } from 'firebase/firestore';
 import { db } from '../firebase';
+import { useOrganization } from '../OrganizationContext';
 
 export function useProjectStats(projects) {
   const [projectStats, setProjectStats] = useState({});
   const [loading, setLoading] = useState(true);
+  const { currentOrganization } = useOrganization();
 
   useEffect(() => {
-    if (!projects || projects.length === 0) {
+    if (!projects || projects.length === 0 || !currentOrganization?.id) {
       setProjectStats({});
       setLoading(false);
       return;
@@ -26,9 +28,8 @@ export function useProjectStats(projects) {
         // Load stats for each project
         for (const project of projects) {
           try {
-            const featuresRef = collection(db, 'features');
-            const q = query(featuresRef, where('projectId', '==', project.id));
-            const snapshot = await getDocs(q);
+            const featuresRef = collection(db, 'organizations', currentOrganization.id, 'projects', project.id, 'features');
+            const snapshot = await getDocs(featuresRef);
             
             const features = snapshot.docs.map(doc => doc.data());
             const totalFeatures = features.length;
@@ -59,7 +60,7 @@ export function useProjectStats(projects) {
     };
 
     loadProjectStats();
-  }, [projects]);
+  }, [projects, currentOrganization?.id]);
 
   return {
     projectStats,

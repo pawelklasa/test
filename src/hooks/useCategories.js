@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import {
   collection,
   query,
@@ -13,23 +13,25 @@ import {
   getDocs
 } from 'firebase/firestore';
 import { db } from '../firebase';
+import { useOrganization } from '../OrganizationContext';
 
 const defaultCategories = ['General', 'UI/UX', 'Backend', 'Database', 'Integration'];
 
 export const useCategories = (projectId) => {
   const [categories, setCategories] = useState(defaultCategories);
   const [loading, setLoading] = useState(true);
+  const { currentOrganization } = useOrganization();
 
   useEffect(() => {
-    if (!projectId) {
+    if (!projectId || !currentOrganization?.id) {
       setCategories(defaultCategories);
       setLoading(false);
       return;
     }
 
     // Listen to both the projectCategories document AND the individual categories collection
-    const categoriesDocRef = doc(db, 'projectCategories', projectId);
-    const categoriesCollectionRef = collection(db, 'categories');
+    const categoriesDocRef = doc(db, 'organizations', currentOrganization.id, 'projectCategories', projectId);
+    const categoriesCollectionRef = collection(db, 'organizations', currentOrganization.id, 'categories');
     const categoriesQuery = query(categoriesCollectionRef, where('projectId', '==', projectId));
     
     // First check for individual categories in the categories collection
@@ -73,10 +75,10 @@ export const useCategories = (projectId) => {
     return () => {
       unsubscribeCollection();
     };
-  }, [projectId]);
+  }, [projectId, currentOrganization?.id]);
 
   const addCategory = async (categoryName) => {
-    if (!projectId || !categoryName.trim()) return;
+    if (!projectId || !categoryName.trim() || !currentOrganization?.id) return;
     
     try {
       const trimmedName = categoryName.trim();
@@ -84,7 +86,7 @@ export const useCategories = (projectId) => {
 
       // Add to both the projectCategories document and individual categories collection
       const newCategories = [...categories, trimmedName];
-      const categoriesDocRef = doc(db, 'projectCategories', projectId);
+      const categoriesDocRef = doc(db, 'organizations', currentOrganization.id, 'projectCategories', projectId);
       
       // Update the projectCategories document
       await setDoc(categoriesDocRef, {
@@ -93,7 +95,7 @@ export const useCategories = (projectId) => {
       }, { merge: true });
 
       // Also add as individual category document for consistency with AutoPopulate
-      const categoriesCollectionRef = collection(db, 'categories');
+      const categoriesCollectionRef = collection(db, 'organizations', currentOrganization.id, 'categories');
       await addDoc(categoriesCollectionRef, {
         name: trimmedName,
         projectId: projectId,
@@ -108,11 +110,11 @@ export const useCategories = (projectId) => {
   };
 
   const removeCategory = async (categoryName) => {
-    if (!projectId || !categoryName) return;
+    if (!projectId || !categoryName || !currentOrganization?.id) return;
     
     try {
       const newCategories = categories.filter(cat => cat !== categoryName);
-      const categoriesDocRef = doc(db, 'projectCategories', projectId);
+      const categoriesDocRef = doc(db, 'organizations', currentOrganization.id, 'projectCategories', projectId);
       
       // Update the projectCategories document
       await setDoc(categoriesDocRef, {
@@ -121,7 +123,7 @@ export const useCategories = (projectId) => {
       }, { merge: true });
 
       // Also remove from individual categories collection
-      const categoriesCollectionRef = collection(db, 'categories');
+      const categoriesCollectionRef = collection(db, 'organizations', currentOrganization.id, 'categories');
       const categoryQuery = query(categoriesCollectionRef, 
         where('projectId', '==', projectId), 
         where('name', '==', categoryName)

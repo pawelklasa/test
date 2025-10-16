@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useContext } from 'react';
 import { Outlet, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import Drawer from '@mui/material/Drawer';
@@ -29,12 +29,26 @@ import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import TimelineIcon from '@mui/icons-material/Timeline';
 import AutorenewIcon from '@mui/icons-material/Autorenew';
 import PeopleIcon from '@mui/icons-material/People';
+import SettingsIcon from '@mui/icons-material/Settings';
 import IntegrationInstructionsIcon from '@mui/icons-material/IntegrationInstructions';
+import PaymentIcon from '@mui/icons-material/Payment';
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
+import BarChartIcon from '@mui/icons-material/BarChart';
+import TrackChangesIcon from '@mui/icons-material/TrackChanges';
+import EmailIcon from '@mui/icons-material/Email';
 import { getAuth } from 'firebase/auth';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from './firebase';
 import { useTheme } from './ThemeContext';
 import { useProject } from './ProjectContext';
+import './utils/fixAdminRoles'; // Import role fix utility
+import './utils/fixGmailUserMapping'; // Import Gmail user mapping fix
+import './utils/debugOrgProjects'; // Import organization projects debug
+import './utils/debugMemberContext'; // Import member context debug
+import './utils/fixMemberUserMapping'; // Import member user mapping fix
+import './utils/disableAutoOrgCreation'; // Import auto-org creation disabler
+import './utils/checkUserProjects'; // Import user projects checker
+import { useOrganization } from './OrganizationContext';
 import { trackSearchUsed } from './services/analytics';
 
 const drawerWidth = 260;
@@ -45,8 +59,16 @@ const menuItems = [
   { text: 'Time to Market', icon: <AccessTimeIcon />, path: '/dashboard/ttl' },
   { text: 'Portfolio Roadmap', icon: <TimelineIcon />, path: '/dashboard/roadmap' },
   { text: 'Feature Lifecycle', icon: <AutorenewIcon />, path: '/dashboard/lifecycle' },
-  { text: 'Jira Integration', icon: <IntegrationInstructionsIcon />, path: '/dashboard/jira' },
-  { text: 'User Management', icon: <PeopleIcon />, path: '/dashboard/users' }
+  { text: 'Jira Integration', icon: <IntegrationInstructionsIcon />, path: '/dashboard/jira', adminOnly: true },
+  { text: 'Team Management', icon: <PeopleIcon />, path: '/dashboard/team', adminOnly: true },
+  { text: 'Analytics Dashboard', icon: <BarChartIcon />, path: '/dashboard/analytics', adminOnly: true },
+  { text: 'User Tracking', icon: <TrackChangesIcon />, path: '/dashboard/user-tracking', adminOnly: true },
+  { text: 'Email Management', icon: <EmailIcon />, path: '/dashboard/email-management', adminOnly: true },
+  { text: 'Email Setup', icon: <SettingsIcon />, path: '/dashboard/email-setup', adminOnly: true },
+  { text: 'Usage & Billing', icon: <PaymentIcon />, path: '/dashboard/usage-limits', adminOnly: true },
+  { text: 'Billing & Subscription', icon: <PaymentIcon />, path: '/dashboard/billing', adminOnly: true },
+  { text: 'Organization Settings', icon: <SettingsIcon />, path: '/dashboard/organization/settings', adminOnly: true },
+  { text: 'Admin Dashboard', icon: <AdminPanelSettingsIcon />, path: '/dashboard/admin', adminOnly: true }
 ];
 
 function DashboardLayout() {
@@ -64,6 +86,9 @@ function DashboardLayout() {
   const auth = getAuth();
   const { mode, toggleTheme } = useTheme();
   const { selectedProject, setSelectedProject, projects } = useProject();
+  const { currentOrganization, userRole } = useOrganization();
+
+
 
   // Listen for auth state changes
   useEffect(() => {
@@ -104,7 +129,7 @@ function DashboardLayout() {
   };
 
   const handleSearch = useCallback(async (value) => {
-    if (!value.trim()) {
+    if (!value.trim() || !currentOrganization?.id) {
       setSearchResults([]);
       setSearchOpen(false);
       return;
@@ -122,9 +147,8 @@ function DashboardLayout() {
         : projects;
 
       for (const project of projectsToSearch) {
-        const featuresRef = collection(db, 'features');
-        const q = query(featuresRef, where('projectId', '==', project.id));
-        const snapshot = await getDocs(q);
+        const featuresRef = collection(db, 'organizations', currentOrganization.id, 'projects', project.id, 'features');
+        const snapshot = await getDocs(featuresRef);
 
         snapshot.docs.forEach(doc => {
           const feature = { id: doc.id, ...doc.data() };
@@ -145,7 +169,7 @@ function DashboardLayout() {
     } finally {
       setSearching(false);
     }
-  }, [selectedProject, projects]);
+  }, [selectedProject, projects, currentOrganization?.id]);
 
   useEffect(() => {
     const debounce = setTimeout(() => {
@@ -188,7 +212,9 @@ function DashboardLayout() {
       </Box>
 
       <List sx={{ flex: 1, px: collapsed ? 0.5 : 2 }}>
-        {menuItems.map((item) => {
+        {menuItems
+          .filter(item => !item.adminOnly || userRole === 'owner' || userRole === 'admin')
+          .map((item) => {
           const isSelected = location.pathname === item.path;
           return (
             <ListItem key={item.text} disablePadding sx={{ mb: 0.5 }}>

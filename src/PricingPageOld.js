@@ -140,7 +140,7 @@ export default function PricingPage() {
               fontSize: { xs: '2.5rem', md: '3.5rem' }
             }}
           >
-            Pricing That Scales With You
+            Simple, Transparent Pricing
           </Typography>
           <Typography
             variant="h5"
@@ -170,173 +170,115 @@ export default function PricingPage() {
               sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: 'white' }} 
             />
           </Box>
+            }}
+          >
+            Choose the perfect plan for your team. Always know what you'll pay.
+          </Typography>
         </Container>
       </Box>
 
-      {/* Value Proposition */}
-      <Container maxWidth="lg" sx={{ mb: 8 }}>
-        <Box sx={{ textAlign: 'center', mb: 6 }}>
-          <Typography variant="h3" gutterBottom fontWeight={700} sx={{ mb: 2 }}>
-            Why Teams Choose Gapple
-          </Typography>
-          <Typography variant="h6" color="text.secondary" sx={{ mb: 4 }}>
-            The only feature planning tool that turns chaos into clarity
-          </Typography>
-        </Box>
-        
-        <Grid container spacing={4}>
-          <Grid item xs={12} md={4}>
-            <Box sx={{ textAlign: 'center', p: 3 }}>
-              <SpeedIcon sx={{ fontSize: 48, color: 'primary.main', mb: 2 }} />
-              <Typography variant="h6" gutterBottom fontWeight={600}>
-                10x Faster Planning
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Cut feature planning time from weeks to hours with AI-powered insights and automated workflows.
-              </Typography>
-            </Box>
-          </Grid>
-          <Grid item xs={12} md={4}>
-            <Box sx={{ textAlign: 'center', p: 3 }}>
-              <GroupIcon sx={{ fontSize: 48, color: 'primary.main', mb: 2 }} />
-              <Typography variant="h6" gutterBottom fontWeight={600}>
-                Team Collaboration
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Unite product, engineering, and design teams with shared visibility and real-time collaboration.
-              </Typography>
-            </Box>
-          </Grid>
-          <Grid item xs={12} md={4}>
-            <Box sx={{ textAlign: 'center', p: 3 }}>
-              <IntegrationInstructionsIcon sx={{ fontSize: 48, color: 'primary.main', mb: 2 }} />
-              <Typography variant="h6" gutterBottom fontWeight={600}>
-                Seamless Integration
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Connect with Jira, Slack, and your existing tools. No workflow disruption.
-              </Typography>
-            </Box>
-          </Grid>
-        </Grid>
-      </Container>
-
       {/* Pricing Cards */}
-      <Container maxWidth="lg">
-        <Box sx={{ textAlign: 'center', mb: 6 }}>
-          <Typography variant="h3" gutterBottom fontWeight={700}>
-            Choose Your Plan
-          </Typography>
-          <Typography variant="h6" color="text.secondary">
-            Start with our free trial, then pick the plan that fits your team
-          </Typography>
-        </Box>
-
-        <Grid container spacing={3} justifyContent="center">
+      <Container maxWidth="lg" sx={{ mt: 4 }}>
+        <Grid container spacing={4} alignItems="stretch" justifyContent="center" sx={{ pt: 4, pb: 2 }}>
           {plans.map((plan, index) => (
-            <Grid item xs={12} sm={6} lg={3} key={plan.name}>
+            <Grid item xs={12} md={4} key={index}>
               <Card
                 sx={{
                   height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
                   position: 'relative',
-                  border: plan.featured ? 3 : 1,
-                  borderColor: plan.featured ? 'primary.main' : 'divider',
-                  boxShadow: plan.featured ? 8 : 2,
+                  border: plan.featured ? '3px solid #667eea' : '1px solid #e0e0e0',
                   transform: plan.featured ? 'scale(1.05)' : 'scale(1)',
-                  transition: 'all 0.3s ease',
+                  transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+                  boxShadow: plan.featured ? 6 : 2,
+                  mt: plan.featured ? 0 : 2,
                   '&:hover': {
-                    transform: plan.featured ? 'scale(1.08)' : 'scale(1.02)',
-                    boxShadow: plan.featured ? 12 : 4
+                    transform: plan.featured ? 'scale(1.08)' : 'scale(1.03)',
+                    boxShadow: 8
                   }
                 }}
               >
-                {plan.highlight && (
+                {plan.featured && (
                   <Box
                     sx={{
                       position: 'absolute',
-                      top: -12,
+                      top: 16,
                       left: '50%',
                       transform: 'translateX(-50%)',
-                      bgcolor: plan.featured ? 'primary.main' : 'secondary.main',
+                      bgcolor: '#667eea',
                       color: 'white',
                       px: 3,
-                      py: 0.5,
-                      borderRadius: 2,
+                      py: 0.75,
+                      borderRadius: 20,
+                      fontWeight: 700,
                       fontSize: '0.75rem',
-                      fontWeight: 'bold',
-                      zIndex: 1
+                      letterSpacing: 1,
+                      whiteSpace: 'nowrap',
+                      zIndex: 1,
+                      boxShadow: 3
                     }}
                   >
-                    {plan.highlight}
+                    MOST POPULAR
                   </Box>
                 )}
-                
-                <CardContent sx={{ p: 4, textAlign: 'center' }}>
-                  <Typography variant="h5" gutterBottom fontWeight={700}>
+                <CardContent sx={{ p: 4, pt: plan.featured ? 7 : 4, flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+                  <Typography
+                    variant="h4"
+                    align="center"
+                    gutterBottom
+                    fontWeight={700}
+                    color={plan.featured ? 'primary' : 'text.primary'}
+                  >
                     {plan.name}
                   </Typography>
-                  
-                  <Box sx={{ mb: 2 }}>
-                    <Box display="flex" alignItems="baseline" justifyContent="center" gap={1}>
-                      {plan.originalPrice && (
-                        <Typography 
-                          variant="h6" 
-                          sx={{ 
-                            textDecoration: 'line-through', 
-                            color: 'text.secondary',
-                            fontSize: '1rem'
-                          }}
-                        >
-                          {plan.originalPrice}
-                        </Typography>
-                      )}
-                      <Typography
-                        variant="h3"
-                        component="span"
-                        color="primary"
-                        fontWeight={700}
-                      >
-                        {plan.price}
-                      </Typography>
-                      <Typography variant="body1" color="text.secondary">
-                        {plan.period}
-                      </Typography>
-                    </Box>
-                    {plan.originalPrice && (
-                      <Chip 
-                        label="Save 30%" 
-                        color="success" 
-                        size="small" 
-                        sx={{ mt: 1 }} 
-                      />
-                    )}
-                  </Box>
-
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 3, minHeight: 40 }}>
+                  <Typography
+                    variant="body2"
+                    align="center"
+                    color="text.secondary"
+                    sx={{ mb: 3 }}
+                  >
                     {plan.description}
                   </Typography>
-
-                  <List sx={{ mb: 3, textAlign: 'left' }}>
-                    {plan.features.map((feature, featureIndex) => (
-                      <ListItem key={featureIndex} sx={{ px: 0, py: 0.5 }}>
-                        <ListItemIcon sx={{ minWidth: 32 }}>
-                          <CheckIcon sx={{ color: 'success.main', fontSize: 20 }} />
+                  <Box sx={{ textAlign: 'center', mb: 4 }}>
+                    <Typography
+                      variant="h2"
+                      component="span"
+                      fontWeight={700}
+                      sx={{
+                        background: plan.featured
+                          ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+                          : 'inherit',
+                        WebkitBackgroundClip: plan.featured ? 'text' : 'inherit',
+                        WebkitTextFillColor: plan.featured ? 'transparent' : 'inherit'
+                      }}
+                    >
+                      {plan.price}
+                    </Typography>
+                    <Typography
+                      variant="h6"
+                      component="span"
+                      color="text.secondary"
+                    >
+                      {plan.period}
+                    </Typography>
+                  </Box>
+                  <List sx={{ mb: 3, flexGrow: 1 }}>
+                    {plan.features.map((feature, idx) => (
+                      <ListItem key={idx} sx={{ py: 1, px: 0 }}>
+                        <ListItemIcon sx={{ minWidth: 36 }}>
+                          <CheckIcon sx={{ color: '#667eea' }} />
                         </ListItemIcon>
                         <ListItemText
                           primary={feature}
                           primaryTypographyProps={{
                             variant: 'body2',
-                            fontSize: '0.875rem'
+                            color: 'text.secondary'
                           }}
                         />
                       </ListItem>
                     ))}
                   </List>
-
-                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2 }}>
-                    {plan.limits}
-                  </Typography>
-
                   <Button
                     variant={plan.buttonVariant}
                     color="primary"
@@ -345,7 +287,6 @@ export default function PricingPage() {
                     sx={{
                       py: 1.5,
                       fontWeight: 600,
-                      fontSize: '1rem',
                       ...(plan.featured && {
                         background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                         '&:hover': {
@@ -362,17 +303,6 @@ export default function PricingPage() {
           ))}
         </Grid>
 
-        {/* Money-back guarantee */}
-        <Box sx={{ textAlign: 'center', mt: 6, p: 4, bgcolor: 'background.paper', borderRadius: 2 }}>
-          <SecurityIcon sx={{ fontSize: 40, color: 'success.main', mb: 2 }} />
-          <Typography variant="h6" gutterBottom fontWeight={600}>
-            30-Day Money-Back Guarantee
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Not satisfied? Get a full refund within 30 days, no questions asked.
-          </Typography>
-        </Box>
-
         {/* FAQ Section */}
         <Box sx={{ mt: 10, textAlign: 'center' }}>
           <Typography variant="h4" gutterBottom fontWeight={700}>
@@ -388,7 +318,7 @@ export default function PricingPage() {
                   Can I change plans later?
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Yes! You can upgrade or downgrade your plan at any time. Changes take effect immediately and we'll prorate any billing differences.
+                  Yes! You can upgrade or downgrade your plan at any time. Changes take effect immediately.
                 </Typography>
               </Box>
             </Grid>
@@ -398,7 +328,7 @@ export default function PricingPage() {
                   Do you offer refunds?
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  We offer a 30-day money-back guarantee for all paid plans. No questions asked, full refund.
+                  We offer a 30-day money-back guarantee for all paid plans. No questions asked.
                 </Typography>
               </Box>
             </Grid>
@@ -408,37 +338,17 @@ export default function PricingPage() {
                   What payment methods do you accept?
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  We accept all major credit cards (Visa, MasterCard, American Express) and PayPal. Enterprise customers can also pay by bank transfer.
+                  We accept all major credit cards, PayPal, and bank transfers for Enterprise plans.
                 </Typography>
               </Box>
             </Grid>
             <Grid item xs={12} md={6}>
               <Box sx={{ textAlign: 'left', p: 3 }}>
                 <Typography variant="h6" gutterBottom fontWeight={600}>
-                  Is there really a free trial?
+                  Is there a free trial?
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Yes! All paid plans come with a 14-day free trial with full access to all features. No credit card required to start.
-                </Typography>
-              </Box>
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <Box sx={{ textAlign: 'left', p: 3 }}>
-                <Typography variant="h6" gutterBottom fontWeight={600}>
-                  How secure is my data?
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  We use enterprise-grade security with SOC 2 compliance, end-to-end encryption, and regular security audits to keep your data safe.
-                </Typography>
-              </Box>
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <Box sx={{ textAlign: 'left', p: 3 }}>
-                <Typography variant="h6" gutterBottom fontWeight={600}>
-                  Can I integrate with existing tools?
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Absolutely! We integrate with Jira, Slack, GitHub, Figma, and many other tools your team already uses. Enterprise plans include custom integrations.
+                  Yes! All paid plans come with a 14-day free trial. No credit card required.
                 </Typography>
               </Box>
             </Grid>

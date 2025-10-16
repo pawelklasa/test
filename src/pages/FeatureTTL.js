@@ -343,19 +343,19 @@ function FeatureTTL() {
       .sort((a, b) => a.ttl.weeks - b.ttl.weeks);
     
     let sprintPoints = 0;
-    let featuresInSprint = 0;
+    let featuresInSprintArray = [];
     
     for (const feature of availableFeatures) {
       const featurePoints = feature.storyPoints || 5;
       if (sprintPoints + featurePoints <= sprintCapacity) {
         sprintPoints += featurePoints;
-        featuresInSprint++;
+        featuresInSprintArray.push(feature);
       } else {
         break;
       }
     }
     
-    const sprintMetric = featuresInSprint;
+    const sprintMetric = featuresInSprintArray.length;
 
     const wontDoFeatures = featuresWithTTL.filter(f => f.workflowStatus === "Won't Do");
 
@@ -395,8 +395,8 @@ function FeatureTTL() {
     // === NEW METRICS ===
     
     // 1. Sprint Burndown - Story points completed vs planned this sprint
-    const totalSprintPoints = featuresInSprint.reduce((sum, f) => sum + (f.storyPoints || 5), 0);
-    const completedSprintPoints = featuresInSprint
+    const totalSprintPoints = featuresInSprintArray.reduce((sum, f) => sum + (f.storyPoints || 5), 0);
+    const completedSprintPoints = featuresInSprintArray
       .filter(f => f.workflowStatus === 'Done')
       .reduce((sum, f) => sum + (f.storyPoints || 5), 0);
     const sprintBurndown = totalSprintPoints > 0 ? Math.round((completedSprintPoints / totalSprintPoints) * 100) : 0;

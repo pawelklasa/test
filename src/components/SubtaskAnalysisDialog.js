@@ -17,76 +17,109 @@ import {
   AccordionDetails,
   Alert,
   LinearProgress,
-  Divider,
   Grid,
-  IconButton,
-  Tooltip
+  CircularProgress
 } from '@mui/material';
 import {
   ExpandMore as ExpandMoreIcon,
   Psychology as PsychologyIcon,
   AutoFixHigh as AutoFixHighIcon,
   TaskAlt as TaskAltIcon,
-  Warning as WarningIcon,
-  Info as InfoIcon,
-  Edit as EditIcon
+  Info as InfoIcon
 } from '@mui/icons-material';
 import { useSubtaskExtraction } from '../hooks/useSubtaskExtraction';
 
 const SubtaskAnalysisDialog = ({ open, onClose, feature, onSubtasksCreated }) => {
   const { analyzeFeatureComplexity, createSubtasks } = useSubtaskExtraction();
   const [analysis, setAnalysis] = useState(null);
-  const [selectedSubtasks, setSelectedSubtasks] = useState([]);
+  const [selectedSubtasks, setSelectedSubtasks] = useState(new Set());
   const [isCreating, setIsCreating] = useState(false);
   const [showFullAnalysis, setShowFullAnalysis] = useState(false);
 
+  // Reset state when dialog opens/closes
   useEffect(() => {
-    if (feature && open) {
+    if (open && feature) {
+      console.log('Dialog opened for feature:', feature.name);
       const complexityAnalysis = analyzeFeatureComplexity(feature);
+      console.log('Analysis result:', complexityAnalysis);
       setAnalysis(complexityAnalysis);
       
-      // Pre-select high-priority subtasks (get the actual indices, not filtered indices)
-      const highPrioritySubtasks = complexityAnalysis.suggestedSubtasks
-        .map((st, index) => ({ subtask: st, originalIndex: index }))
-        .filter(({ subtask }) => subtask.priority === 'Must-Have')
-        .map(({ originalIndex }) => originalIndex);
-      setSelectedSubtasks(highPrioritySubtasks);
+      // Pre-select high-priority subtasks using Set for better performance
+      const highPriorityIndices = new Set();
+      complexityAnalysis.suggestedSubtasks.forEach((subtask, index) => {
+        if (subtask.priority === 'Must-Have') {
+          highPriorityIndices.add(index);
+        }
+      });
+      console.log('Pre-selected indices:', Array.from(highPriorityIndices));
+      setSelectedSubtasks(highPriorityIndices);
     } else if (!open) {
-      // Reset state when dialog closes
+      // Reset all state when dialog closes
+      console.log('Dialog closed, resetting state');
       setAnalysis(null);
-      setSelectedSubtasks([]);
+      setSelectedSubtasks(new Set());
       setShowFullAnalysis(false);
       setIsCreating(false);
     }
-  }, [feature, open, analyzeFeatureComplexity]);
+  }, [open, feature, analyzeFeatureComplexity]);
 
   const handleSubtaskSelection = (index, checked) => {
-    console.log('Subtask selection:', { index, checked, currentSelected: selectedSubtasks });
-    if (checked) {
-      setSelectedSubtasks(prev => {
-        const newSelection = [...prev, index];
-        console.log('Adding subtask, new selection:', newSelection);
-        return newSelection;
-      });
-    } else {
-      setSelectedSubtasks(prev => {
-        const newSelection = prev.filter(i => i !== index);
-        console.log('Removing subtask, new selection:', newSelection);
-        return newSelection;
-      });
-    }
+    console.log('Checkbox clicked:', { index, checked, currentSelected: Array.from(selectedSubtasks) });
+    
+    setSelectedSubtasks(prev => {
+      const newSelection = new Set(prev);
+      if (checked) {
+        newSelection.add(index);
+      } else {
+        newSelection.delete(index);
+      }
+      console.log('New selection:', Array.from(newSelection));
+      return newSelection;
+    });
+  };
+
+  const handleSelectAll = () => {
+    if (!analysis) return;
+    
+    const allIndices = new Set();
+    analysis.suggestedSubtasks.forEach((_, index) => {
+      allIndices.add(index);
+    });
+    setSelectedSubtasks(allIndices);
+    console.log('Selected all subtasks:', Array.from(allIndices));
+  };
+
+  const handleDeselectAll = () => {
+    setSelectedSubtasks(new Set());
+    console.log('Deselected all subtasks');
   };
 
   const handleCreateSubtasks = async () => {
-    if (!analysis || selectedSubtasks.length === 0) return;
+    if (!analysis || selectedSubtasks.size === 0) {
+      console.log('Cannot create subtasks:', { hasAnalysis: !!analysis, selectedCount: selectedSubtasks.size });
+      return;
+    }
 
+    console.log('Creating subtasks for indices:', Array.from(selectedSubtasks));
     setIsCreating(true);
+    
     try {
-      const subtasksToCreate = selectedSubtasks.map(index => analysis.suggestedSubtasks[index]);
-      const createdSubtasks = await createSubtasks(feature, subtasksToCreate);
+      const subtasksToCreate = Array.from(selectedSubtasks).map(index => {
+        const subtask = analysis.suggestedSubtasks[index];
+        console.log(`Subtask ${index}:`, subtask);
+        return subtask;
+      });
       
-      onSubtasksCreated(createdSubtasks);
-      onClose();
+      console.log('Subtasks to create:', subtasksToCreate);
+      const createdSubtasks = await createSubtasks(feature, subtasksToCreate);
+      console.log('Created subtasks:', createdSubtasks);
+      
+      if (createdSubtasks.length > 0) {
+        onSubtasksCreated(createdSubtasks);
+        onClose();
+      } else {
+        console.error('No subtasks were created');
+      }
     } catch (error) {
       console.error('Error creating subtasks:', error);
     } finally {
@@ -131,6 +164,9 @@ const SubtaskAnalysisDialog = ({ open, onClose, feature, onSubtasksCreated }) =>
   if (!analysis) {
     return null;
   }
+
+  const selectedCount = selectedSubtasks.size;
+  const totalCount = analysis.suggestedSubtasks.length;
 
   return (
     <Dialog 
@@ -215,17 +251,18 @@ const SubtaskAnalysisDialog = ({ open, onClose, feature, onSubtasksCreated }) =>
               <Box display="flex" alignItems="center" gap={2} mb={3}>
                 <TaskAltIcon color="primary" />
                 <Typography variant="h6">
-                  Suggested Subtasks ({analysis.suggestedSubtasks.length})
+                  Suggested Subtasks ({totalCount})
                 </Typography>
                 <Button
                   size="small"
-                  onClick={() => {
-                    const allIndexes = analysis.suggestedSubtasks.map((_, index) => index);
-                    setSelectedSubtasks(selectedSubtasks.length === allIndexes.length ? [] : allIndexes);
-                  }}
+                  onClick={selectedCount === totalCount ? handleDeselectAll : handleSelectAll}
+                  variant="outlined"
                 >
-                  {selectedSubtasks.length === analysis.suggestedSubtasks.length ? 'Deselect All' : 'Select All'}
+                  {selectedCount === totalCount ? 'Deselect All' : 'Select All'}
                 </Button>
+                <Typography variant="body2" color="text.secondary">
+                  {selectedCount} of {totalCount} selected
+                </Typography>
               </Box>
 
               <Grid container spacing={2}>
@@ -234,17 +271,22 @@ const SubtaskAnalysisDialog = ({ open, onClose, feature, onSubtasksCreated }) =>
                     <Card 
                       variant="outlined" 
                       sx={{ 
-                        borderColor: selectedSubtasks.includes(index) ? 'primary.main' : 'divider',
-                        backgroundColor: selectedSubtasks.includes(index) ? 'primary.50' : 'background.paper'
+                        borderColor: selectedSubtasks.has(index) ? 'primary.main' : 'divider',
+                        backgroundColor: selectedSubtasks.has(index) ? 'primary.50' : 'background.paper',
+                        cursor: 'pointer'
                       }}
+                      onClick={() => handleSubtaskSelection(index, !selectedSubtasks.has(index))}
                     >
                       <CardContent sx={{ pb: 2 }}>
                         <Box display="flex" alignItems="flex-start" gap={1}>
                           <FormControlLabel
                             control={
                               <Checkbox
-                                checked={selectedSubtasks.includes(index)}
-                                onChange={(e) => handleSubtaskSelection(index, e.target.checked)}
+                                checked={selectedSubtasks.has(index)}
+                                onChange={(e) => {
+                                  e.stopPropagation();
+                                  handleSubtaskSelection(index, e.target.checked);
+                                }}
                               />
                             }
                             label=""
@@ -284,10 +326,10 @@ const SubtaskAnalysisDialog = ({ open, onClose, feature, onSubtasksCreated }) =>
                 ))}
               </Grid>
 
-              {selectedSubtasks.length > 0 && (
+              {selectedCount > 0 && (
                 <Alert severity="info" sx={{ mt: 3 }}>
                   <Typography variant="body2">
-                    {selectedSubtasks.length} subtask(s) selected for creation. 
+                    {selectedCount} subtask(s) selected for creation. 
                     These will be created as separate features under the same category with appropriate sizing and priorities.
                   </Typography>
                 </Alert>
@@ -312,10 +354,10 @@ const SubtaskAnalysisDialog = ({ open, onClose, feature, onSubtasksCreated }) =>
           <Button
             variant="contained"
             onClick={handleCreateSubtasks}
-            disabled={selectedSubtasks.length === 0 || isCreating}
-            startIcon={isCreating ? <LinearProgress size={20} /> : <TaskAltIcon />}
+            disabled={selectedCount === 0 || isCreating}
+            startIcon={isCreating ? <CircularProgress size={16} /> : <TaskAltIcon />}
           >
-            {isCreating ? 'Creating...' : `Create ${selectedSubtasks.length} Subtask(s)`}
+            {isCreating ? 'Creating...' : `Create ${selectedCount} Subtask(s)`}
           </Button>
         )}
       </DialogActions>

@@ -253,7 +253,13 @@ export const useSubtaskExtraction = () => {
 
   // Create subtasks in database
   const createSubtasks = async (parentFeature, subtasks) => {
+    console.log('createSubtasks called with:', { parentFeature: parentFeature.name, subtasks });
     const createdSubtasks = [];
+    
+    if (!selectedProject) {
+      console.error('No project selected');
+      return createdSubtasks;
+    }
     
     for (const subtask of subtasks) {
       try {
@@ -285,13 +291,19 @@ export const useSubtaskExtraction = () => {
           estimatedQAHours: 2
         };
 
-        await addFeature(subtaskData);
-        createdSubtasks.push(subtaskData);
+        console.log('Creating subtask:', subtaskData);
+        const result = await addFeature(subtaskData);
+        console.log('Subtask creation result:', result);
+        
+        if (result && result.success !== false) {
+          createdSubtasks.push({ ...subtaskData, id: result.id });
+        }
       } catch (error) {
         console.error('Error creating subtask:', error);
       }
     }
     
+    console.log('All subtasks created:', createdSubtasks);
     return createdSubtasks;
   };
 

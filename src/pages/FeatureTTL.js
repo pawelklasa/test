@@ -8,7 +8,13 @@ import Typography from '@mui/material/Typography';
 import Paper from '@mui/material/Paper';
 import Chip from '@mui/material/Chip';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import SpeedIcon from '@mui/icons-material/Speed';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import TrendingDownIcon from '@mui/icons-material/TrendingDown';
+import BlockIcon from '@mui/icons-material/Block';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import ReportProblemIcon from '@mui/icons-material/ReportProblem';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import WarningIcon from '@mui/icons-material/Warning';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import SettingsIcon from '@mui/icons-material/Settings';
@@ -282,10 +288,26 @@ function FeatureTTL() {
     })).sort((a, b) => b.ttl.weeks - a.ttl.weeks); // Sort by longest time first
   }, [features, teamConfig]);
 
+  // Helper function to format time with days for < 1 week
+  const formatTimeDisplay = (weeks) => {
+    if (weeks < 1) {
+      const days = Math.round(weeks * 5);
+      return {
+        primary: `${days}d`,
+        secondary: `${weeks.toFixed(1)} weeks`
+      };
+    } else {
+      return {
+        primary: `${weeks.toFixed(1)}w`,
+        secondary: `~${(weeks / 4.33).toFixed(1)} months`
+      };
+    }
+  };
+
   // Calculate summary stats
   const stats = useMemo(() => {
     if (featuresWithTTL.length === 0) return {
-      avgWeeks: 0,
+      nextReleaseTTM: { weeks: 0, display: { primary: '0d', secondary: '0 weeks' } },
       fast: 0,
       slow: 0,
       critical: 0,
@@ -295,7 +317,6 @@ function FeatureTTL() {
       planningCount: 0
     };
 
-    const avgWeeks = featuresWithTTL.reduce((sum, f) => sum + f.ttl.weeks, 0) / featuresWithTTL.length;
     const fast = featuresWithTTL.filter(f => f.ttl.status === 'fast').length;
     const normal = featuresWithTTL.filter(f => f.ttl.status === 'normal').length;
     const slow = featuresWithTTL.filter(f => f.ttl.status === 'slow').length;
@@ -311,6 +332,31 @@ function FeatureTTL() {
     const planningFeatures = featuresWithTTL.filter(f =>
       f.workflowStatus === 'Planning' || !f.workflowStatus
     );
+
+    // Calculate Sprint Capacity (more realistic than next release)
+    // Shows how many features can be completed in next 2-week sprint
+    const weeklyCapacity = teamConfig.teamVelocity; // Story points per week
+    const sprintCapacity = weeklyCapacity * 2; // 2-week sprint
+    
+    // Sort available features by TTL (fastest first)
+    const availableFeatures = [...inProgressFeatures, ...planningFeatures]
+      .sort((a, b) => a.ttl.weeks - b.ttl.weeks);
+    
+    let sprintPoints = 0;
+    let featuresInSprint = 0;
+    
+    for (const feature of availableFeatures) {
+      const featurePoints = feature.storyPoints || 5;
+      if (sprintPoints + featurePoints <= sprintCapacity) {
+        sprintPoints += featurePoints;
+        featuresInSprint++;
+      } else {
+        break;
+      }
+    }
+    
+    const sprintMetric = featuresInSprint;
+
     const wontDoFeatures = featuresWithTTL.filter(f => f.workflowStatus === "Won't Do");
 
     // Calculate total remaining effort (in "feature-weeks")
@@ -346,8 +392,45 @@ function FeatureTTL() {
     }
     const totalRemainingMonths = (totalRemainingWeeks / 4.33).toFixed(1);
 
+    // === NEW METRICS ===
+    
+    // 1. Sprint Burndown - Story points completed vs planned this sprint
+    const totalSprintPoints = featuresInSprint.reduce((sum, f) => sum + (f.storyPoints || 5), 0);
+    const completedSprintPoints = featuresInSprint
+      .filter(f => f.workflowStatus === 'Done')
+      .reduce((sum, f) => sum + (f.storyPoints || 5), 0);
+    const sprintBurndown = totalSprintPoints > 0 ? Math.round((completedSprintPoints / totalSprintPoints) * 100) : 0;
+
+    // 2. Blocked Features - Features with high dependency risk or explicit blocks
+    const blockedFeatures = featuresWithTTL.filter(f => {
+      const depRisk = f.dependencyRisk || 3;
+      const depCount = f.dependencyCount || 0;
+      return depRisk >= 4 || depCount >= 3 || f.workflowStatus === 'Blocked';
+    }).length;
+
+    // 3. Ready to Start - Planning features with good clarity
+    const readyToStart = featuresWithTTL.filter(f => {
+      const clarity = f.requirementsClarity || 3;
+      return f.workflowStatus === 'Planning' && clarity >= 4;
+    }).length;
+
+    // 4. At Risk Features - High complexity + unknowns + dependencies
+    const atRiskFeatures = featuresWithTTL.filter(f => {
+      const complexity = f.technicalComplexity || 3;
+      const unknowns = f.unknowns || 3;
+      const depRisk = f.dependencyRisk || 3;
+      const riskScore = (complexity + unknowns + depRisk) / 3;
+      return riskScore >= 4 && f.workflowStatus !== 'Done' && f.workflowStatus !== "Won't Do";
+    }).length;
+
+    // 5. Requirements Gap - Features with low clarity scores
+    const requirementsGap = featuresWithTTL.filter(f => {
+      const clarity = f.requirementsClarity || 3;
+      return clarity <= 2 && f.workflowStatus !== 'Done' && f.workflowStatus !== "Won't Do";
+    }).length;
+
     return {
-      avgWeeks: avgWeeks.toFixed(1),
+      sprintCapacity: sprintMetric,
       fast,
       normal,
       slow,
@@ -358,7 +441,13 @@ function FeatureTTL() {
       },
       completedCount: completedFeatures.length,
       inProgressCount: inProgressFeatures.length,
-      planningCount: planningFeatures.length
+      planningCount: planningFeatures.length,
+      // New metrics
+      sprintBurndown,
+      blockedFeatures,
+      readyToStart,
+      atRiskFeatures,
+      requirementsGap
     };
   }, [featuresWithTTL]);
 
@@ -530,16 +619,16 @@ function FeatureTTL() {
           }
         }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-            <AccessTimeIcon sx={{ color: 'primary.main', fontSize: 20 }} />
+            <SpeedIcon sx={{ color: 'primary.main', fontSize: 20 }} />
             <Typography variant="caption" color="text.secondary">
-              Avg Time to Market
+              Sprint Capacity
             </Typography>
           </Box>
           <Typography variant="h4" sx={{ fontWeight: 700 }}>
-            {stats.avgWeeks} wks
+            {stats.sprintCapacity}
           </Typography>
           <Typography variant="caption" color="text.secondary">
-            ~{(stats.avgWeeks / 4.33).toFixed(1)} months
+            features in 2 weeks
           </Typography>
         </Box>
 
@@ -665,6 +754,164 @@ function FeatureTTL() {
         </Box>
       </Box>
 
+      {/* Second Row - New Metrics */}
+      <Box sx={{ 
+        display: 'flex', 
+        gap: 2, 
+        flexWrap: 'wrap',
+        mb: 3
+      }}>
+        {/* Sprint Burndown */}
+        <Box sx={{
+          p: 2,
+          flex: '1 1 200px',
+          minWidth: 200,
+          bgcolor: 'background.paper',
+          border: 1,
+          borderColor: 'divider',
+          borderRadius: '4px',
+          transition: 'all 0.2s ease',
+          '&:hover': {
+            boxShadow: isDark
+              ? '0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2)'
+              : '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+          }
+        }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+            <TrendingDownIcon sx={{ color: '#8B5CF6', fontSize: 20 }} />
+            <Typography variant="caption" color="text.secondary">
+              Sprint Burndown
+            </Typography>
+          </Box>
+          <Typography variant="h4" sx={{ fontWeight: 700, color: '#8B5CF6' }}>
+            {stats.sprintBurndown}%
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            completed
+          </Typography>
+        </Box>
+
+        {/* Blocked Features */}
+        <Box sx={{
+          p: 2,
+          flex: '1 1 200px',
+          minWidth: 200,
+          bgcolor: 'background.paper',
+          border: 1,
+          borderColor: 'divider',
+          borderRadius: '4px',
+          transition: 'all 0.2s ease',
+          '&:hover': {
+            boxShadow: isDark
+              ? '0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2)'
+              : '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+          }
+        }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+            <BlockIcon sx={{ color: '#EF4444', fontSize: 20 }} />
+            <Typography variant="caption" color="text.secondary">
+              Blocked Features
+            </Typography>
+          </Box>
+          <Typography variant="h4" sx={{ fontWeight: 700, color: '#EF4444' }}>
+            {stats.blockedFeatures}
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            high dependencies
+          </Typography>
+        </Box>
+
+        {/* Ready to Start */}
+        <Box sx={{
+          p: 2,
+          flex: '1 1 200px',
+          minWidth: 200,
+          bgcolor: 'background.paper',
+          border: 1,
+          borderColor: 'divider',
+          borderRadius: '4px',
+          transition: 'all 0.2s ease',
+          '&:hover': {
+            boxShadow: isDark
+              ? '0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2)'
+              : '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+          }
+        }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+            <PlayArrowIcon sx={{ color: '#10B981', fontSize: 20 }} />
+            <Typography variant="caption" color="text.secondary">
+              Ready to Start
+            </Typography>
+          </Box>
+          <Typography variant="h4" sx={{ fontWeight: 700, color: '#10B981' }}>
+            {stats.readyToStart}
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            clear requirements
+          </Typography>
+        </Box>
+
+        {/* At Risk Features */}
+        <Box sx={{
+          p: 2,
+          flex: '1 1 200px',
+          minWidth: 200,
+          bgcolor: 'background.paper',
+          border: 1,
+          borderColor: 'divider',
+          borderRadius: '4px',
+          transition: 'all 0.2s ease',
+          '&:hover': {
+            boxShadow: isDark
+              ? '0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2)'
+              : '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+          }
+        }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+            <ReportProblemIcon sx={{ color: '#F59E0B', fontSize: 20 }} />
+            <Typography variant="caption" color="text.secondary">
+              At Risk Features
+            </Typography>
+          </Box>
+          <Typography variant="h4" sx={{ fontWeight: 700, color: '#F59E0B' }}>
+            {stats.atRiskFeatures}
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            high complexity
+          </Typography>
+        </Box>
+
+        {/* Requirements Gap */}
+        <Box sx={{
+          p: 2,
+          flex: '1 1 200px',
+          minWidth: 200,
+          bgcolor: 'background.paper',
+          border: 1,
+          borderColor: 'divider',
+          borderRadius: '4px',
+          transition: 'all 0.2s ease',
+          '&:hover': {
+            boxShadow: isDark
+              ? '0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2)'
+              : '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+          }
+        }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+            <HelpOutlineIcon sx={{ color: '#6B7280', fontSize: 20 }} />
+            <Typography variant="caption" color="text.secondary">
+              Requirements Gap
+            </Typography>
+          </Box>
+          <Typography variant="h4" sx={{ fontWeight: 700, color: '#6B7280' }}>
+            {stats.requirementsGap}
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            unclear needs
+          </Typography>
+        </Box>
+      </Box>
+
       {/* Features List - Two Column Grid */}
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'repeat(2, 1fr)' }, gap: 2 }}>
         {featuresWithTTL.map((feature) => (
@@ -722,10 +969,10 @@ function FeatureTTL() {
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.25 }}>
                 <Box>
                   <Typography variant="h5" sx={{ fontWeight: 700, color: getStatusColor(feature.ttl.status), lineHeight: 1.2 }}>
-                    {feature.ttl.weeks} wks
+                    {formatTimeDisplay(feature.ttl.weeks).primary}
                   </Typography>
                   <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
-                    ~{feature.ttl.months} months
+                    {formatTimeDisplay(feature.ttl.weeks).secondary}
                   </Typography>
                 </Box>
 
@@ -818,10 +1065,10 @@ function FeatureTTL() {
               }}>
                 <Box sx={{ textAlign: 'center', mb: 2 }}>
                   <Typography variant="h3" sx={{ fontWeight: 700, color: getStatusColor(selectedFeatureForBreakdown.ttl.status) }}>
-                    {selectedFeatureForBreakdown.ttl.weeks} weeks
+                    {formatTimeDisplay(selectedFeatureForBreakdown.ttl.weeks).primary}
                   </Typography>
                   <Typography variant="body1" color="text.secondary">
-                    ~{selectedFeatureForBreakdown.ttl.months} months
+                    {formatTimeDisplay(selectedFeatureForBreakdown.ttl.weeks).secondary}
                   </Typography>
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1 }}>

@@ -167,6 +167,7 @@ const SubtaskAnalysisDialog = ({ open, onClose, feature, onSubtasksCreated }) =>
 
   const getSubtaskTypeIcon = (type) => {
     switch (type) {
+      case 'acceptance_criteria_section': return '📝';
       case 'bullet_point': return '•';
       case 'numbered_step': return '#';
       case 'functionality': return '⚙️';

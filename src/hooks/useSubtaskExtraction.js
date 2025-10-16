@@ -30,98 +30,132 @@ export const useSubtaskExtraction = () => {
       return []; // Too short to need breakdown
     }
 
-    const sentences = description
-      .split(/[.!?]+/)
-      .map(s => s.trim())
-      .filter(s => s.length > 10);
-
     const subtasks = [];
     
-    // Pattern 1: Bullet points or numbered lists
-    const bulletPoints = description.match(/[-•*]\s*(.+?)(?=[-•*]|\n|$)/g);
-    if (bulletPoints && bulletPoints.length > 1) {
-      bulletPoints.forEach((point, index) => {
-        const cleanPoint = point.replace(/^[-•*]\s*/, '').trim();
-        if (cleanPoint.length > 15) {
-          subtasks.push({
-            name: `${featureName} - ${capitalizeFirst(cleanPoint)}`,
-            description: cleanPoint,
-            type: 'bullet_point',
-            priority: index === 0 ? 'Must-Have' : 'Should-Have'
-          });
-        }
-      });
-    }
-
-    // Pattern 2: Numbered lists
-    const numberedItems = description.match(/\d+\.\s*(.+?)(?=\d+\.|\n|$)/g);
-    if (numberedItems && numberedItems.length > 1) {
-      numberedItems.forEach((item, index) => {
-        const cleanItem = item.replace(/^\d+\.\s*/, '').trim();
-        if (cleanItem.length > 15) {
-          subtasks.push({
-            name: `${featureName} - Step ${index + 1}: ${capitalizeFirst(cleanItem)}`,
-            description: cleanItem,
-            type: 'numbered_step',
-            priority: index < 2 ? 'Must-Have' : 'Should-Have'
-          });
-        }
-      });
-    }
-
-    // Pattern 3: Multiple functionality mentions
-    const functionalityMatches = [];
-    sentences.forEach(sentence => {
-      const taskKeywords = taskIndicators.filter(keyword => 
-        sentence.toLowerCase().includes(keyword)
-      );
+    // Pattern 1: Acceptance Criteria Sections (your specific structure)
+    if (description.includes('Acceptance Criteria')) {
+      console.log('Found Acceptance Criteria structure');
       
-      if (taskKeywords.length >= 2 || sentence.length > 80) {
-        // Check if sentence describes a distinct functionality
-        const hasComplexityIndicator = complexityIndicators.some(indicator =>
-          sentence.toLowerCase().includes(indicator)
+      // Split by lines and find section headers (lines that don't start with [ ] or are empty)
+      const lines = description.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+      
+      let currentSection = null;
+      let currentSectionItems = [];
+      
+      for (const line of lines) {
+        // Skip the "Acceptance Criteria" header itself
+        if (line === 'Acceptance Criteria') {
+          continue;
+        }
+        
+        // Check if this line is a section header (doesn't start with [ ] and isn't a checklist item)
+        if (!line.startsWith('[ ]') && !line.startsWith('[x]') && !line.startsWith('- ') && !line.startsWith('* ')) {
+          // Save previous section if it exists
+          if (currentSection && currentSectionItems.length > 0) {
+            subtasks.push({
+              name: `${featureName} - ${currentSection}`,
+              description: currentSectionItems.join('\n'),
+              type: 'acceptance_criteria_section',
+              priority: 'Must-Have'
+            });
+          }
+          
+          // Start new section
+          currentSection = line;
+          currentSectionItems = [];
+        } else if (currentSection) {
+          // Add checklist item to current section
+          currentSectionItems.push(line);
+        }
+      }
+      
+      // Don't forget the last section
+      if (currentSection && currentSectionItems.length > 0) {
+        subtasks.push({
+          name: `${featureName} - ${currentSection}`,
+          description: currentSectionItems.join('\n'),
+          type: 'acceptance_criteria_section',
+          priority: 'Must-Have'
+        });
+      }
+      
+      console.log(`Extracted ${subtasks.length} acceptance criteria sections:`, subtasks.map(s => s.name));
+    }
+    
+    // Pattern 2: Traditional bullet points (fallback for other formats)
+    if (subtasks.length === 0) {
+      const bulletPoints = description.match(/[-•*]\s*(.+?)(?=[-•*]|\n|$)/g);
+      if (bulletPoints && bulletPoints.length > 1) {
+        bulletPoints.forEach((point, index) => {
+          const cleanPoint = point.replace(/^[-•*]\s*/, '').trim();
+          if (cleanPoint.length > 15) {
+            subtasks.push({
+              name: `${featureName} - ${capitalizeFirst(cleanPoint)}`,
+              description: cleanPoint,
+              type: 'bullet_point',
+              priority: index === 0 ? 'Must-Have' : 'Should-Have'
+            });
+          }
+        });
+      }
+    }
+
+    // Pattern 3: Numbered lists (fallback for other formats)
+    if (subtasks.length === 0) {
+      const numberedItems = description.match(/\d+\.\s*(.+?)(?=\d+\.|\n|$)/g);
+      if (numberedItems && numberedItems.length > 1) {
+        numberedItems.forEach((item, index) => {
+          const cleanItem = item.replace(/^\d+\.\s*/, '').trim();
+          if (cleanItem.length > 15) {
+            subtasks.push({
+              name: `${featureName} - Step ${index + 1}: ${capitalizeFirst(cleanItem)}`,
+              description: cleanItem,
+              type: 'numbered_step',
+              priority: index < 2 ? 'Must-Have' : 'Should-Have'
+            });
+          }
+        });
+      }
+    }
+
+    // Pattern 4: Multiple functionality mentions (fallback for unstructured text)
+    if (subtasks.length === 0) {
+      const sentences = description.split(/[.!?]+/).map(s => s.trim()).filter(s => s.length > 10);
+      const functionalityMatches = [];
+      
+      sentences.forEach(sentence => {
+        const taskKeywords = taskIndicators.filter(keyword => 
+          sentence.toLowerCase().includes(keyword)
         );
         
-        if (hasComplexityIndicator || taskKeywords.length >= 2) {
-          functionalityMatches.push(sentence);
+        if (taskKeywords.length >= 2 || sentence.length > 80) {
+          const hasComplexityIndicator = complexityIndicators.some(indicator =>
+            sentence.toLowerCase().includes(indicator)
+          );
+          
+          if (hasComplexityIndicator || taskKeywords.length >= 2) {
+            functionalityMatches.push(sentence);
+          }
         }
-      }
-    });
+      });
 
-    // Create subtasks from functionality matches
-    functionalityMatches.forEach((match, index) => {
-      if (index < 5) { // Limit to 5 auto-generated subtasks
-        const taskName = extractTaskName(match, featureName);
-        if (taskName && !subtasks.some(st => st.name === taskName)) {
-          subtasks.push({
-            name: taskName,
-            description: match.trim(),
-            type: 'functionality',
-            priority: index < 2 ? 'Must-Have' : 'Should-Have'
-          });
-        }
-      }
-    });
-
-    // Pattern 4: Component/Module breakdown
-    const componentMatches = description.match(/\b(component|module|service|api|interface|dashboard|panel|widget|form|modal|dialog)\b[^.!?]*[.!?]/gi);
-    if (componentMatches && componentMatches.length > 1) {
-      componentMatches.forEach((match, index) => {
-        if (index < 4) {
-          const componentName = extractComponentName(match, featureName);
-          if (componentName && !subtasks.some(st => st.name === componentName)) {
+      // Create subtasks from functionality matches
+      functionalityMatches.forEach((match, index) => {
+        if (index < 5) { // Limit to 5 auto-generated subtasks
+          const taskName = extractTaskName(match, featureName);
+          if (taskName && !subtasks.some(st => st.name === taskName)) {
             subtasks.push({
-              name: componentName,
+              name: taskName,
               description: match.trim(),
-              type: 'component',
-              priority: 'Should-Have'
+              type: 'functionality',
+              priority: index < 2 ? 'Must-Have' : 'Should-Have'
             });
           }
         }
       });
     }
 
-    return subtasks.slice(0, 8); // Limit total subtasks
+    return subtasks.slice(0, 12); // Increased limit to accommodate more sections
   };
 
   // Extract a meaningful task name from a sentence

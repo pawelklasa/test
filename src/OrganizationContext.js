@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc, setDoc, collection, query, where, getDocs, updateDoc } from 'firebase/firestore';
 import { db } from './firebase';
@@ -39,25 +39,8 @@ export const OrganizationProvider = ({ children }) => {
   const [userRole, setUserRole] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Listen to auth state changes
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(getAuth(), async (user) => {
-      setUser(user);
-      if (user) {
-        await loadUserOrganizations(user.uid);
-      } else {
-        setCurrentOrganization(null);
-        setUserOrganizations([]);
-        setUserRole(null);
-      }
-      setLoading(false);
-    });
-
-    return unsubscribe;
-  }, []);
-
   // Load organizations for the current user
-  const loadUserOrganizations = async (userId) => {
+  const loadUserOrganizations = useCallback(async (userId) => {
     try {
       // Get user's organization memberships from userOrganizations collection
       const membershipsQuery = query(
@@ -79,8 +62,14 @@ export const OrganizationProvider = ({ children }) => {
             return loadUserOrganizations(userId);
           }
         } else {
-          console.log('No organizations found for user, and no existing data to migrate');
-          // Don't create default organization - user needs to be properly invited
+          console.log('New user with no existing data - creating default organization');
+          // Create default organization for new users too
+          const orgId = await createDefaultOrganizationForUser({ uid: userId });
+          if (orgId) {
+            // Reload after creating organization
+            return loadUserOrganizations(userId);
+          }
+          console.log('No organizations found for user');
           return;
         }
       }
@@ -117,7 +106,24 @@ export const OrganizationProvider = ({ children }) => {
     } catch (error) {
       console.error('Error loading user organizations:', error);
     }
-  };
+  }, []);
+
+  // Listen to auth state changes
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(getAuth(), async (user) => {
+      setUser(user);
+      if (user) {
+        await loadUserOrganizations(user.uid);
+      } else {
+        setCurrentOrganization(null);
+        setUserOrganizations([]);
+        setUserRole(null);
+      }
+      setLoading(false);
+    });
+
+    return unsubscribe;
+  }, [loadUserOrganizations]);
 
   // Create a new organization
   const createOrganization = async (organizationData) => {

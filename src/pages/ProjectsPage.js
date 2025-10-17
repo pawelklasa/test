@@ -94,23 +94,21 @@ function ProjectsPage() {
     console.log('addProject function:', typeof addProject);
 
     if (formData.name.trim()) {
-      console.log('Creating project...');
-      const result = await addProject({
-        name: formData.name,
-        description: formData.description,
-        status: formData.status,
-        color: formData.color
-      });
+      try {
+        console.log('Creating project...');
+        const projectId = await addProject({
+          name: formData.name,
+          description: formData.description,
+          status: formData.status,
+          color: formData.color
+        });
 
-      console.log('Result:', result);
-
-      if (result.success) {
-        console.log('Project created successfully:', result.id);
+        console.log('Project created successfully with ID:', projectId);
         trackProjectCreated(formData.name);
         handleCloseDialog();
-      } else {
-        console.error('Failed to create project:', result.error);
-        alert('Failed to create project: ' + result.error);
+      } catch (error) {
+        console.error('Failed to create project:', error);
+        alert('Failed to create project: ' + error.message);
       }
     } else {
       console.log('Project name is empty');
@@ -145,16 +143,17 @@ function ProjectsPage() {
 
   const handleRenameConfirm = async () => {
     if (projectBeingRenamed && renameProjectName.trim()) {
-      const oldName = projectBeingRenamed.name;
-      const result = await updateProject(projectBeingRenamed.id, {
-        name: renameProjectName.trim()
-      });
-      
-      if (result.success) {
+      try {
+        const oldName = projectBeingRenamed.name;
+        await updateProject(projectBeingRenamed.id, {
+          name: renameProjectName.trim()
+        });
+        
         console.log('✅ Project renamed successfully');
         trackProjectRenamed(projectBeingRenamed.id, oldName, renameProjectName.trim());
-      } else {
-        console.error('❌ Failed to rename project:', result.error);
+      } catch (error) {
+        console.error('❌ Failed to rename project:', error);
+        alert('Failed to rename project: ' + error.message);
       }
     }
     setRenameDialogOpen(false);
